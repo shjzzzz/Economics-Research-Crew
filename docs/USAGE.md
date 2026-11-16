@@ -143,6 +143,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 - 用法相同：直接用自然语言提问，或点名 Skill（如“用 literature-review 梳理……”）。agy 装了 `-WithHooks` 时，路由提示会在每轮第一次调用模型前注入。
 - agy 的原始材料保护 hook 在不拦截时返回 `ask`（沿用 agy 正常审批流程），不会自动批准任何操作。
 - Codex：未在本机运行测试；没有 hook，`06-Data/raw` 与 `03-Literature/_sources` 的只读规则只靠 `AGENTS.md` 文本约束。若 Codex 不支持子 Agent，Skill 会在主会话里按 `.agents/agents/<名称>.md` 的职责完成。
+- 在库里改了 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md` 后，运行 `.\Sync-AgentsMd.ps1 -VaultPath <库>` 把改动同步进 `AGENTS.md` 区块（`-Check` 只检查不写；区块之外的内容不动，原文件另存 `AGENTS.md.bak`）。
 - 修改 Skill 或规则时改 `payload/.claude/` 下的源文件，再用 `-Update` 重新生成；不要直接改 `.agents/` 或 `AGENTS.md` 区块。
 
 ## 10. 常见问题

@@ -13,6 +13,7 @@ the installer then copies into the vault without overwriting:
 Usage:
   build_platform.py build <payload_dir> <stage_dir> --platforms agy,codex
   build_platform.py merge-agents-md <vault_AGENTS.md> <block_file> [--update]
+  build_platform.py sync-vault <vault> [--check]   regenerate AGENTS.md block from the vault's CLAUDE.md
   build_platform.py merge-agy-hooks <vault_hooks.json> <snippet.json>
 """
 import json
@@ -104,9 +105,11 @@ def convert_agent(text, fallback_name):
     return head + rewrite(body, TEXT_REWRITES)
 
 
-def build_rules_block(payload):
-    tpl = rd(os.path.join(payload, "CLAUDE.template.md"))
-    rules = rd(os.path.join(payload, ".claude", "ECONOMICS-RESEARCH.md"))
+def build_rules_block(payload=None, claude_md=None, rules_md=None):
+    """Rules block for AGENTS.md. Sources: the payload (install) or a vault's own
+    CLAUDE.md + .claude/ECONOMICS-RESEARCH.md (sync), so user edits propagate."""
+    tpl = rd(claude_md or os.path.join(payload, "CLAUDE.template.md"))
+    rules = rd(rules_md or os.path.join(payload, ".claude", "ECONOMICS-RESEARCH.md"))
     tpl = "\n".join(l for l in tpl.split("\n") if l.strip() != "@.claude/ECONOMICS-RESEARCH.md").rstrip()
     body = rewrite(tpl, RULES_REWRITES) + "\n\n" + PLATFORM_NOTE + "\n" + rules.rstrip() + "\n"
     body = rewrite(body, TEXT_REWRITES)
@@ -190,6 +193,40 @@ def merge_agents_md(target, block_file, update):
         print("stale")
 
 
+def sync_vault(vault, check):
+    """Regenerate the ERC block of <vault>/AGENTS.md from the vault's current CLAUDE.md and
+    ECONOMICS-RESEARCH.md. Only the marked block changes; the rest of AGENTS.md is untouched.
+    --check only reports (exit 1 when out of sync)."""
+    if not (os.path.exists(os.path.join(vault, "CLAUDE.md"))
+            and os.path.exists(os.path.join(vault, ".claude", "ECONOMICS-RESEARCH.md"))):
+        print("skipped (no CLAUDE.md / .claude/ECONOMICS-RESEARCH.md here, so nothing to sync from)")
+        return
+    block = build_rules_block(claude_md=os.path.join(vault, "CLAUDE.md"),
+                              rules_md=os.path.join(vault, ".claude", "ECONOMICS-RESEARCH.md"))
+    size = len(block.encode("utf-8"))
+    if size > AGENTS_MD_LIMIT:
+        sys.exit("generated block is %d bytes, above agy's %d-byte limit; shorten CLAUDE.md" % (size, AGENTS_MD_LIMIT))
+    target = os.path.join(vault, "AGENTS.md")
+    cur = rd(target) if os.path.exists(target) else ""
+    if BEGIN in cur:
+        i, j = cur.index(BEGIN), cur.find(END)
+        if j < 0:
+            sys.exit("AGENTS.md has the ERC begin marker but no end marker; fix it by hand")
+        if cur[i:j + len(END)] + chr(10) == block:
+            print("in-sync")
+            return
+        new = cur[:i] + block + cur[j + len(END):].lstrip(chr(10))
+    else:
+        new = (cur.rstrip() + chr(10) * 2 if cur else "") + block
+    if check:
+        print("out-of-sync")
+        sys.exit(1)
+    if cur:
+        shutil.copyfile(target, target + ".bak")
+    wr(target, new)
+    print("synced (previous AGENTS.md saved as AGENTS.md.bak)" if cur else "created")
+
+
 def merge_agy_hooks(target, snippet_file):
     """Set our named hook key in .agents/hooks.json; leave every other key untouched."""
     snippet = json.loads(rd(snippet_file))
@@ -213,6 +250,8 @@ def main(argv):
         build(argv[1], argv[2], plats)
     elif len(argv) >= 3 and argv[0] == "merge-agents-md":
         merge_agents_md(argv[1], argv[2], "--update" in argv)
+    elif len(argv) >= 2 and argv[0] == "sync-vault":
+        sync_vault(argv[1], "--check" in argv)
     elif len(argv) == 3 and argv[0] == "merge-agy-hooks":
         merge_agy_hooks(argv[1], argv[2])
     else:

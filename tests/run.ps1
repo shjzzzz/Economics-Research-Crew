@@ -281,6 +281,20 @@ Ok ((Run-Install $v10c @("-Platform","codex","-WithHooks")) -eq 0) "codex instal
 Ok ((Run-Check $v10c) -eq 0) "checker passes for codex"
 Ok ((Test-Path (Join-Path $v10c "AGENTS.md")) -and -not (Test-Path (Join-Path $v10c ".agents\hooks.json")) -and -not (Test-Path (Join-Path $v10c ".agents\hooks"))) "codex: AGENTS.md, no agy hooks"
 
+# CLAUDE.md <-> AGENTS.md sync
+$syncer = Join-Path $pkg "Sync-AgentsMd.ps1"
+function Run-Sync([string]$Vault, [string[]]$Extra = @()) { $ErrorActionPreference = "Continue"; & $shell -NoProfile -File $syncer -VaultPath $Vault @Extra *> $null; return $LASTEXITCODE }
+Ok ((Run-Sync $v10 @("-Check")) -eq 0) "fresh install: CLAUDE.md and AGENTS.md are in sync"
+$cm = Join-Path $v10 "CLAUDE.md"
+[IO.File]::WriteAllText($cm, ([IO.File]::ReadAllText($cm, $enc).TrimEnd() + "`n`n## 我的补充规则`n- 同步测试标记 XYZ123`n"), $enc)
+Ok ((Run-Sync $v10 @("-Check")) -eq 1) "after editing CLAUDE.md: -Check reports out of sync"
+$shaAm = Get-Sha (Join-Path $v10 "AGENTS.md")
+Ok ((Get-Sha (Join-Path $v10 "AGENTS.md")) -eq $shaAm) "-Check does not write"
+Ok ((Run-Sync $v10) -eq 0) "sync exit 0"
+Ok (([IO.File]::ReadAllText((Join-Path $v10 "AGENTS.md"), $enc)) -match "XYZ123") "edit propagated into AGENTS.md block"
+Ok ((Test-Path (Join-Path $v10 "AGENTS.md.bak")) -and ((Run-Sync $v10 @("-Check")) -eq 0)) "backup written; now in sync"
+Ok ((Run-Sync $v10b) -eq 0 -and ([IO.File]::ReadAllText((Join-Path $v10b "AGENTS.md"), $enc)).StartsWith("# 我的规则")) "sync keeps user content outside the block"
+
 # agy hook input shapes
 function AgyHook([string]$Script, [string]$Json) {
     $ErrorActionPreference = "Continue"

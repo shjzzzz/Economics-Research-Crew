@@ -32,6 +32,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 | Antigravity（agy） | 根 `AGENTS.md` 中带标记的区块（自包含，≤24 KB） | `.agents/skills/` | `.agents/agents/`（subagent） | `.agents/hooks.json` 的 `economics-research-crew` 键：原始材料保护 + 路由提示 | 已在 agy 1.5.9 冒烟测试 |
 | Codex CLI | 同上 `AGENTS.md` | `.agents/skills/` | `.agents/agents/` 作为角色说明读取 | 无（原始材料保护仅靠规则文本） | 仅生成文件，**未运行测试** |
 
+`.\Sync-AgentsMd.ps1` 以库里当前的 `CLAUDE.md` 为准重新生成 `AGENTS.md` 区块，保持两者一致。
+
 已存在的 `AGENTS.md` 只追加区块、不覆盖；`-Update` 时若区块过期，生成 `AGENTS.md.new` 供比对。
 
 详细用法见 [docs/USAGE.md](docs/USAGE.md)。
