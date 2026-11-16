@@ -1,6 +1,6 @@
 # Economics Research Crew
 
-面向税收经济学、公共经济学、计量经济学与因果推断的 Claude Code 研究环境扩展。
+面向税收经济学、公共经济学、计量经济学与因果推断的研究环境扩展，支持 Claude Code、Antigravity CLI（`agy`）与 Codex CLI。
 
 ## 设计
 - 6 个研究 Subagents、11 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
@@ -14,13 +14,25 @@
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
 .\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WhatIf   # 先预演
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki"           # 仅安装本扩展
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki"           # 仅安装本扩展（默认 -Platform auto）
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -Platform all       # 指定平台：auto | claude | agy | codex | all
 .\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WithHooks            # 可选：安装 hooks（合并 settings.json）
 .\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -Update               # 升级：差异文件生成 .new，不覆盖
 .\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WithUpstream -RepoUrl "<上游仓库地址>"
 .\Test-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki"
 ```
-脚本只新增文件，已存在的文件一律跳过并列出；改动前备份 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json` 到 `_erc-backups/<时间戳>/`。
+脚本只新增文件，已存在的文件一律跳过并列出；改动前备份 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`、`AGENTS.md`、`.agents/hooks.json` 到 `_erc-backups/<时间戳>/`。
+
+### 多平台（自适应）
+`-Platform auto`（默认）检测本机已安装的 `claude`、`agy`、`codex`，只为检测到的平台生成文件；都没检测到时安装 Claude Code 版。`payload/.claude/` 是唯一源，其他平台的文件在安装时生成（需要 python）。
+
+| 平台 | 规则 | Skills | Agents | Hooks（`-WithHooks`） | 状态 |
+|---|---|---|---|---|---|
+| Claude Code | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md` | `.claude/skills/` | `.claude/agents/` | `.claude/settings.json` | 已测试 |
+| Antigravity（agy） | 根 `AGENTS.md` 中带标记的区块（自包含，≤24 KB） | `.agents/skills/` | `.agents/agents/`（subagent） | `.agents/hooks.json` 的 `economics-research-crew` 键：原始材料保护 + 路由提示 | 已在 agy 1.5.9 冒烟测试 |
+| Codex CLI | 同上 `AGENTS.md` | `.agents/skills/` | `.agents/agents/` 作为角色说明读取 | 无（原始材料保护仅靠规则文本） | 仅生成文件，**未运行测试** |
+
+已存在的 `AGENTS.md` 只追加区块、不覆盖；`-Update` 时若区块过期，生成 `AGENTS.md.new` 供比对。
 
 详细用法见 [docs/USAGE.md](docs/USAGE.md)。
 

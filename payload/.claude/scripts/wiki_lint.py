@@ -22,7 +22,7 @@ from pathlib import Path
 
 SCOPE = ["01-Research-Projects", "03-Literature", "04-Theories",
          "05-Methods", "08-Research-Notes", "09-Writing"]
-SKIP_PARTS = {"_sources", ".obsidian", ".claude", ".git", "node_modules",
+SKIP_PARTS = {"_sources", ".obsidian", ".claude", ".agents", ".codex", ".git", "node_modules",
               "_vendor", "_erc-staging", "_erc-backups", "Templates"}
 NEEDS_SOURCES = {"literature", "theory", "method", "synthesis", "query"}
 PATH_EXT = (".pdf", ".md", ".txt", ".csv", ".dta", ".xlsx", ".html", ".epub", ".docx")

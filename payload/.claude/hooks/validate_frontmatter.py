@@ -12,7 +12,7 @@ import sys
 
 def main():
     try:
-        data = json.load(sys.stdin)
+        data = json.loads(sys.stdin.buffer.read().decode("utf-8-sig", "replace"))  # UTF-8 regardless of locale
     except Exception:
         sys.exit(0)
     ti = data.get("tool_input", {}) or {}

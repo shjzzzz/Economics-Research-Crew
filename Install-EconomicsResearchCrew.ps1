@@ -4,7 +4,10 @@ param(
     [switch]$WithUpstream,
     [switch]$WithHooks,
     [switch]$Update,
-    [string]$RepoUrl = ""
+    [string]$RepoUrl = "",
+    # auto：检测本机已安装的 claude / agy / codex，只为检测到的平台生成文件（都没检测到则装 Claude 版）
+    [ValidateSet("auto","claude","agy","codex","all")]
+    [string]$Platform = "auto"
 )
 $ErrorActionPreference = "Stop"
 
@@ -43,10 +46,22 @@ $payload = Join-Path $packageRoot "payload"
 if (-not (Test-Path $payload)) { throw "未找到 payload 目录，请完整解压安装包。" }
 $claudeDir = Join-Path $VaultPath ".claude"
 
+# 0. 平台
+$detected = @("claude","agy","codex" | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue })
+$platforms = @(switch ($Platform) {
+    "auto" { if ($detected.Count -gt 0) { $detected } else { "claude" } }
+    "all"  { "claude","agy","codex" }
+    default { $Platform }
+})
+$doClaude = $platforms -contains "claude"
+$doAgents = ($platforms -contains "agy") -or ($platforms -contains "codex")
+Write-Host ("平台：{0}（-Platform {1}；本机检测到：{2}）" -f ($platforms -join ", "), $Platform, $(if ($detected) { $detected -join ", " } else { "无" })) -ForegroundColor Cyan
+if ($doAgents -and -not (Get-Command python -ErrorAction SilentlyContinue)) { throw "为 agy/Codex 生成文件需要 python 在 PATH 中。" }
+
 # 1. 备份
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $backupDir = Join-Path $VaultPath "_erc-backups\$stamp"
-foreach ($rel in @("CLAUDE.md", ".mcp.json", ".claude\settings.json")) {
+foreach ($rel in @("CLAUDE.md", ".mcp.json", ".claude\settings.json", "AGENTS.md", ".agents\hooks.json")) {
     $src = Join-Path $VaultPath $rel
     if (Test-Path $src -PathType Leaf) {
         $dst = Join-Path $backupDir $rel
@@ -94,12 +109,42 @@ if ($WithUpstream) {
 $importLines += "@.claude/ECONOMICS-RESEARCH.md"
 
 # 3. 本扩展
-Copy-NoOverwrite (Join-Path $payload ".claude") $claudeDir
+if ($doClaude) { Copy-NoOverwrite (Join-Path $payload ".claude") $claudeDir }
 Copy-NoOverwrite (Join-Path $payload "Meta") (Join-Path $VaultPath "Meta")
 Copy-NoOverwrite (Join-Path $payload "Templates") (Join-Path $VaultPath "Templates")
 
+# 3a. agy / Codex：由 payload/.claude 生成 .agents/ 与 AGENTS.md 区块（先生成到临时目录，再不覆盖地复制）
+if ($doAgents) {
+    $builder = Join-Path $packageRoot "tools\build_platform.py"
+    $stage = Join-Path ([IO.Path]::GetTempPath()) ("erc-platform-" + $stamp)
+    $agentPlats = @($platforms | Where-Object { $_ -ne "claude" }) -join ","
+    & python -X utf8 $builder build $payload $stage --platforms $agentPlats
+    if ($LASTEXITCODE -ne 0) { throw "生成 agy/Codex 文件失败；知识库未被改动。" }
+    try {
+        Copy-NoOverwrite (Join-Path $stage ".agents") (Join-Path $VaultPath ".agents")
+        $agentsMd = Join-Path $VaultPath "AGENTS.md"
+        if ($PSCmdlet.ShouldProcess($agentsMd, "新建或追加 Economics Research Crew 区块")) {
+            $mergeArgs = @("merge-agents-md", $agentsMd, (Join-Path $stage "AGENTS.erc.md"))
+            if ($Update) { $mergeArgs += "--update" }
+            $r = (& python -X utf8 $builder @mergeArgs | Out-String).Trim()
+            if ($LASTEXITCODE -ne 0) { throw "AGENTS.md 合并失败。" }
+            if ($r -eq "pending") { $script:Pending += "$agentsMd.new" }
+            if ($r -eq "stale") { Write-Host "  AGENTS.md 中的区块不是最新版；用 -Update 生成 AGENTS.md.new 供比对。" -ForegroundColor Yellow }
+        }
+        if ($WithHooks -and ($platforms -contains "agy")) {
+            $agyHooks = Join-Path $VaultPath ".agents\hooks.json"
+            if ($PSCmdlet.ShouldProcess($agyHooks, "合并 agy hooks（仅 economics-research-crew 键）")) {
+                & python -X utf8 $builder merge-agy-hooks $agyHooks (Join-Path $stage "hooks.erc.json")
+                if ($LASTEXITCODE -ne 0) { throw "agy hooks 合并失败；hooks.json 未被改动。" }
+            }
+        }
+    } finally {
+        Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
 # 3b. 可选：hooks（修改 settings.json，需 -WithHooks；已在步骤 1 备份）
-if ($WithHooks) {
+if ($WithHooks -and $doClaude) {
     if (-not (Get-Command python -ErrorAction SilentlyContinue)) { throw "-WithHooks 需要 python 在 PATH 中。" }
     $merge = Join-Path $packageRoot "tools\merge_hooks.py"
     $snippet = Join-Path $payload ".claude\settings.hooks.json"
@@ -113,7 +158,9 @@ if ($WithHooks) {
 # 4. 根 CLAUDE.md 仅追加缺失的 import
 $rootClaude = Join-Path $VaultPath "CLAUDE.md"
 $enc = [System.Text.UTF8Encoding]::new($false)
-if (-not (Test-Path $rootClaude)) {
+if (-not $doClaude) {
+    # 未选择 Claude Code：不创建、不修改 CLAUDE.md
+} elseif (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
         $tpl = Join-Path $payload "CLAUDE.template.md"
         $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# Research Workspace" }
@@ -147,5 +194,5 @@ foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\
     if (-not (Test-Path $p) -and $PSCmdlet.ShouldProcess($p, "创建目录")) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
 }
 if ($script:Pending.Count -gt 0) { Write-Host "以下文件与新版不同，已生成 .new 副本（未覆盖原文件），请人工比对后合并：" -ForegroundColor Cyan; $script:Pending | ForEach-Object { Write-Host "  $_" } }
-$backupNote = if (Test-Path $backupDir) { "备份：$backupDir" } else { "无需备份（没有已存在的 CLAUDE.md/.mcp.json/settings.json）" }
+$backupNote = if (Test-Path $backupDir) { "备份：$backupDir" } else { "无需备份（没有已存在的 CLAUDE.md/.mcp.json/settings.json/AGENTS.md/hooks.json）" }
 Write-Host "完成。$backupNote 。请运行 Test-EconomicsResearchCrew.ps1。" -ForegroundColor Green

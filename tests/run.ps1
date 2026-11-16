@@ -27,6 +27,7 @@ function Ok([bool]$cond, [string]$name) {
 function New-Vault { $d = Join-Path ([IO.Path]::GetTempPath()) ("erc-test-" + [guid]::NewGuid().ToString("N").Substring(0,8)); New-Item -ItemType Directory $d | Out-Null; $d }
 function Run-Install([string]$Vault, [string[]]$Extra = @()) {
     $ErrorActionPreference = "Continue"
+    if ($Extra -notcontains "-Platform") { $Extra = @("-Platform","claude") + $Extra }
     & $shell -NoProfile -File $installer -VaultPath $Vault @Extra *> $null
     return $LASTEXITCODE
 }
@@ -189,6 +190,15 @@ Ok ((Hint "我的 DID 平行趋势成立吗") -match "/causal-inference-audit") 
 Ok ((Hint "我想完整做一个研究并推进") -match "/research-pipeline") "project intent -> /research-pipeline"
 Ok ((Hint "固定效应和随机效应的核心区别是什么") -eq "") "conceptual question -> no hint"
 Ok ((Hint "/literature-review 税收遵从") -eq "") "explicit slash command -> no hint"
+# Hosts run hooks as plain `python script.py` (no -X utf8). On Chinese Windows python would decode
+# stdin as GBK and no Chinese trigger would ever match; the scripts must read UTF-8 bytes themselves.
+function HintPlain([string]$Json) {
+    $ErrorActionPreference = "Continue"
+    $out = $Json | & $py (Join-Path $payload ".claude\hooks\routing_hint.py") 2>$null
+    return ($out -join " ")
+}
+Ok ((HintPlain (@{prompt="帮我梳理税收遵从的国内外文献"} | ConvertTo-Json -Compress)) -match "/literature-review") "Chinese prompt matches without -X utf8 (Claude host)"
+Ok ((HintPlain (@{hookEventName="PreInvocation"; invocationNum=0; lastUserInput="我的 DID 平行趋势成立吗"} | ConvertTo-Json -Compress)) -match "causal-inference-audit") "Chinese prompt matches without -X utf8 (agy host)"
 
 # --- 9. wiki_lint ---------------------------------------------------------------
 Write-Host "[9] wiki_lint"
@@ -222,8 +232,78 @@ Add-Content -LiteralPath (Join-Path $v "Meta\source-registry.md") -Value "| SRC-
 & $py -X utf8 $lint hash (Join-Path $lit "_sources\a.pdf") --vault $v *> $null
 Ok ($LASTEXITCODE -eq 10) "registered source detected (exit 10)"
 
+# --- 10. multi-platform (agy / Codex) -----------------------------------------
+Write-Host "[10] multi-platform"
+$v10 = New-Vault
+Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform install exit 0"
+Ok ((Run-Check $v10) -eq 0) "checker passes for all platforms"
+Ok ((Test-Path (Join-Path $v10 "CLAUDE.md")) -and (Test-Path (Join-Path $v10 ".claude\skills"))) "Claude files present"
+$sk = @(Get-ChildItem (Join-Path $v10 ".agents\skills") -Directory)
+Ok ($sk.Count -eq 11) ".agents has 11 skills (got $($sk.Count))"
+$badName = @($sk | Where-Object { ([IO.File]::ReadAllText((Join-Path $_.FullName "SKILL.md"), $enc)) -notmatch ("(?m)^name:\s*" + [regex]::Escape($_.Name) + "\s*$") })
+Ok ($badName.Count -eq 0) "every SKILL.md name equals its folder"
+$ag = @(Get-ChildItem (Join-Path $v10 ".agents\agents") -Filter *.md)
+Ok ($ag.Count -eq 6 -and @($ag | Where-Object { ([IO.File]::ReadAllText($_.FullName, $enc)) -notmatch "(?m)^subagent: true" }).Count -eq 0) "6 agy subagents with subagent: true"
+$am = [IO.File]::ReadAllText((Join-Path $v10 "AGENTS.md"), $enc)
+Ok ([IO.File]::ReadAllBytes((Join-Path $v10 "AGENTS.md")).Length -le 24000) "AGENTS.md within 24,000 bytes"
+Ok ($am -match "ERC:BEGIN" -and $am -notmatch "(?m)^@\.claude/" -and $am -match "\.agents/scripts/wiki_lint\.py" -and $am -notmatch "Skill 工具") "AGENTS.md self-contained, paths and wording rewritten"
+Ok (-not (@(Get-ChildItem (Join-Path $v10 ".agents\skills") -Recurse -Filter *.md | Where-Object { ([IO.File]::ReadAllText($_.FullName, $enc)) -match "\.claude/" }).Count)) "no .claude/ paths left in .agents skills"
+$hj = [IO.File]::ReadAllText((Join-Path $v10 ".agents\hooks.json"), $enc) | ConvertFrom-Json
+Ok ($null -ne $hj.'economics-research-crew'.PreToolUse -and $null -ne $hj.'economics-research-crew'.PreInvocation) "agy hooks.json has our key with PreToolUse + PreInvocation"
+& $py -X utf8 (Join-Path $v10 ".agents\scripts\wiki_lint.py") lint --vault $v10 *> $null
+Ok ($LASTEXITCODE -eq 0) "generated wiki_lint runs on a fresh vault (and skips .agents/)"
+$before10 = Snapshot $v10
+Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform re-install exit 0"
+Ok ((($before10 -join "`n") -eq ((Snapshot $v10) -join "`n"))) "no file changed on all-platform re-install"
+
+# existing AGENTS.md / hooks.json are preserved
+$v10b = New-Vault
+New-Item -ItemType Directory (Join-Path $v10b ".agents") | Out-Null
+[IO.File]::WriteAllText((Join-Path $v10b "AGENTS.md"), "# 我的规则`n保留这一行`n", $enc)
+[IO.File]::WriteAllText((Join-Path $v10b ".agents\hooks.json"), '{"mine":{"Stop":[{"command":"echo hi"}]}}', $enc)
+Ok ((Run-Install $v10b @("-Platform","agy","-WithHooks")) -eq 0) "agy install over existing files exit 0"
+$am2 = [IO.File]::ReadAllText((Join-Path $v10b "AGENTS.md"), $enc)
+Ok ($am2.StartsWith("# 我的规则`n保留这一行") -and $am2 -match "ERC:BEGIN") "existing AGENTS.md kept, block appended"
+$hj2 = [IO.File]::ReadAllText((Join-Path $v10b ".agents\hooks.json"), $enc) | ConvertFrom-Json
+Ok ($null -ne $hj2.mine -and $null -ne $hj2.'economics-research-crew') "existing hooks.json key kept, ours added"
+Ok (-not (Test-Path (Join-Path $v10b "CLAUDE.md")) -and -not (Test-Path (Join-Path $v10b ".claude"))) "agy-only install leaves no Claude files"
+Ok (@(Get-ChildItem (Join-Path $v10b "_erc-backups") -Recurse -File -Filter AGENTS.md).Count -eq 1) "existing AGENTS.md backed up"
+# -Update with a stale block -> AGENTS.md.new, original untouched
+[IO.File]::WriteAllText((Join-Path $v10b "AGENTS.md"), $am2.Replace("## 路由规则", "## 路由规则（旧）"), $enc)
+$shaOld = Get-Sha (Join-Path $v10b "AGENTS.md")
+Ok ((Run-Install $v10b @("-Platform","agy","-Update")) -eq 0) "agy -Update exit 0"
+Ok ((Get-Sha (Join-Path $v10b "AGENTS.md")) -eq $shaOld -and (Test-Path (Join-Path $v10b "AGENTS.md.new"))) "stale block -> AGENTS.md.new, original untouched"
+Ok (([IO.File]::ReadAllText((Join-Path $v10b "AGENTS.md.new"), $enc)).StartsWith("# 我的规则")) "AGENTS.md.new keeps user content"
+
+# Codex-only: shared files, no agy hooks
+$v10c = New-Vault
+Ok ((Run-Install $v10c @("-Platform","codex","-WithHooks")) -eq 0) "codex install exit 0"
+Ok ((Run-Check $v10c) -eq 0) "checker passes for codex"
+Ok ((Test-Path (Join-Path $v10c "AGENTS.md")) -and -not (Test-Path (Join-Path $v10c ".agents\hooks.json")) -and -not (Test-Path (Join-Path $v10c ".agents\hooks"))) "codex: AGENTS.md, no agy hooks"
+
+# agy hook input shapes
+function AgyHook([string]$Script, [string]$Json) {
+    $ErrorActionPreference = "Continue"
+    $out = $Json | & $py -X utf8 (Join-Path $payload ".claude\hooks\$Script") 2>$null
+    return (($out -join " ") + "|rc=$LASTEXITCODE")
+}
+$rawf = Join-Path $v10 "06-Data\raw\p.csv"; [IO.File]::WriteAllText($rawf, "a", $enc)
+$jp = { param($tool,$args2) (@{toolCall=@{name=$tool; args=$args2}; cwd=$v10} | ConvertTo-Json -Depth 5 -Compress) }
+Ok ((AgyHook "protect_raw.py" (& $jp "edit_file" @{Path=$rawf; Target="a"; Replacement="b"})) -match '"decision": "deny".*\|rc=0') "agy edit_file on raw -> deny JSON"
+Ok ((AgyHook "protect_raw.py" (& $jp "write_file" @{Path=$rawf; Content="x"})) -match '"decision": "deny"') "agy write_file overwriting raw -> deny"
+Ok ((AgyHook "protect_raw.py" (& $jp "write_file" @{Path=(Join-Path $v10 "06-Data\raw\new.csv"); Content="x"})) -match '^\{"decision":"ask"\}\|rc=0') "agy write_file creating new raw file -> ask (normal flow)"
+Ok ((AgyHook "protect_raw.py" (& $jp "run_command" @{CommandLine="del 06-Data\raw\p.csv"})) -match '"decision": "deny"') "agy run_command deleting raw -> deny"
+Ok ((AgyHook "protect_raw.py" (& $jp "read_file" @{Path=$rawf})) -match '^\{"decision":"ask"\}') "agy read_file -> ask (never allow)"
+Ok ((AgyHook "protect_raw.py" '{"toolCall":broken') -match '^\{"decision":"ask"\}\|rc=0') "agy malformed input -> neutral JSON"
+$pi0 = @{hookEventName="PreInvocation"; invocationNum=0; lastUserInput="帮我梳理税收遵从的国内外文献"} | ConvertTo-Json -Compress
+$pi1 = @{hookEventName="PreInvocation"; invocationNum=1; lastUserInput="帮我梳理税收遵从的国内外文献"} | ConvertTo-Json -Compress
+$pi2 = @{hookEventName="PreInvocation"; invocationNum=0; lastUserInput="固定效应是什么"} | ConvertTo-Json -Compress
+Ok ((AgyHook "routing_hint.py" $pi0) -match 'injectSteps.*literature-review') "agy PreInvocation first call -> injected hint"
+Ok ((AgyHook "routing_hint.py" $pi1) -match '^\{\}\|rc=0') "agy later invocation in same turn -> {}"
+Ok ((AgyHook "routing_hint.py" $pi2) -match '^\{\}\|rc=0') "agy conceptual question -> {}"
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

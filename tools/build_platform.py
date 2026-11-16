@@ -1,0 +1,223 @@
+#!/usr/bin/env python3
+"""Generate Antigravity (agy) / Codex CLI files from the canonical Claude payload.
+
+payload/.claude/ stays the single source. This script writes a staging tree that
+the installer then copies into the vault without overwriting:
+
+  stage/.agents/skills/<name>/...   (agy + Codex)  skills, script paths rewritten
+  stage/.agents/scripts/...         (agy + Codex)  wiki_lint.py etc.
+  stage/.agents/agents/<name>.md    (agy + Codex)  agy subagent format; Codex reads them as role files
+  stage/AGENTS.erc.md               (agy + Codex)  self-contained rules block for root AGENTS.md
+  stage/.agents/hooks/*.py, routing-triggers.json, hooks.erc.json   (agy only)
+
+Usage:
+  build_platform.py build <payload_dir> <stage_dir> --platforms agy,codex
+  build_platform.py merge-agents-md <vault_AGENTS.md> <block_file> [--update]
+  build_platform.py merge-agy-hooks <vault_hooks.json> <snippet.json>
+"""
+import json
+import os
+import re
+import shutil
+import sys
+
+BEGIN = "<!-- ERC:BEGIN Economics Research Crew (generated; edit payload, not this block) -->"
+END = "<!-- ERC:END -->"
+HOOK_KEY = "economics-research-crew"
+AGENTS_MD_LIMIT = 24000  # agy truncates rule files above 24,000 bytes
+
+# Claude tool grants -> agy native tool names (from agy's built-in migrate-agent-settings skill;
+# write_file / edit_file / read_file / run_command confirmed by a live PreToolUse probe)
+TOOL_MAP = {
+    "Read": ["read_file"], "Glob": ["read_file"], "Grep": ["read_file"],
+    "Edit": ["edit_file"], "MultiEdit": ["edit_file"], "Write": ["write_file"],
+    "Bash": ["run_command", "manage_task"], "WebSearch": ["search_web"], "WebFetch": ["search_web"],
+}
+
+TEXT_REWRITES = [
+    (".claude/scripts/", ".agents/scripts/"),
+]
+
+RULES_REWRITES = [
+    ("本目录同时是 Obsidian Vault 与 Claude Code 项目根目录。",
+     "本目录同时是 Obsidian Vault 与 AI 编码助手（Claude Code / Antigravity / Codex）的项目根目录。"),
+    ("**先用 Skill 工具调用该 Skill**", "**先调用（激活）该 Skill**"),
+    ("Claude 的职责", "AI 助手的职责"),
+    ("详细研究规则见下方 import 的 `.claude/ECONOMICS-RESEARCH.md`", "详细研究规则见本文件后半部分"),
+    ("不要在 `.claude`、`_vendor`", "不要在 `.claude`、`.agents`、`_vendor`"),
+]
+
+PLATFORM_NOTE = """## 平台说明（Antigravity / Codex）
+- 本节由 Economics Research Crew 安装器生成，与 Claude Code 的 `CLAUDE.md` 规则一致。
+- Skills 位于 `.agents/skills/<名称>/SKILL.md`；文中的 `/名称`（如 `/literature-review`）指同名 Skill，按路由规则激活后照其步骤执行。
+- Agent 说明位于 `.agents/agents/<名称>.md`。当前工具支持子 Agent 时按 Skill 要求派出；不支持时，读该文件并在主会话按其职责完成，独立审查须只依据产物并说明独立性降低。
+- 确定性脚本在 `.agents/scripts/`（如 `python .agents/scripts/wiki_lint.py lint --vault .`）。
+- 原始材料保护：Antigravity 由 `.agents/hooks.json` 的 hook 拦截；Codex 无此 hook，必须自觉遵守“`06-Data/raw` 与 `03-Literature/_sources` 只读”的规则。
+"""
+
+
+def rd(path):
+    with open(path, "rb") as fh:
+        return fh.read().decode("utf-8-sig").replace("\r\n", "\n")
+
+
+def wr(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as fh:
+        fh.write(text.encode("utf-8"))
+
+
+def rewrite(text, pairs):
+    for old, new in pairs:
+        text = text.replace(old, new)
+    return text
+
+
+def split_frontmatter(text):
+    m = re.match(r"---\n(.*?)\n---\n?", text, re.S)
+    if not m:
+        return None, text
+    return m.group(1), text[m.end():]
+
+
+def fm_value(fm, key):
+    m = re.search(r"^%s:\s*(.*)$" % re.escape(key), fm, re.M)
+    return m.group(1).strip() if m else ""
+
+
+def convert_agent(text, fallback_name):
+    fm, body = split_frontmatter(text)
+    fm = fm or ""
+    name = fm_value(fm, "name").strip("\"'") or fallback_name
+    desc = fm_value(fm, "description") or '"%s"' % name
+    grants = [g.strip() for g in fm_value(fm, "tools").split(",") if g.strip()]
+    if grants:
+        tools = []
+        for g in grants:
+            for t in TOOL_MAP.get(g, []):
+                if t not in tools:
+                    tools.append(t)
+    else:
+        tools = ["read_file", "edit_file", "write_file", "run_command", "manage_task", "search_web"]
+    head = "---\nname: %s\ndescription: %s\nsubagent: true\nmainAgent: false\ntools: [%s]\n---\n" % (
+        name, desc, ", ".join(tools))
+    return head + rewrite(body, TEXT_REWRITES)
+
+
+def build_rules_block(payload):
+    tpl = rd(os.path.join(payload, "CLAUDE.template.md"))
+    rules = rd(os.path.join(payload, ".claude", "ECONOMICS-RESEARCH.md"))
+    tpl = "\n".join(l for l in tpl.split("\n") if l.strip() != "@.claude/ECONOMICS-RESEARCH.md").rstrip()
+    body = rewrite(tpl, RULES_REWRITES) + "\n\n" + PLATFORM_NOTE + "\n" + rules.rstrip() + "\n"
+    body = rewrite(body, TEXT_REWRITES)
+    return BEGIN + "\n" + body + END + "\n"
+
+
+def build(payload, stage, platforms):
+    src = os.path.join(payload, ".claude")
+    agents_root = os.path.join(stage, ".agents")
+    # skills (shared by agy and Codex)
+    sk_src = os.path.join(src, "skills")
+    for name in sorted(os.listdir(sk_src)):
+        d = os.path.join(sk_src, name)
+        if not os.path.isdir(d):
+            continue
+        for root, _, files in os.walk(d):
+            for f in files:
+                s = os.path.join(root, f)
+                t = os.path.join(agents_root, "skills", os.path.relpath(s, sk_src))
+                if f.endswith(".md"):
+                    wr(t, rewrite(rd(s), TEXT_REWRITES))
+                else:
+                    os.makedirs(os.path.dirname(t), exist_ok=True)
+                    shutil.copyfile(s, t)
+    # scripts
+    sc_src = os.path.join(src, "scripts")
+    if os.path.isdir(sc_src):
+        for f in os.listdir(sc_src):
+            if f.endswith(".py"):
+                os.makedirs(os.path.join(agents_root, "scripts"), exist_ok=True)
+                shutil.copyfile(os.path.join(sc_src, f), os.path.join(agents_root, "scripts", f))
+    # agents
+    ag_src = os.path.join(src, "agents")
+    for f in sorted(os.listdir(ag_src)):
+        if f.endswith(".md"):
+            wr(os.path.join(agents_root, "agents", f), convert_agent(rd(os.path.join(ag_src, f)), f[:-3]))
+    # rules block
+    block = build_rules_block(payload)
+    size = len(block.encode("utf-8"))
+    if size > AGENTS_MD_LIMIT:
+        sys.exit("AGENTS block is %d bytes, above agy's %d-byte rule-file limit" % (size, AGENTS_MD_LIMIT))
+    wr(os.path.join(stage, "AGENTS.erc.md"), block)
+    # agy hooks
+    if "agy" in platforms:
+        for f in ("protect_raw.py", "routing_hint.py"):
+            os.makedirs(os.path.join(agents_root, "hooks"), exist_ok=True)
+            shutil.copyfile(os.path.join(src, "hooks", f), os.path.join(agents_root, "hooks", f))
+        shutil.copyfile(os.path.join(src, "routing-triggers.json"), os.path.join(agents_root, "routing-triggers.json"))
+        snippet = {HOOK_KEY: {
+            "PreToolUse": [{"matcher": "*", "hooks": [
+                {"type": "command", "command": "python hooks/protect_raw.py", "timeout": 10}]}],
+            "PreInvocation": [{"type": "command", "command": "python hooks/routing_hint.py", "timeout": 10}],
+        }}
+        wr(os.path.join(stage, "hooks.erc.json"), json.dumps(snippet, ensure_ascii=False, indent=2) + "\n")
+    print("built %s (AGENTS block %d bytes)" % (",".join(sorted(platforms)), size))
+
+
+def merge_agents_md(target, block_file, update):
+    """Create AGENTS.md, or append the marked block; never overwrite user content.
+    With --update and a stale block, write AGENTS.md.new (block replaced) for manual merge."""
+    block = rd(block_file)
+    if not os.path.exists(target):
+        wr(target, block)
+        print("created")
+        return
+    cur = rd(target)
+    if BEGIN not in cur:
+        wr(target, cur.rstrip() + "\n\n" + block)
+        print("appended")
+        return
+    i, j = cur.index(BEGIN), cur.find(END)
+    if j < 0:
+        sys.exit("AGENTS.md has the ERC begin marker but no end marker; fix it by hand")
+    old = cur[i:j + len(END)] + "\n"
+    if old == block:
+        print("unchanged")
+    elif update:
+        wr(target + ".new", cur[:i] + block + cur[j + len(END):].lstrip("\n"))
+        print("pending")
+    else:
+        print("stale")
+
+
+def merge_agy_hooks(target, snippet_file):
+    """Set our named hook key in .agents/hooks.json; leave every other key untouched."""
+    snippet = json.loads(rd(snippet_file))
+    data = {}
+    if os.path.exists(target):
+        data = json.loads(rd(target))
+        if not isinstance(data, dict):
+            sys.exit("hooks.json is not a JSON object; not modified")
+    data.update(snippet)
+    tmp = target + ".tmp"
+    wr(tmp, json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+    os.replace(tmp, target)
+    print("merged")
+
+
+def main(argv):
+    if len(argv) >= 3 and argv[0] == "build":
+        plats = {"agy", "codex"}
+        if "--platforms" in argv:
+            plats = set(argv[argv.index("--platforms") + 1].split(","))
+        build(argv[1], argv[2], plats)
+    elif len(argv) >= 3 and argv[0] == "merge-agents-md":
+        merge_agents_md(argv[1], argv[2], "--update" in argv)
+    elif len(argv) == 3 and argv[0] == "merge-agy-hooks":
+        merge_agy_hooks(argv[1], argv[2])
+    else:
+        sys.exit(__doc__)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

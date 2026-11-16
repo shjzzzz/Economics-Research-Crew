@@ -137,6 +137,14 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 
 改完后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。
 
+## 9b. 在 Antigravity（agy）或 Codex CLI 中使用
+- 安装：`-Platform auto` 会自动为本机已有的 CLI 生成文件；也可用 `-Platform agy` / `codex` / `all` 指定。
+- 规则在研究库根目录 `AGENTS.md` 的 `ERC:BEGIN … ERC:END` 区块里，内容与 `CLAUDE.md` 一致；Skills 在 `.agents/skills/`，Agent 说明在 `.agents/agents/`，脚本在 `.agents/scripts/`。
+- 用法相同：直接用自然语言提问，或点名 Skill（如“用 literature-review 梳理……”）。agy 装了 `-WithHooks` 时，路由提示会在每轮第一次调用模型前注入。
+- agy 的原始材料保护 hook 在不拦截时返回 `ask`（沿用 agy 正常审批流程），不会自动批准任何操作。
+- Codex：未在本机运行测试；没有 hook，`06-Data/raw` 与 `03-Literature/_sources` 的只读规则只靠 `AGENTS.md` 文本约束。若 Codex 不支持子 Agent，Skill 会在主会话里按 `.agents/agents/<名称>.md` 的职责完成。
+- 修改 Skill 或规则时改 `payload/.claude/` 下的源文件，再用 `-Update` 重新生成；不要直接改 `.agents/` 或 `AGENTS.md` 区块。
+
 ## 10. 常见问题
 - **`/agents` 看不到 Agent**：确认在 Vault 根目录启动 `claude`，且 `.claude/agents/` 下有文件；改动后重启会话。
 - **安装脚本提示“跳过(已存在)”**：正常，说明保护了你已有的文件。想获取新版内容，用 `-Update`：已存在且有差异的文件会生成 `<文件>.new`（如 `SKILL.md.new`，不会被当作 Skill/Agent 加载），原文件不动，你人工比对合并。
