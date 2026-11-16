@@ -12,6 +12,8 @@ Usage:
                                  [--only id1,id2] [--max-turns 4] [--out DIR]
 
 Each case runs in a fresh headless session, sequentially (no concurrency).
+Web tools are disabled (routing is decided before any research); each case is
+killed with its whole process tree after --timeout seconds.
 PASS when the first routing action (Skill or subagent) is in `expect`;
 "direct" means no Skill/subagent was used.
 """
@@ -40,6 +42,17 @@ if d.get("tool_name") in ("Task", "Agent"):
     sys.exit(2)
 sys.exit(0)
 '''
+
+
+def kill_tree(pid):
+    """Kill a process and all its children (claude spawns helpers; plain kill leaves them running)."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True)
+    else:
+        try:
+            os.killpg(os.getpgid(pid), 9)
+        except Exception:
+            pass
 
 
 def routes_from_log(path):
@@ -71,7 +84,7 @@ def main():
     ap.add_argument("--cases", default=str(HERE / "routing_cases.json"))
     ap.add_argument("--only", default="")
     ap.add_argument("--max-turns", type=int, default=4)
-    ap.add_argument("--timeout", type=int, default=420)
+    ap.add_argument("--timeout", type=int, default=240)
     ap.add_argument("--out", default="")
     a = ap.parse_args()
 
@@ -80,7 +93,7 @@ def main():
     local = claude_dir / "settings.local.json"
     if not (claude_dir / "ECONOMICS-RESEARCH.md").exists():
         sys.exit("vault does not look like an installed Crew vault: " + str(vault))
-    if local.exists():
+    if local.exists() and "routing_logger" not in local.read_text(encoding="utf-8", errors="replace"):
         sys.exit("refusing: %s already exists (use a throwaway vault)" % local)
     logger = claude_dir / "routing_logger.py"
     logger.write_text(LOGGER, encoding="utf-8")
@@ -113,13 +126,17 @@ def run_cases(a, vault):
             log.unlink()
         env = dict(os.environ, ERC_ROUTING_LOG=str(log))
         t0 = time.time()
+        cmd = [claude, "-p", c["prompt"], "--model", a.model, "--max-turns", str(a.max_turns),
+               "--output-format", "json", "--disallowedTools", "WebSearch,WebFetch"]
+        proc = subprocess.Popen(cmd, cwd=str(vault), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                encoding="utf-8", errors="replace")
+        timed_out = False
         try:
-            p = subprocess.run([claude, "-p", c["prompt"], "--model", a.model, "--max-turns", str(a.max_turns),
-                                "--output-format", "json"], cwd=str(vault), env=env, capture_output=True,
-                               timeout=a.timeout, encoding="utf-8", errors="replace")
-            raw = p.stdout
+            raw, _ = proc.communicate(timeout=a.timeout)
         except subprocess.TimeoutExpired:
-            raw = ""
+            timed_out = True
+            kill_tree(proc.pid)
+            raw, _ = proc.communicate()
         answer = ""
         try:
             data = json.loads(raw)
@@ -140,6 +157,8 @@ def run_cases(a, vault):
             if bad:
                 ok = False
                 notes.append("write to forbidden path: %s" % bad[:2])
+        if timed_out:
+            notes.append("timed out after %ds (process tree killed)" % a.timeout)
         if "max_parallel_agents" in c:
             n_agents = sum(1 for r in routes if r.startswith("agent:"))
             if n_agents > c["max_parallel_agents"]:

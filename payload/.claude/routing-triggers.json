@@ -1,0 +1,150 @@
+{
+  "_comment": "Intent -> project Skill trigger table used by hooks/routing_hint.py. Ordered by priority: the first matching entry is the primary route. Patterns are Python regexes, matched case-insensitively against the user's prompt.",
+  "routes": [
+    {
+      "skill": "research-pipeline",
+      "patterns": [
+        "完整(地)?(做|开展|推进)",
+        "推进(这个|我的|一个)?研究",
+        "规划并推进",
+        "继续上次",
+        "全流程",
+        "整个研究项目",
+        "上次的研究",
+        "接着做",
+        "做到哪"
+      ]
+    },
+    {
+      "skill": "ingest-source",
+      "patterns": [
+        "摄入",
+        "入库",
+        "加入知识库",
+        "_sources"
+      ]
+    },
+    {
+      "skill": "query-wiki",
+      "patterns": [
+        "知识库里",
+        "库里(有|关于|的)",
+        "根据知识库",
+        "我们已有的文献"
+      ]
+    },
+    {
+      "skill": "wiki-lint",
+      "patterns": [
+        "体检",
+        "健康状况",
+        "断链",
+        "孤立页",
+        "wiki.?lint"
+      ]
+    },
+    {
+      "skill": "academic-review",
+      "patterns": [
+        "审稿",
+        "挑刺",
+        "匿名审",
+        "审查(这个|我的|一下)?(研究)?(设计|论文|稿件|草稿)",
+        "referee",
+        "审(一下|阅|查一下)"
+      ]
+    },
+    {
+      "skill": "research-question",
+      "patterns": [
+        "选题",
+        "研究问题",
+        "收敛成",
+        "可检验",
+        "estimand",
+        "定题"
+      ]
+    },
+    {
+      "skill": "causal-inference-audit",
+      "patterns": [
+        "识别(策略|是否|成立)?",
+        "因果",
+        "\\bDID\\b",
+        "双重差分",
+        "事件研究",
+        "工具变量",
+        "\\bIV\\b",
+        "断点回归",
+        "\\bRDD\\b",
+        "平行趋势",
+        "内生性",
+        "安慰剂"
+      ]
+    },
+    {
+      "skill": "econometric-analysis",
+      "patterns": [
+        "清洗",
+        "回归",
+        "面板数据",
+        "变量构造",
+        "描述统计",
+        "复现",
+        "代码审计",
+        "\\bstata\\b",
+        "异质性分析"
+      ]
+    },
+    {
+      "skill": "theory-modeling",
+      "patterns": [
+        "理论模型",
+        "建模",
+        "建立.{0,12}模型",
+        "均衡",
+        "比较静态",
+        "博弈",
+        "委托代理",
+        "数学推导"
+      ]
+    },
+    {
+      "skill": "literature-review",
+      "patterns": [
+        "文献综述",
+        "梳理.{0,15}文献",
+        "研究现状",
+        "研究缺口",
+        "文献矩阵",
+        "找文献",
+        "literature review",
+        "(相关|有哪些|国内外|已有).{0,6}文献",
+        "文献(有哪些|回顾|梳理)"
+      ]
+    },
+    {
+      "skill": "tax-policy-analysis",
+      "patterns": [
+        "个人所得税",
+        "个税",
+        "增值税",
+        "企业所得税",
+        "税法",
+        "税目",
+        "征管",
+        "税收政策",
+        "税负归宿",
+        "劳务报酬",
+        "经营所得",
+        "核定征收",
+        "税收遵从",
+        "代扣代缴",
+        "扣缴义务",
+        "纳税义务",
+        "税收(法律|法规)",
+        "法律依据"
+      ]
+    }
+  ]
+}

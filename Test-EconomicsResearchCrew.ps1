@@ -33,7 +33,7 @@ foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Pat
 $sj = Join-Path $VaultPath ".claude\settings.json"
 if (Test-Path $sj) {
     $st = [IO.File]::ReadAllText($sj)
-    foreach ($h in "protect_raw.py","validate_frontmatter.py") {
+    foreach ($h in "protect_raw.py","validate_frontmatter.py","routing_hint.py") {
         if ($st -match [regex]::Escape($h) -and -not (Test-Path (Join-Path $VaultPath ".claude\hooks\$h"))) { $errors += "settings.json 引用了 hook 但文件缺失: $h" }
     }
 }

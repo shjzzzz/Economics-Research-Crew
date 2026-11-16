@@ -11,6 +11,8 @@ $checker = Join-Path $pkg "Test-EconomicsResearchCrew.ps1"
 $payload = Join-Path $pkg "payload"
 $py = (Get-Command python -ErrorAction Stop).Source
 $enc = [System.Text.UTF8Encoding]::new($false)
+# Windows PowerShell 5.1 pipes to native programs in ASCII by default; force UTF-8 so Chinese test input survives
+$OutputEncoding = $enc
 $shell = (Get-Process -Id $PID).Path
 $script:pass = 0; $script:fail = 0
 
@@ -173,6 +175,20 @@ Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v; tool_input=@{fi
 Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=$tab}}) -eq 2) "tab in frontmatter reported"
 
 Remove-Item -LiteralPath $good,$bad,$tab -Force
+
+# --- 8b. routing_hint hook (offline) ----------------------------------------
+Write-Host "[8b] routing_hint hook"
+function Hint([string]$Prompt) {
+    $ErrorActionPreference = "Continue"
+    $json = @{prompt=$Prompt} | ConvertTo-Json -Compress
+    $out = $json | & $py -X utf8 (Join-Path $payload ".claude\hooks\routing_hint.py") 2>$null
+    return ($out -join " ")
+}
+Ok ((Hint "帮我梳理税收遵从的国内外文献，找出研究缺口") -match "/literature-review") "literature intent -> /literature-review"
+Ok ((Hint "我的 DID 平行趋势成立吗") -match "/causal-inference-audit") "DID intent -> /causal-inference-audit"
+Ok ((Hint "我想完整做一个研究并推进") -match "/research-pipeline") "project intent -> /research-pipeline"
+Ok ((Hint "固定效应和随机效应的核心区别是什么") -eq "") "conceptual question -> no hint"
+Ok ((Hint "/literature-review 税收遵从") -eq "") "explicit slash command -> no hint"
 
 # --- 9. wiki_lint ---------------------------------------------------------------
 Write-Host "[9] wiki_lint"
