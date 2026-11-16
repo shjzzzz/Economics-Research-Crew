@@ -37,8 +37,28 @@
 7. 含个人信息或受限数据的内容不得发送到外部服务。
 8. 先读 `Meta/vault-map.md` 再假定路径；不要在 `.claude`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中检索税法笔记。
 
-## 常用命令
-`/research-question` `/literature-review` `/theory-modeling` `/tax-policy-analysis` `/causal-inference-audit` `/econometric-analysis` `/academic-review`
+## Skills（用 `/名称` 触发）
+| 命令 | 用途 | 主要产出 |
+|---|---|---|
+| `/research-question` | 把主题收敛为可检验的研究问题与 estimand | ≤3 个候选问题、可行性评估、推荐一个 |
+| `/literature-review` | 有来源的文献检索与综述 | 检索记录、文献矩阵、研究缺口、未核实清单 |
+| `/theory-modeling` | 构建或审查理论模型与机制 | 设定、假设、逐步推导、比较静态、可检验推论 |
+| `/tax-policy-analysis` | 税制、征管、遵从、归宿与中国税法制度 | 法源与有效性、机制、效率与分配、待官方确认项 |
+| `/causal-inference-audit` | 审查 DID/IV/RDD 等识别策略 | estimand、假设、威胁、检验、可用的因果措辞 |
+| `/econometric-analysis` | 数据审计、实现与复现计量分析 | 分析计划、代码、样本核算、日志 |
+| `/academic-review` | 对稿件或设计做对抗式审稿 | Fatal / Major / Minor 分级意见 |
+
+## Agents（Claude 按分派规则委派，也可点名调用）
+| Agent | 职责 | 工具 |
+|---|---|---|
+| `literature-agent` | 检索、抽取、比较、综合文献 | Read, Grep, Glob, WebSearch, WebFetch |
+| `theory-agent` | 模型设定与推导、比较静态 | Read, Grep, Glob, Write, Edit |
+| `tax-policy-agent` | 税法、征管、遵从与归宿分析 | Read, Grep, Glob, WebSearch, WebFetch |
+| `econometrics-agent` | 数据审计、估计实现与输出核对 | Read, Grep, Glob, Bash, Write, Edit |
+| `causal-inference-agent` | 识别假设、威胁与稳健性设计 | Read, Grep, Glob, WebSearch, WebFetch, Write |
+| `academic-reviewer` | 独立审查，不改稿 | Read, Grep, Glob, WebSearch, WebFetch |
+
+仅在任务确实专业化、可并行或需要独立审查时委派；简单问题直接处理。启动超过 3 个并发 Agent 前先说明数量。
 
 ## 汇报格式
 重要改动或结论按：改了什么 / 为什么 / 如何验证 三段说明；无法验证的部分明确写出。
