@@ -85,7 +85,11 @@ $rootClaude = Join-Path $VaultPath "CLAUDE.md"
 $enc = [System.Text.UTF8Encoding]::new($false)
 if (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
-        [IO.File]::WriteAllText($rootClaude, "# TaxWiki Research Workspace`r`n`r`n" + ($importLines -join "`r`n") + "`r`n", $enc)
+        $tpl = Join-Path $payload "CLAUDE.template.md"
+        $body = if (Test-Path $tpl) { (Get-Content -LiteralPath $tpl -Raw).TrimEnd() } else { "# TaxWiki Research Workspace" }
+        $extra = @($importLines | Where-Object { $body -notmatch [regex]::Escape($_) })
+        if ($extra.Count -gt 0) { $body += "`r`n`r`n" + ($extra -join "`r`n") }
+        [IO.File]::WriteAllText($rootClaude, $body + "`r`n", $enc)
     }
 } else {
     $existing = Get-Content -LiteralPath $rootClaude -Raw
