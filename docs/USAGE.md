@@ -5,9 +5,10 @@
 ## 1. 它是什么
 一组放进 Claude Code 项目的配置：
 - **6 个 Subagent**（`.claude/agents/`）：各有职责与证据标准的专业角色。
-- **7 个 Skill**（`.claude/skills/`）：固定流程，用 `/名称` 触发。
+- **10 个 Skill**（`.claude/skills/`）：固定流程，用 `/名称` 触发。
 - **项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`）：每次会话自动加载。
-- **规范与模板**（`Meta/`、`Templates/`）：研究标准、来源登记、研究日志、文献/数据/分析模板。
+- **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、研究日志、待审队列、来源登记、研究标准，以及文献/数据/分析模板。
+- **脚本与 hooks**（`.claude/scripts/`、`.claude/hooks/`）：知识库体检脚本；可选的原始数据保护与 frontmatter 校验。
 
 它不包含计量软件，也不会自动跑回归；它约束 Claude 如何组织、检查和记录研究工作。
 
@@ -21,7 +22,7 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 6 个 Agent，`/skills` 确认 7 个 Skill。
+再用 `/agents` 确认 6 个 Agent，`/skills` 确认 10 个 Skill。
 
 ## 3. Skill 速查
 | 命令 | 何时用 | 产出 |
@@ -33,6 +34,9 @@ claude
 | `/causal-inference-audit <设计>` | 设计 DID/IV/RDD 前后审查识别 | estimand、假设、威胁、检验、可用的因果措辞 |
 | `/econometric-analysis <任务>` | 数据审计、实现与复现回归 | 分析计划、代码、样本核算、日志 |
 | `/academic-review <稿件/设计>` | 投稿或汇报前挑刺 | Fatal / Major / Minor 分级意见 |
+| `/ingest-source <文件>` | 把 `03-Literature/_sources/` 里的一个来源摄入 wiki | 先输出分析并等你确认；确认后写文献笔记、更新 index/日志/登记 |
+| `/query-wiki <问题>` | 基于已积累的 wiki 回答 | 带引用的回答，区分依据与推断，可回存为笔记 |
+| `/wiki-lint` | 知识库体检 | 断链/孤立页/溯源/index 覆盖 + 矛盾与过时检查报告 |
 
 例：
 ```text
@@ -67,17 +71,38 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 
 不要跳过第 5 步：能跑出回归不等于识别成立。
 
-## 6. 它会遵守的规则
-- `06-Data/raw` 只读；衍生数据只写 `06-Data/processed`。
+## 6. 知识库维护（可积累的 wiki）
+思路借鉴 llm_wiki：不是每次从原始文献重新检索，而是让知识库随摄入和提问不断积累。三层：**原始来源**（`03-Literature/_sources/`，不可变）→ **wiki 页面**（文献笔记、理论、方法、综合，由 Claude 与你共同维护）→ **规则**（`CLAUDE.md`）。
+
+- **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界。Claude 每次摄入和回答前都会读它；没填它会提醒你，不会替你编。
+- **摄入**：把 PDF/剪藏放进 `03-Literature/_sources/`，运行 `/ingest-source 路径`。它先算 SHA256 去重，再输出分析（抽取、与已有页面的矛盾、拟改动清单、未核实项），**等你确认**后才写页面、更新 `Meta/index.md`、追加日志、登记来源。
+- **提问**：`/query-wiki 问题`，先读 index 再读页面，回答区分“库内依据”和“推断”，并询问是否回存为 `08-Research-Notes/` 笔记。
+- **体检**：`/wiki-lint`，先跑确定性脚本再做语义检查；默认只报告不修改。也可直接运行 `python .claude/scripts/wiki_lint.py lint --vault .`。扫描范围只含新增研究目录，**不扫描原有 TaxWiki 税法笔记**。
+- **日志**：`Meta/research-log.md` 条目以 `## [日期] 类型 | 标题` 开头，可用 `grep "^## \[" Meta/research-log.md | tail` 查看近期记录。
+- **矛盾**：来源之间的冲突并列记录并进入 `Meta/review-queue.md`，由你裁决。
+- 页面 frontmatter 约定：`type`、`sources`、`updated`、`verification`（verified | unverified）。
+
+## 7. Hooks（可选，技术层面的保护）
+安装时加 `-WithHooks`，会把两个 hook 合并进 `.claude/settings.json`（合并前备份；已有设置保留；重复运行不会重复添加；若 settings.json 不是合法 JSON 则拒绝并保持原样）。需要 PATH 中有 `python`。
+
+| Hook | 时机 | 作用 |
+|---|---|---|
+| `protect_raw.py` | PreToolUse | 阻止修改 `06-Data/raw` 与 `03-Literature/_sources` 里**已存在**的文件（Write/Edit/NotebookEdit 精确拦截）；新建文件允许，便于导入新资料 |
+| `validate_frontmatter.py` | PostToolUse | 写入 .md 后检查 frontmatter 是否闭合、有无 Tab，有问题时把提示反馈给 Claude 去修 |
+
+**局限**：对 Bash 只是关键字启发式检查（`rm`/`mv`/`Remove-Item`/重定向/复制到目标等且命令里出现受保护路径），无法覆盖所有 shell 写法；hook 输入异常时放行（fail open）。它们是在提示约束之外多加的一层，不是沙箱，Git 与备份仍然需要。
+
+## 8. 它会遵守的规则
+- `06-Data/raw` 与 `03-Literature/_sources` 只读；衍生数据只写 `06-Data/processed`。
 - 不删除、不移动、不重命名现有 TaxWiki 笔记，除非你明确同意。
 - 不编造文献、DOI、法条、数据或结果；查不到就标“未核实”。
 - 区分相关与因果，先说 estimand 与假设。
 - 税法结论要给文号、日期、生效与废止状态。
 - 涉及个人或受限数据，不外发。
 
-这些是写在指令里的约束，不是技术隔离：模型可能出错，权限提示与 Git 才是实际保险。重要结论请自行核对原始来源。
+这些主要是写在指令里的约束：模型可能出错。装了 hooks 后，原始数据与原始来源另有技术拦截（见第 7 节，有局限）；权限提示与 Git 仍是实际保险。重要结论请自行核对原始来源。
 
-## 7. 自定义
+## 9. 自定义
 - **改角色**：编辑 `.claude/agents/*.md`（`description` 决定何时被自动调用，`tools` 决定权限）。
 - **加 Skill**：新建 `.claude/skills/<name>/SKILL.md`，frontmatter 需有 `name`（与目录同名）和 `description`。
 - **改规则**：编辑 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md`。
@@ -86,9 +111,10 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 
 改完后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。
 
-## 8. 常见问题
+## 10. 常见问题
 - **`/agents` 看不到 Agent**：确认在 Vault 根目录启动 `claude`，且 `.claude/agents/` 下有文件；改动后重启会话。
-- **安装脚本提示“跳过(已存在)”**：正常，说明保护了你已有的文件。
+- **安装脚本提示“跳过(已存在)”**：正常，说明保护了你已有的文件。想获取新版内容，用 `-Update`：已存在且有差异的文件会生成 `<文件>.new`（如 `SKILL.md.new`，不会被当作 Skill/Agent 加载），原文件不动，你人工比对合并。
+- **怎么确认安装器没坏**：运行 `tests/run.ps1`（5.1 与 pwsh 7 各一次），覆盖安装、幂等、保留中文 CLAUDE.md、`-WhatIf`、`-Update`、`-WithHooks`、两个 hook 与 lint。
 - **中文乱码**：用 UTF-8 打开；`.ps1` 已带 BOM，Windows PowerShell 5.1 与 pwsh 7 均可运行。
 - **`-WithUpstream`**：需同时给 `-RepoUrl`；上游构建参数未经本项目验证，运行前请先读其 `launchme.sh`。
 - **卸载**：本项目不提供自动卸载。按 `README` 列出的文件手动删除；安装前的 `CLAUDE.md` 等备份在 `_erc-backups/<时间戳>/`。

@@ -1,0 +1,197 @@
+﻿[CmdletBinding()]
+param()
+# Regression tests for the Economics Research Crew installer, hooks and lint.
+# Run under each host you care about:
+#   powershell -NoProfile -File tests\run.ps1   (Windows PowerShell 5.1)
+#   pwsh -NoProfile -File tests\run.ps1         (PowerShell 7)
+$ErrorActionPreference = "Stop"
+$pkg = Split-Path -Parent $PSScriptRoot
+$installer = Join-Path $pkg "Install-EconomicsResearchCrew.ps1"
+$checker = Join-Path $pkg "Test-EconomicsResearchCrew.ps1"
+$payload = Join-Path $pkg "payload"
+$py = (Get-Command python -ErrorAction Stop).Source
+$enc = [System.Text.UTF8Encoding]::new($false)
+$shell = (Get-Process -Id $PID).Path
+$script:pass = 0; $script:fail = 0
+
+function Get-Sha([string]$Path) {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { $fs = [IO.File]::OpenRead($Path); try { return [BitConverter]::ToString($sha.ComputeHash($fs)).Replace("-","") } finally { $fs.Dispose() } } finally { $sha.Dispose() }
+}
+function Ok([bool]$cond, [string]$name) {
+    if ($cond) { $script:pass++; Write-Host "  PASS $name" -ForegroundColor Green }
+    else { $script:fail++; Write-Host "  FAIL $name" -ForegroundColor Red }
+}
+function New-Vault { $d = Join-Path ([IO.Path]::GetTempPath()) ("erc-test-" + [guid]::NewGuid().ToString("N").Substring(0,8)); New-Item -ItemType Directory $d | Out-Null; $d }
+function Run-Install([string]$Vault, [string[]]$Extra = @()) {
+    $ErrorActionPreference = "Continue"
+    & $shell -NoProfile -File $installer -VaultPath $Vault @Extra *> $null
+    return $LASTEXITCODE
+}
+function Run-Check([string]$Vault) { $ErrorActionPreference = "Continue"; & $shell -NoProfile -File $checker -VaultPath $Vault *> $null; return $LASTEXITCODE }
+function Snapshot([string]$Vault) {
+    Get-ChildItem -LiteralPath $Vault -Recurse -File -Force | Where-Object { $_.FullName -notmatch '_erc-backups' } |
+        Sort-Object FullName | ForEach-Object { $_.FullName.Substring($Vault.Length) + ":" + (Get-Sha $_.FullName) }
+}
+function Hook([string]$Script, [hashtable]$Data) {
+    $ErrorActionPreference = "Continue"
+    $json = $Data | ConvertTo-Json -Depth 5 -Compress
+    $json | & $py -X utf8 (Join-Path $payload ".claude\hooks\$Script") 2>$null
+    return $LASTEXITCODE
+}
+
+Write-Host "Host: $($PSVersionTable.PSVersion)  python: $(& $py --version)"
+
+# --- 1. fresh install -------------------------------------------------------
+Write-Host "[1] fresh install"
+$v = New-Vault
+Ok ((Run-Install $v) -eq 0) "install exit 0"
+Ok ((Run-Check $v) -eq 0) "checker exit 0"
+$skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
+$agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
+Ok ($skillCount -eq 10) "10 skills (got $skillCount)"
+Ok ($agentCount -eq 6) "6 agents (got $agentCount)"
+$tpl = [IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n").TrimEnd()
+$got = [IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n").TrimEnd()
+Ok ($got -eq $tpl) "root CLAUDE.md equals template (UTF-8, no mojibake)"
+Ok (Test-Path (Join-Path $v "03-Literature\_sources")) "_sources dir created"
+
+# --- 2. idempotent ----------------------------------------------------------
+Write-Host "[2] idempotent"
+$before = Snapshot $v
+Ok ((Run-Install $v) -eq 0) "second install exit 0"
+$after = Snapshot $v
+Ok ((($before -join "`n") -eq ($after -join "`n"))) "no file changed on re-install"
+
+# --- 3. existing Chinese CLAUDE.md preserved ---------------------------------
+Write-Host "[3] existing CLAUDE.md preserved"
+$v3 = New-Vault
+$orig = "# 我的 CLAUDE`n中文内容：税收遵从`n"
+[IO.File]::WriteAllText((Join-Path $v3 "CLAUDE.md"), $orig, $enc)
+Ok ((Run-Install $v3) -eq 0) "install exit 0"
+$c = [IO.File]::ReadAllText((Join-Path $v3 "CLAUDE.md"), $enc).Replace("`r`n","`n")
+Ok ($c.StartsWith($orig)) "original Chinese content preserved byte-for-byte"
+Ok (([regex]::Matches($c, [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md"))).Count -eq 1) "import appended once"
+Run-Install $v3 | Out-Null
+$c2 = [IO.File]::ReadAllText((Join-Path $v3 "CLAUDE.md"), $enc).Replace("`r`n","`n")
+Ok ($c2 -eq $c) "re-run does not duplicate import"
+Ok ((Get-ChildItem (Join-Path $v3 "_erc-backups") -Recurse -Filter CLAUDE.md).Count -ge 1) "backup of CLAUDE.md written"
+
+# --- 4. -WhatIf writes nothing ------------------------------------------------
+Write-Host "[4] -WhatIf"
+$v4 = New-Vault
+Ok ((Run-Install $v4 @("-WhatIf")) -eq 0) "WhatIf exit 0"
+Ok ((Get-ChildItem -LiteralPath $v4 -Force).Count -eq 0) "WhatIf left vault empty"
+
+# --- 5. -Update writes .new, never overwrites -------------------------------
+Write-Host "[5] -Update"
+$skill = Join-Path $v ".claude\skills\research-question\SKILL.md"
+[IO.File]::AppendAllText($skill, "`nLOCAL EDIT`n", $enc)
+$edited = (Get-Sha $skill)
+Ok ((Run-Install $v @("-Update")) -eq 0) "update exit 0"
+Ok ((Get-Sha $skill) -eq $edited) "edited file not overwritten"
+Ok (Test-Path "$skill.new") ".new copy created for differing file"
+$newCount = (Get-ChildItem $v -Recurse -Filter *.new -Force).Count
+Ok ($newCount -eq 1) "only the differing file got a .new (got $newCount)"
+
+# --- 6. -WithHooks merge ------------------------------------------------------
+Write-Host "[6] -WithHooks"
+$v6 = New-Vault
+New-Item -ItemType Directory (Join-Path $v6 ".claude") | Out-Null
+$sj = Join-Path $v6 ".claude\settings.json"
+[IO.File]::WriteAllText($sj, '{"permissions":{"allow":["Bash(ls)"]}}', $enc)
+Ok ((Run-Install $v6 @("-WithHooks")) -eq 0) "install -WithHooks exit 0"
+$st = [IO.File]::ReadAllText($sj, $enc) | ConvertFrom-Json
+Ok ($st.permissions.allow[0] -eq "Bash(ls)") "existing permissions preserved"
+Ok ($null -ne $st.hooks.PreToolUse -and $null -ne $st.hooks.PostToolUse) "hooks present"
+$h1 = (Get-Sha $sj)
+Run-Install $v6 @("-WithHooks") | Out-Null
+Ok ((Get-Sha $sj) -eq $h1) "second merge is idempotent"
+Ok ((Run-Check $v6) -eq 0) "checker exit 0 with hooks"
+# without -WithHooks, settings.json is never touched
+$v6b = New-Vault
+New-Item -ItemType Directory (Join-Path $v6b ".claude") | Out-Null
+$sjb = Join-Path $v6b ".claude\settings.json"
+[IO.File]::WriteAllText($sjb, '{"a":1}', $enc)
+Run-Install $v6b | Out-Null
+Ok (([IO.File]::ReadAllText($sjb, $enc)) -eq '{"a":1}') "settings.json untouched without -WithHooks"
+# invalid JSON is refused and left untouched
+$v6c = New-Vault
+New-Item -ItemType Directory (Join-Path $v6c ".claude") | Out-Null
+$sjc = Join-Path $v6c ".claude\settings.json"
+[IO.File]::WriteAllText($sjc, '{not json', $enc)
+$rc = Run-Install $v6c @("-WithHooks")
+Ok ($rc -ne 0 -and ([IO.File]::ReadAllText($sjc, $enc)) -eq '{not json') "invalid settings.json refused, untouched"
+
+# --- 7. protect_raw hook ------------------------------------------------------
+Write-Host "[7] protect_raw hook"
+$rawDir = Join-Path $v "06-Data\raw"
+$existing = Join-Path $rawDir "a.csv"
+[IO.File]::WriteAllText($existing, "x,y`n1,2`n", $enc)
+$proc = Join-Path $v "06-Data\processed\out.csv"
+Ok ((Hook "protect_raw.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=(Join-Path $rawDir "new.csv")}}) -eq 0) "Write NEW raw file allowed"
+Ok ((Hook "protect_raw.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=$existing}}) -eq 2) "Write EXISTING raw file blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Edit"; cwd=$v; tool_input=@{file_path=$existing}}) -eq 2) "Edit raw file blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Edit"; cwd=$v; tool_input=@{file_path="06-Data/raw/a.csv"}}) -eq 2) "Edit via relative path blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path="03-Literature/_sources/p.pdf"}}) -eq 0) "Write NEW source allowed"
+Ok ((Hook "protect_raw.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=$proc}}) -eq 0) "Write processed allowed"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="rm 06-Data/raw/a.csv"}}) -eq 2) "Bash rm raw blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="Remove-Item .\06-Data\raw\a.csv"}}) -eq 2) "PowerShell Remove-Item raw blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="echo x > 06-Data/raw/a.csv"}}) -eq 2) "Bash redirect into raw blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="cp /tmp/x.csv 06-Data/raw/"}}) -eq 2) "Bash cp into raw blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="head -3 06-Data/raw/a.csv"}}) -eq 0) "Bash read of raw allowed"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="cp 06-Data/raw/a.csv 06-Data/processed/a.csv"}}) -eq 0) "Bash copy FROM raw allowed"
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="rm tmp.txt"}}) -eq 0) "unrelated rm allowed"
+"not json" | & $py -X utf8 (Join-Path $payload ".claude\hooks\protect_raw.py") 2>$null
+Ok ($LASTEXITCODE -eq 0) "malformed input fails open"
+
+# --- 8. validate_frontmatter hook ---------------------------------------------
+Write-Host "[8] validate_frontmatter hook"
+$good = Join-Path $v "08-Research-Notes\good.md"
+$bad = Join-Path $v "08-Research-Notes\bad.md"
+$tab = Join-Path $v "08-Research-Notes\tab.md"
+New-Item -ItemType Directory (Split-Path $good) -Force | Out-Null
+[IO.File]::WriteAllText($good, "---`ntype: query`n---`n# ok`n", $enc)
+[IO.File]::WriteAllText($bad, "---`ntype: query`n# no closing`n", $enc)
+[IO.File]::WriteAllText($tab, "---`ntype: query`n`tx: 1`n---`n", $enc)
+Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=$good}}) -eq 0) "valid frontmatter passes"
+Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=$bad}}) -eq 2) "missing closing --- reported"
+Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v; tool_input=@{file_path=$tab}}) -eq 2) "tab in frontmatter reported"
+
+Remove-Item -LiteralPath $good,$bad,$tab -Force
+
+# --- 9. wiki_lint ---------------------------------------------------------------
+Write-Host "[9] wiki_lint"
+$lint = Join-Path $v ".claude\scripts\wiki_lint.py"
+$lit = Join-Path $v "03-Literature"
+[IO.File]::WriteAllText((Join-Path $lit "_sources\a.pdf"), "pdf", $enc)
+[IO.File]::WriteAllText((Join-Path $lit "good.md"), "---`ntype: literature`nsources: [03-Literature/_sources/a.pdf]`nverification: verified`n---`nsee [[other]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $lit "other.md"), "---`ntype: literature`nsources: [https://doi.org/10.1/x]`nverification: unverified`n---`nback to [[good]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $v "Meta\index.md"), "---`ntype: index`n---`n[[good]] [[other]]`n", $enc)
+& $py -X utf8 $lint lint --vault $v *> $null
+Ok ($LASTEXITCODE -eq 0) "clean wiki exit 0"
+[IO.File]::WriteAllText((Join-Path $lit "broken.md"), "---`ntype: literature`nsources: [03-Literature/_sources/missing.pdf]`nverification: verified`n---`n[[nonexistent]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $lit "nofm.md"), "---`ntype: literature`n# no closing`n", $enc)
+$out = (& $py -X utf8 $lint lint --vault $v --json) -join "`n"
+Ok ($LASTEXITCODE -eq 1) "defects give exit 1"
+$j = $out | ConvertFrom-Json
+Ok (@($j.findings | Where-Object { $_.check -eq "link" }).Count -ge 1) "broken wikilink found"
+Ok (@($j.findings | Where-Object { $_.check -eq "sources" -and $_.level -eq "error" }).Count -ge 1) "unresolvable source found"
+Ok (@($j.findings | Where-Object { $_.check -eq "frontmatter" -and $_.level -eq "error" }).Count -ge 1) "unclosed frontmatter found"
+Ok (@($j.findings | Where-Object { $_.check -eq "orphan" }).Count -ge 1) "orphan page found"
+$legacy = Join-Path $v "旧税法笔记.md"
+[IO.File]::WriteAllText($legacy, "[[ghost]] no frontmatter", $enc)
+$out2 = (& $py -X utf8 $lint lint --vault $v --json) -join "`n"
+Ok (-not ($out2 -match "旧税法笔记")) "legacy notes outside scope are not scanned"
+$h = & $py -X utf8 $lint hash (Join-Path $lit "_sources\a.pdf") --vault $v
+Ok ($LASTEXITCODE -eq 0 -and ($h -join " ") -match "sha256: [0-9a-f]{64}") "hash prints sha256 for new source"
+$hex = ((($h -join " ") -replace '.*sha256: ([0-9a-f]{64}).*','$1'))
+Add-Content -LiteralPath (Join-Path $v "Meta\source-registry.md") -Value "| SRC-X | a.pdf | | | | $hex | |" -Encoding UTF8
+& $py -X utf8 $lint hash (Join-Path $lit "_sources\a.pdf") --vault $v *> $null
+Ok ($LASTEXITCODE -eq 10) "registered source detected (exit 10)"
+
+# --- cleanup + summary ----------------------------------------------------------
+foreach ($d in $v,$v3,$v4,$v6,$v6b,$v6c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+Write-Host ""
+Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
+if ($script:fail) { exit 1 }

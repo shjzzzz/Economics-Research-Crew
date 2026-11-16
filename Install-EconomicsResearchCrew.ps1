@@ -2,16 +2,33 @@
 param(
     [string]$VaultPath = "D:\TaxWiki",
     [switch]$WithUpstream,
+    [switch]$WithHooks,
+    [switch]$Update,
     [string]$RepoUrl = ""
 )
 $ErrorActionPreference = "Stop"
 
+function Get-Sha([string]$Path) {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    try { $fs = [IO.File]::OpenRead($Path); try { return [BitConverter]::ToString($sha.ComputeHash($fs)).Replace("-","") } finally { $fs.Dispose() } } finally { $sha.Dispose() }
+}
+$script:Pending = @()
 function Copy-NoOverwrite([string]$Source, [string]$Destination) {
     if (-not (Test-Path $Source)) { return }
     foreach ($f in Get-ChildItem -LiteralPath $Source -Recurse -File -Force) {
         $rel = $f.FullName.Substring($Source.TrimEnd('\').Length).TrimStart('\')
         $dest = Join-Path $Destination $rel
-        if (Test-Path $dest) { Write-Host "  跳过(已存在): $rel" -ForegroundColor Yellow; continue }
+        if (Test-Path $dest) {
+            if ($Update -and ((Get-Sha $f.FullName) -ne (Get-Sha $dest))) {
+                $new = "$dest.new"
+                if ($PSCmdlet.ShouldProcess($new, "写入差异副本")) { Copy-Item -LiteralPath $f.FullName -Destination $new -Force }
+                $script:Pending += "$dest.new"
+                Write-Host "  有差异 -> $rel.new" -ForegroundColor Cyan
+            } elseif (-not $Update) {
+                Write-Host "  跳过(已存在): $rel" -ForegroundColor Yellow
+            }
+            continue
+        }
         if ($PSCmdlet.ShouldProcess($dest, "复制")) {
             New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
             Copy-Item -LiteralPath $f.FullName -Destination $dest
@@ -80,6 +97,18 @@ Copy-NoOverwrite (Join-Path $payload ".claude") $claudeDir
 Copy-NoOverwrite (Join-Path $payload "Meta") (Join-Path $VaultPath "Meta")
 Copy-NoOverwrite (Join-Path $payload "Templates") (Join-Path $VaultPath "Templates")
 
+# 3b. 可选：hooks（修改 settings.json，需 -WithHooks；已在步骤 1 备份）
+if ($WithHooks) {
+    if (-not (Get-Command python -ErrorAction SilentlyContinue)) { throw "-WithHooks 需要 python 在 PATH 中。" }
+    $merge = Join-Path $packageRoot "tools\merge_hooks.py"
+    $snippet = Join-Path $payload ".claude\settings.hooks.json"
+    $settingsFile = Join-Path $claudeDir "settings.json"
+    if ($PSCmdlet.ShouldProcess($settingsFile, "合并 hooks")) {
+        & python -X utf8 $merge $settingsFile $snippet
+        if ($LASTEXITCODE -ne 0) { throw "hooks 合并失败；settings.json 未被改动。" }
+    }
+}
+
 # 4. 根 CLAUDE.md 仅追加缺失的 import
 $rootClaude = Join-Path $VaultPath "CLAUDE.md"
 $enc = [System.Text.UTF8Encoding]::new($false)
@@ -100,10 +129,11 @@ if (-not (Test-Path $rootClaude)) {
 }
 
 # 5. 研究目录（仅新建，不移动现有内容）
-foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","04-Theories","05-Methods",
+foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\_sources","04-Theories","05-Methods",
                "06-Data\raw","06-Data\processed","06-Data\metadata","07-Code\python","07-Code\R","07-Code\stata",
                "08-Research-Notes","09-Writing","10-Archive","MOC") {
     $p = Join-Path $VaultPath $d
     if (-not (Test-Path $p) -and $PSCmdlet.ShouldProcess($p, "创建目录")) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
 }
+if ($script:Pending.Count -gt 0) { Write-Host "以下文件与新版不同，已生成 .new 副本（未覆盖原文件），请人工比对后合并：" -ForegroundColor Cyan; $script:Pending | ForEach-Object { Write-Host "  $_" } }
 Write-Host "完成。备份：$backupDir 。请运行 Test-EconomicsResearchCrew.ps1。" -ForegroundColor Green
