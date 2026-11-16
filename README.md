@@ -18,6 +18,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 脚本只新增文件，已存在的文件一律跳过并列出；改动前备份 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json` 到 `_erc-backups/<时间戳>/`。
 
+详细用法见 [docs/USAGE.md](docs/USAGE.md)。
+
 ## 首次对话
 ```text
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
