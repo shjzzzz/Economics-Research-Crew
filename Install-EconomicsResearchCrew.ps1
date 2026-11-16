@@ -86,13 +86,13 @@ $enc = [System.Text.UTF8Encoding]::new($false)
 if (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
         $tpl = Join-Path $payload "CLAUDE.template.md"
-        $body = if (Test-Path $tpl) { (Get-Content -LiteralPath $tpl -Raw).TrimEnd() } else { "# TaxWiki Research Workspace" }
+        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# TaxWiki Research Workspace" }
         $extra = @($importLines | Where-Object { $body -notmatch [regex]::Escape($_) })
         if ($extra.Count -gt 0) { $body += "`r`n`r`n" + ($extra -join "`r`n") }
         [IO.File]::WriteAllText($rootClaude, $body + "`r`n", $enc)
     }
 } else {
-    $existing = Get-Content -LiteralPath $rootClaude -Raw
+    $existing = [IO.File]::ReadAllText($rootClaude, $enc)
     $missing = @($importLines | Where-Object { $existing -notmatch [regex]::Escape($_) })
     if ($missing.Count -gt 0 -and $PSCmdlet.ShouldProcess($rootClaude, "追加 import")) {
         [IO.File]::WriteAllText($rootClaude, $existing.TrimEnd() + "`r`n`r`n" + ($missing -join "`r`n") + "`r`n", $enc)
