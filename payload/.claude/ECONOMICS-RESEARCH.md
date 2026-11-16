@@ -36,5 +36,13 @@ Do not skip identification design merely because a regression can be run.
 ## Knowledge base
 Read `Meta/vault-map.md` before assuming paths. Existing TaxWiki notes are local resources, not automatically current law. Do not move, rename or mass-rewrite them without approval.
 
+## Wiki maintenance
+- The wiki is a persistent, compounding artifact: raw sources (immutable, `03-Literature/_sources`) -> wiki pages (maintained with the researcher) -> rules (this file and `CLAUDE.md`).
+- Read `Meta/purpose.md` first; if empty, ask the researcher to fill it. Never invent a research direction.
+- Page frontmatter: `type`, `sources`, `updated`, `verification` (verified|unverified). Every claim traces to a source with page/table/section.
+- Ingest is two-step (analyze, researcher approves, then write). After writing: update `Meta/index.md`, append `## [YYYY-MM-DD] <type> | <title>` to `Meta/research-log.md`, register the source with its SHA256 in `Meta/source-registry.md`.
+- Contradictions between sources are shown side by side and logged in `Meta/review-queue.md`; do not resolve them silently.
+- Run `python .claude/scripts/wiki_lint.py lint --vault .` for deterministic checks; lint scope excludes legacy TaxWiki notes.
+
 ## Output
 Question/scope; evidence/sources; method/assumptions; results/derivation; limitations; reproducibility; next step.

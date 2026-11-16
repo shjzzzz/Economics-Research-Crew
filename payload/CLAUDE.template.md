@@ -13,6 +13,7 @@
 | `00-Inbox` | 待整理资料 |
 | `01-Research-Projects` | 每个研究项目一个子目录 |
 | `03-Literature` | 文献笔记与证据矩阵（模板：`Templates/literature-note.md`） |
+| `03-Literature/_sources` | 原始来源（PDF、网页剪藏），**不可变** |
 | `04-Theories` | 理论与机制笔记 |
 | `05-Methods` | 计量与识别方法笔记 |
 | `06-Data/raw` | 原始数据，**只读** |
@@ -22,13 +23,13 @@
 | `08-Research-Notes` | 研究笔记 |
 | `09-Writing` | 论文与报告 |
 | `10-Archive` | 已完成项目 |
-| `Meta/` | 研究规范、来源登记、研究日志 |
+| `Meta/` | `purpose`（方向）、`index`（目录）、`research-log`、`review-queue`、`source-registry`、研究规范 |
 | `MOC/` | 主题索引 |
 
 此外，根目录下原有的 TaxWiki 税法资料保持原位，不移动、不重命名、不批量改写；它们是本地资料，不等于现行有效法规。
 
 ## 硬性规则
-1. `06-Data/raw` 不得修改或覆盖；衍生数据只写入 `06-Data/processed`。
+1. `06-Data/raw` 与 `03-Literature/_sources` 不得修改或覆盖；衍生数据只写入 `06-Data/processed`。
 2. 不删除文件；清理、移动、重命名需先征得明确同意。
 3. 不虚构文献、作者、DOI、法条、数据或回归结果；无法核实的内容标注“未核实”。
 4. 区分相关、预测与因果；先说明 estimand 与识别假设，再解释系数。
@@ -47,6 +48,9 @@
 | `/causal-inference-audit` | 审查 DID/IV/RDD 等识别策略 | estimand、假设、威胁、检验、可用的因果措辞 |
 | `/econometric-analysis` | 数据审计、实现与复现计量分析 | 分析计划、代码、样本核算、日志 |
 | `/academic-review` | 对稿件或设计做对抗式审稿 | Fatal / Major / Minor 分级意见 |
+| `/ingest-source` | 摄入一个来源：先分析、确认后再写入 wiki | 文献笔记、index/日志/登记更新、矛盾进 review-queue |
+| `/query-wiki` | 基于已积累的 wiki 回答问题 | 带引用的回答，可回存为笔记 |
+| `/wiki-lint` | 知识库体检：断链、孤立页、溯源、矛盾、过时 | 错误/警告报告与下一步建议 |
 
 ## Agents（Claude 按分派规则委派，也可点名调用）
 | Agent | 职责 | 工具 |
@@ -59,6 +63,13 @@
 | `academic-reviewer` | 独立审查，不改稿 | Read, Grep, Glob, WebSearch, WebFetch |
 
 仅在任务确实专业化、可并行或需要独立审查时委派；简单问题直接处理。启动超过 3 个并发 Agent 前先说明数量。
+
+## 知识库维护（wiki 约定）
+- 每次会话先读 `Meta/purpose.md`；内容为空或未填时提醒我填写，不要替我编造研究方向。
+- 新增页面的 frontmatter：`type`（literature|theory|method|synthesis|query|project）、`sources`（指向 `03-Literature/_sources` 或 DOI/URL）、`updated`、`verification`（verified|unverified）。
+- 摄入一个来源会触及多个页面：先分析、我确认后再写；每次写入后更新 `Meta/index.md`，并在 `Meta/research-log.md` 追加 `## [日期] 类型 | 标题`。
+- 来源之间的矛盾并列写出并记入 `Meta/review-queue.md`，不要擅自裁决。
+- 有价值的回答经我同意后回存为笔记。定期运行 `/wiki-lint`。
 
 ## 汇报格式
 重要改动或结论按：改了什么 / 为什么 / 如何验证 三段说明；无法验证的部分明确写出。

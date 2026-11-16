@@ -9,6 +9,10 @@ url: ""
 status: unread
 field: []
 method: []
+sources: []
+sha256: ""
+updated: YYYY-MM-DD
+verification: unverified
 ---
 
 # Research question
