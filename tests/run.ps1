@@ -122,7 +122,8 @@ $old = '{"hooks":{"PreToolUse":[{"matcher":"Write|Edit|Bash","hooks":[{"type":"c
 [IO.File]::WriteAllText($sj, $old, $enc)
 Run-Install $v6 @("-WithHooks") | Out-Null
 $st2 = [IO.File]::ReadAllText($sj, $enc) | ConvertFrom-Json
-Ok (@($st2.hooks.PreToolUse).Count -eq 1 -and $st2.hooks.PreToolUse[0].matcher -match "PowerShell") "old matcher widened without duplicating hook"
+$prot = @($st2.hooks.PreToolUse | Where-Object { ($_ | ConvertTo-Json -Depth 5) -match "protect_raw" })
+Ok ($prot.Count -eq 1 -and $prot[0].matcher -match "PowerShell") "old matcher widened without duplicating hook"
 # without -WithHooks, settings.json is never touched
 $v6b = New-Vault
 New-Item -ItemType Directory (Join-Path $v6b ".claude") | Out-Null
@@ -316,8 +317,116 @@ Ok ((AgyHook "routing_hint.py" $pi0) -match 'injectSteps.*literature-review') "a
 Ok ((AgyHook "routing_hint.py" $pi1) -match '^\{\}\|rc=0') "agy later invocation in same turn -> {}"
 Ok ((AgyHook "routing_hint.py" $pi2) -match '^\{\}\|rc=0') "agy conceptual question -> {}"
 
+# --- 11. orchestration layer ------------------------------------------------------
+Write-Host "[11] orchestration layer"
+$v11 = New-Vault
+Ok ((Run-Install $v11 @("-Platform","claude","-WithHooks")) -eq 0) "install with hooks exit 0"
+Ok ((Run-Check $v11) -eq 0) "checker passes (orchestrator files + hook files present)"
+$st = [IO.File]::ReadAllText((Join-Path $v11 ".claude\settings.json"), $enc) | ConvertFrom-Json
+Ok ($null -ne $st.hooks.SubagentStart -and $null -ne $st.hooks.SubagentStop -and ($st.hooks.PreToolUse | ConvertTo-Json -Depth 6) -match "orchestrator_guard") "settings.json has guard + SubagentStart/Stop recorders"
+$orc = Join-Path $v11 ".claude\scripts\orchestrator.py"
+function Orc([string[]]$A) { $ErrorActionPreference = "Continue"; & $py -X utf8 $orc --vault $v11 @A *> $null; return $LASTEXITCODE }
+function OrcOut([string[]]$A) {
+    $ErrorActionPreference = "Continue"
+    $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc   # python prints UTF-8; decode it as such
+    try { return ((& $py -X utf8 $orc --vault $v11 @A 2>&1) -join "`n") } finally { [Console]::OutputEncoding = $prev }
+}
+function Guard([string]$Tool, [hashtable]$In) {
+    $ErrorActionPreference = "Continue"
+    $json = @{tool_name=$Tool; tool_input=$In; cwd=$v11} | ConvertTo-Json -Depth 5 -Compress
+    $out = $json | & $py (Join-Path $v11 ".claude\hooks\orchestrator_guard.py") 2>$null
+    return "$(($out -join ' '))|rc=$LASTEXITCODE"
+}
+Ok ((Guard "Agent" @{subagent_type="academic-reviewer"}) -match "rc=0") "no active project -> agent dispatch allowed"
+Ok ((Orc @("init","01-Research-Projects\demo")) -eq 0) "init creates STATE.json"
+Ok ((Orc @("init","01-Research-Projects\demo")) -ne 0) "init refuses to re-initialise"
+Ok ((Orc @("gate","--decision","pass","--note","x")) -eq 1) "gate pass blocked while S1 has no artifact"
+Ok ((Orc @("gate","--decision","pass")) -ne 0) "gate without --note refused"
+[IO.File]::WriteAllText((Join-Path $v11 "Meta\q.md"), "question", $enc)
+Ok ((Orc @("artifact","Meta\q.md")) -eq 0) "artifact registered"
+Ok ((Orc @("artifact","..\..\outside.md")) -ne 0) "artifact outside vault refused"
+Ok ((Orc @("gate","--decision","pass","--note","研究者确认问题")) -eq 0) "S1 gate passes with artifact + note"
+Ok ((OrcOut @("status")) -match "当前阶段：S2") "now at S2"
+# guard: ordering, retries, concurrency, gate prompt, protected files
+Ok ((Guard "Agent" @{subagent_type="academic-reviewer"}) -match "rc=2") "skip ahead to reviewer (S6) at S2 -> blocked"
+Ok ((Guard "Agent" @{subagent_type="Explore"}) -match "rc=0") "non-pipeline agent -> allowed"
+Orc @("recover") | Out-Null
+Ok ((Guard "Agent" @{subagent_type="literature-agent"}) -match "rc=0") "S2 literature-agent -> allowed"
+Ok ((Guard "Agent" @{subagent_type="literature-agent"}) -match "rc=2") "second concurrent dispatch (limit 1) -> blocked"
+Ok ((Orc @("recover")) -eq 0 -and ((Guard "Agent" @{subagent_type="literature-agent"}) -match "rc=0")) "recover frees stale pending dispatch"
+Orc @("recover") | Out-Null
+1..3 | ForEach-Object { Orc @("fail","--agent","literature-agent","--reason","timeout") | Out-Null }
+Ok ((Guard "Agent" @{subagent_type="literature-agent"}) -match "rc=2") "retry budget used up -> blocked"
+Ok ((Orc @("gate","--decision","revise","--note","研究者要求重做")) -eq 0 -and ((Guard "Agent" @{subagent_type="literature-agent"}) -match "rc=0")) "researcher revise resets retry budget"
+Ok ((Guard "Bash" @{command="python .claude/scripts/orchestrator.py gate --decision pass --note ok"}) -match "permissionDecision.*ask") "gate via Bash forces a permission prompt"
+Ok ((Guard "PowerShell" @{command="python .claude\scripts\orchestrator.py gate --decision pass --note ok"}) -match "permissionDecision.*ask") "gate via PowerShell forces a permission prompt"
+Ok ((Guard "Bash" @{command="python .claude/scripts/orchestrator.py status"}) -match "^\|rc=0") "status via Bash not prompted"
+Ok ((Guard "Edit" @{file_path=(Join-Path $v11 "01-Research-Projects\demo\STATE.json")}) -match "rc=2") "direct edit of STATE.json blocked"
+Ok ((Guard "Write" @{file_path=(Join-Path $v11 "Meta\run-ledger.jsonl")}) -match "rc=2") "direct write of run-ledger blocked"
+Ok ((Guard "Write" @{file_path=(Join-Path $v11 "Meta\note.md")}) -match "rc=0") "ordinary write not affected"
+# the block reason is Chinese and must reach the host as UTF-8 (default Windows stderr codec is GBK)
+$chkPy = Join-Path ([IO.Path]::GetTempPath()) ("erc-chk-" + [guid]::NewGuid().ToString("N").Substring(0,8) + ".py")
+[IO.File]::WriteAllText($chkPy, @"
+import subprocess, sys, json
+inp = json.dumps({"tool_name": "Agent", "tool_input": {"subagent_type": "academic-reviewer"}, "cwd": sys.argv[2]}).encode("utf-8")
+p = subprocess.run([sys.executable, sys.argv[1]], input=inp, capture_output=True)
+print("OK" if p.returncode == 2 and "不能跳阶段" in p.stderr.decode("utf-8") else "BAD")
+"@, $enc)
+$chkOut = & $py $chkPy (Join-Path $v11 ".claude\hooks\orchestrator_guard.py") $v11
+Remove-Item -LiteralPath $chkPy -Force
+Ok ($chkOut -eq "OK") "block reason reaches host as readable UTF-8"
+Ok ((Orc @("recover")) -eq 0 -and (Orc @("enforce","off")) -eq 0 -and ((Guard "Agent" @{subagent_type="academic-reviewer"}) -match "rc=0")) "enforce off -> skip ahead allowed (still recorded)"
+Orc @("enforce","on") | Out-Null
+$null = "{broken" | & $py (Join-Path $v11 ".claude\hooks\orchestrator_guard.py") 2>$null
+Ok ($LASTEXITCODE -eq 0) "malformed hook input fails open"
+# recorder + ledger
+$rec = @{hook_event_name="SubagentStart"; agent_type="literature-agent"; agent_id="a1"; cwd=$v11} | ConvertTo-Json -Compress
+$rec | & $py (Join-Path $v11 ".claude\hooks\orchestrator_record.py") 2>$null
+$rec2 = @{hook_event_name="SubagentStop"; agent_type="literature-agent"; agent_id="a1"; cwd=$v11; last_assistant_message="完成"} | ConvertTo-Json -Compress
+$rec2 | & $py (Join-Path $v11 ".claude\hooks\orchestrator_record.py") 2>$null
+$ledger = [IO.File]::ReadAllText((Join-Path $v11 "Meta\run-ledger.jsonl"), $enc)
+Ok ($ledger -match '"event": "start"' -and $ledger -match '"event": "stop"' -and $ledger -match '"event": "gate"' -and $ledger -match '"event": "fail"') "ledger records start/stop/gate/fail"
+Ok ($ledger -notmatch "完成") "ledger does not store agent message content"
+# stage rules: S4 needs an analysis plan; return resets later stages
+$j = (OrcOut @("status","--json")) | ConvertFrom-Json
+Ok ($j.stage -eq "S2") "state survives (S2)"
+foreach ($pair in @(@("S2","Meta\lit.md"),@("S3","Meta\mech.md"))) {
+    [IO.File]::WriteAllText((Join-Path $v11 $pair[1]), "x", $enc)
+    Orc @("artifact",$pair[1]) | Out-Null
+    Orc @("gate","--decision","pass","--note","ok") | Out-Null
+}
+Ok ((OrcOut @("status")) -match "当前阶段：S4") "S2 and S3 passed -> S4"
+[IO.File]::WriteAllText((Join-Path $v11 "Meta\design.md"), "x", $enc); [IO.File]::WriteAllText((Join-Path $v11 "Meta\other.md"), "x", $enc)
+Orc @("artifact","Meta\design.md","Meta\other.md") | Out-Null
+Ok ((Orc @("verify")) -eq 1) "S4 verify fails without an analysis-plan artifact"
+[IO.File]::WriteAllText((Join-Path $v11 "Meta\analysis-plan.md"), "x", $enc)
+Orc @("artifact","Meta\analysis-plan.md") | Out-Null
+Ok ((Orc @("verify")) -eq 0) "S4 verify passes with analysis-plan"
+Orc @("gate","--decision","pass","--note","ok") | Out-Null
+Orc @("gate","--decision","return","--to","S2","--note","退回补文献") | Out-Null
+$j = (OrcOut @("status","--json")) | ConvertFrom-Json
+Ok ($j.stage -eq "S2" -and $j.stages.S4.status -eq "pending" -and $j.stages.S3.status -eq "pending") "return --to S2 resets later stages"
+Ok ((Orc @("gate","--decision","return","--to","S6","--note","x")) -ne 0) "return to a later stage refused"
+Ok ((Orc @("gate","--decision","stop","--note","研究者决定停止")) -eq 0 -and ((OrcOut @("status")) -match "状态：stopped")) "stop ends the project"
+Ok ((Guard "Agent" @{subagent_type="academic-reviewer"}) -match "rc=0") "stopped project no longer enforces"
+# bytecode caches in the package must not be copied into a user's vault
+$cache = Join-Path $payload ".claude\scripts\__pycache__"
+New-Item -ItemType Directory -Force $cache | Out-Null
+[IO.File]::WriteAllText((Join-Path $cache "x.pyc"), "x", $enc)
+$v11c = New-Vault
+$null = Run-Install $v11c @("-Platform","claude")
+Remove-Item -LiteralPath $cache -Recurse -Force
+Ok (@(Get-ChildItem $v11c -Recurse -Force -Directory -Filter __pycache__ -ErrorAction SilentlyContinue).Count -eq 0) "installer does not copy __pycache__"
+# agy / Codex get the script + stages file
+$v11b = New-Vault
+Ok ((Run-Install $v11b @("-Platform","all")) -eq 0 -and (Test-Path (Join-Path $v11b ".agents\scripts\orchestrator.py")) -and (Test-Path (Join-Path $v11b ".agents\pipeline-stages.json"))) "agy/Codex install includes orchestrator + stages"
+& $py -X utf8 (Join-Path $v11b ".agents\scripts\orchestrator.py") --vault $v11b init 01-Research-Projects\demo *> $null
+Ok ($LASTEXITCODE -eq 0) ".agents orchestrator runs (finds .agents/pipeline-stages.json)"
+$sk = [IO.File]::ReadAllText((Join-Path $v11b ".agents\skills\research-pipeline\SKILL.md"), $enc)
+Ok ($sk -match "\.agents/scripts/orchestrator\.py" -and $sk -notmatch "\.claude/scripts") "agy research-pipeline skill points to .agents/scripts"
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

@@ -137,6 +137,14 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 
 改完后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。
 
+## 9a. 编排层：状态、关卡、重试与记录
+- 完整研究用 `/research-pipeline`。它会用 `orchestrator.py` 记录当前阶段、已登记的产物和你每次的关卡决定，所以中断后可以从 `STATE.json` 继续，不会重做已通过的阶段。
+- 常用命令（在库根目录）：`python .claude/scripts/orchestrator.py status`（进度）、`next`（下一步与还缺什么）、`log -n 20`（最近的派出与决定）。
+- **关卡由你决定。** Claude 汇报产物和关卡问题后会等你表态；它运行 `gate` 时 Claude Code 会弹出权限提示，请在确认你确实作出了该决定后再同意。
+- Agent 失败：最多重试 2 次，之后停下向你报告；你决定“修改（revise）”后计数才清零。
+- 如果被 hook 拦住而你确认是残留记录：`orchestrator.py recover`；要临时关闭拦截：`orchestrator.py enforce off`（仍会记录）。
+- 派出 Agent 的交接单模板：`Templates/handoff.md`（只给产物路径，不给推理，保持独立审查）。
+
 ## 9b. 在 Antigravity（agy）或 Codex CLI 中使用
 - 安装：`-Platform auto` 会自动为本机已有的 CLI 生成文件；也可用 `-Platform agy` / `codex` / `all` 指定。
 - 规则在研究库根目录 `AGENTS.md` 的 `ERC:BEGIN … ERC:END` 区块里，内容与 `CLAUDE.md` 一致；Skills 在 `.agents/skills/`，Agent 说明在 `.agents/agents/`，脚本在 `.agents/scripts/`。

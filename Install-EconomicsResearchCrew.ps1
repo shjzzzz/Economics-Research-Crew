@@ -18,7 +18,7 @@ function Get-Sha([string]$Path) {
 $script:Pending = @()
 function Copy-NoOverwrite([string]$Source, [string]$Destination) {
     if (-not (Test-Path $Source)) { return }
-    foreach ($f in Get-ChildItem -LiteralPath $Source -Recurse -File -Force) {
+    foreach ($f in Get-ChildItem -LiteralPath $Source -Recurse -File -Force | Where-Object { $_.FullName -notmatch '[\\/]__pycache__[\\/]' }) {
         $rel = $f.FullName.Substring($Source.TrimEnd('\').Length).TrimStart('\')
         $dest = Join-Path $Destination $rel
         if (Test-Path $dest) {

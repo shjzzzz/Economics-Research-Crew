@@ -39,20 +39,22 @@ foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Pat
 
 if ($hasClaude) {
     Test-Defs ".claude"
-    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
+    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\pipeline-stages.json","Templates\handoff.md") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
     $rc = Join-Path $VaultPath "CLAUDE.md"
     if (-not (Test-Path $rc) -or (Get-Content $rc -Raw) -notmatch [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md")) { $errors += "根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md" }
     $sj = Join-Path $VaultPath ".claude\settings.json"
     if (Test-Path $sj) {
         $st = [IO.File]::ReadAllText($sj)
-        foreach ($h in "protect_raw.py","validate_frontmatter.py","routing_hint.py") {
+        foreach ($h in "protect_raw.py","validate_frontmatter.py","routing_hint.py","orchestrator_guard.py","orchestrator_record.py") {
             if ($st -match [regex]::Escape($h) -and -not (Test-Path (Join-Path $VaultPath ".claude\hooks\$h"))) { $errors += "settings.json 引用了 hook 但文件缺失: $h" }
         }
     }
 }
 if ($hasAgents) {
     Test-Defs ".agents"
-    if (-not (Test-Path (Join-Path $VaultPath ".agents\scripts\wiki_lint.py"))) { $errors += "缺少文件: .agents\scripts\wiki_lint.py" }
+    foreach ($m in ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\pipeline-stages.json") {
+        if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" }
+    }
     $am = Join-Path $VaultPath "AGENTS.md"
     if (-not (Test-Path $am)) { $errors += "缺少根 AGENTS.md" }
     else {

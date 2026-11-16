@@ -23,6 +23,12 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 脚本只新增文件，已存在的文件一律跳过并列出；改动前备份 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`、`AGENTS.md`、`.agents/hooks.json` 到 `_erc-backups/<时间戳>/`。
 
+### 编排层（Research Director）
+`/research-pipeline` 通过 `.claude/scripts/orchestrator.py` 维护项目状态 `01-Research-Projects/<项目>/STATE.json` 和派出日志 `Meta/run-ledger.jsonl`（只通过脚本修改）：`init / status / next / artifact / verify / gate / fail / recover / enforce / log`。阶段定义在 `.claude/pipeline-stages.json`，交接模板在 `Templates/handoff.md`。
+- **关卡只由研究者决定：** 脚本需要 `--note`；`gate` 命令经 hook 触发权限提示，研究者确认后才执行。
+- **Claude Code 下的强制（`-WithHooks`）：** 不能派出后续阶段的 Agent、重试（每个 Agent 每阶段最多 2 次）用尽后不能再派、同时运行数不得超过阶段上限（默认 1，S3 为 2，硬上限 3）；直接编辑 `STATE.json` / 账本会被拦。`orchestrator.py enforce off` 可关闭拦截，`recover` 清理残留记录。
+- agy / Codex 没有这层 hook，命令照常可用，规则靠遵守。
+
 ### 多平台（自适应）
 `-Platform auto`（默认）检测本机已安装的 `claude`、`agy`、`codex`，只为检测到的平台生成文件；都没检测到时安装 Claude Code 版。`payload/.claude/` 是唯一源，其他平台的文件在安装时生成（需要 python）。
 

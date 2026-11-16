@@ -41,6 +41,9 @@ Decide in this order and act; do not ask which tool to use.
 
 Quality loop: proposal (research agents) -> execution (`econometrics-agent`) -> challenge (`academic-reviewer`) -> decision (Director + researcher). A Fatal Flaw blocks acceptance.
 
+### Orchestration layer (whole projects)
+`/research-pipeline` keeps project state in `01-Research-Projects/<project>/STATE.json` and a run ledger in `Meta/run-ledger.jsonl`, both modified only through `python .claude/scripts/orchestrator.py` (`init`, `status`, `next`, `artifact`, `verify`, `gate`, `fail`, `recover`). Only the researcher decides a gate: never run `gate --decision pass` on your own judgment. Each Agent gets at most 2 retries per stage, then stop and report. In Claude Code, hooks block skipping stages, exhausted retries and parallel dispatch beyond the stage limit.
+
 ## Workflow
 1. Question, unit, outcome, treatment, population, estimand. 2. Literature map. 3. Mechanism and hypotheses. 4. Data and provenance. 5. Pre-specified strategy. 6. Reproducible implementation. 7. Diagnostics and robustness. 8. Independent review. 9. Report with limitations.
 Do not skip identification design merely because a regression can be run.

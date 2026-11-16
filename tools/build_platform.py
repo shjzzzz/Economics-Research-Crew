@@ -5,7 +5,8 @@ payload/.claude/ stays the single source. This script writes a staging tree that
 the installer then copies into the vault without overwriting:
 
   stage/.agents/skills/<name>/...   (agy + Codex)  skills, script paths rewritten
-  stage/.agents/scripts/...         (agy + Codex)  wiki_lint.py etc.
+  stage/.agents/scripts/...         (agy + Codex)  wiki_lint.py, orchestrator.py
+  stage/.agents/pipeline-stages.json (agy + Codex)  stage definitions for orchestrator.py
   stage/.agents/agents/<name>.md    (agy + Codex)  agy subagent format; Codex reads them as role files
   stage/AGENTS.erc.md               (agy + Codex)  self-contained rules block for root AGENTS.md
   stage/.agents/hooks/*.py, routing-triggers.json, hooks.erc.json   (agy only)
@@ -52,7 +53,7 @@ PLATFORM_NOTE = """## 平台说明（Antigravity / Codex）
 - 本节由 Economics Research Crew 安装器生成，与 Claude Code 的 `CLAUDE.md` 规则一致。
 - Skills 位于 `.agents/skills/<名称>/SKILL.md`；文中的 `/名称`（如 `/literature-review`）指同名 Skill，按路由规则激活后照其步骤执行。
 - Agent 说明位于 `.agents/agents/<名称>.md`。当前工具支持子 Agent 时按 Skill 要求派出；不支持时，读该文件并在主会话按其职责完成，独立审查须只依据产物并说明独立性降低。
-- 确定性脚本在 `.agents/scripts/`（如 `python .agents/scripts/wiki_lint.py lint --vault .`）。
+- 确定性脚本在 `.agents/scripts/`（如 `python .agents/scripts/wiki_lint.py lint --vault .`；项目编排用 `python .agents/scripts/orchestrator.py`）。
 - 原始材料保护：Antigravity 由 `.agents/hooks.json` 的 hook 拦截；Codex 无此 hook，必须自觉遵守“`06-Data/raw` 与 `03-Literature/_sources` 只读”的规则。
 """
 
@@ -141,6 +142,9 @@ def build(payload, stage, platforms):
             if f.endswith(".py"):
                 os.makedirs(os.path.join(agents_root, "scripts"), exist_ok=True)
                 shutil.copyfile(os.path.join(sc_src, f), os.path.join(agents_root, "scripts", f))
+    stages = os.path.join(src, "pipeline-stages.json")
+    if os.path.exists(stages):
+        shutil.copyfile(stages, os.path.join(agents_root, "pipeline-stages.json"))
     # agents
     ag_src = os.path.join(src, "agents")
     for f in sorted(os.listdir(ag_src)):
