@@ -1,4 +1,4 @@
-# TaxWiki Research Workspace
+# Economicresearchwiki Research Workspace
 
 税收经济学、公共经济学、计量经济学与因果推断的研究工作区。本目录同时是 Obsidian Vault 与 Claude Code 项目根目录。
 
@@ -26,7 +26,7 @@
 | `Meta/` | `purpose`（方向）、`index`（目录）、`research-log`、`review-queue`、`source-registry`、研究规范 |
 | `MOC/` | 主题索引 |
 
-此外，根目录下原有的 TaxWiki 税法资料保持原位，不移动、不重命名、不批量改写；它们是本地资料，不等于现行有效法规。
+此外，根目录下原有的 Economicresearchwiki 税法资料保持原位，不移动、不重命名、不批量改写；它们是本地资料，不等于现行有效法规。
 
 ## 硬性规则
 1. `06-Data/raw` 与 `03-Literature/_sources` 不得修改或覆盖；衍生数据只写入 `06-Data/processed`。

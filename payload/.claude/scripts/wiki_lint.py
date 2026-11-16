@@ -6,7 +6,7 @@ Usage:
     python wiki_lint.py hash FILE [--vault PATH]
 
 lint  : frontmatter, sources[] resolvability, broken wikilinks, orphan pages,
-        index coverage. Scope = new research folders only (legacy TaxWiki
+        index coverage. Scope = new research folders only (legacy Economicresearchwiki
         notes are never scanned).
 hash  : print SHA256 of FILE and report whether Meta/source-registry.md
         already contains it (exit 10 if already registered).

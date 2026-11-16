@@ -1,6 +1,6 @@
 # 使用说明
 
-本说明面向已把本扩展安装到研究库（下称 Vault，例如 `D:\TaxWiki`）的使用者。安装步骤见 [README](../README.md)。
+本说明面向已把本扩展安装到研究库（下称 Vault，例如 `D:\Economicresearchwiki`）的使用者。安装步骤见 [README](../README.md)。
 
 ## 1. 它是什么
 一组放进 Claude Code 项目的配置：
@@ -14,7 +14,7 @@
 
 ## 2. 开始一次会话
 ```powershell
-Set-Location D:\TaxWiki
+Set-Location D:\Economicresearchwiki
 claude
 ```
 首次使用先做只读检查：
@@ -77,7 +77,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 - **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界。Claude 每次摄入和回答前都会读它；没填它会提醒你，不会替你编。
 - **摄入**：把 PDF/剪藏放进 `03-Literature/_sources/`，运行 `/ingest-source 路径`。它先算 SHA256 去重，再输出分析（抽取、与已有页面的矛盾、拟改动清单、未核实项），**等你确认**后才写页面、更新 `Meta/index.md`、追加日志、登记来源。
 - **提问**：`/query-wiki 问题`，先读 index 再读页面，回答区分“库内依据”和“推断”，并询问是否回存为 `08-Research-Notes/` 笔记。
-- **体检**：`/wiki-lint`，先跑确定性脚本再做语义检查；默认只报告不修改。也可直接运行 `python .claude/scripts/wiki_lint.py lint --vault .`。扫描范围只含新增研究目录，**不扫描原有 TaxWiki 税法笔记**。
+- **体检**：`/wiki-lint`，先跑确定性脚本再做语义检查；默认只报告不修改。也可直接运行 `python .claude/scripts/wiki_lint.py lint --vault .`。扫描范围只含新增研究目录，**不扫描原有 Economicresearchwiki 税法笔记**。
 - **日志**：`Meta/research-log.md` 条目以 `## [日期] 类型 | 标题` 开头，可用 `grep "^## \[" Meta/research-log.md | tail` 查看近期记录。
 - **矛盾**：来源之间的冲突并列记录并进入 `Meta/review-queue.md`，由你裁决。
 - 页面 frontmatter 约定：`type`、`sources`、`updated`、`verification`（verified | unverified）。
@@ -94,7 +94,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 
 ## 8. 它会遵守的规则
 - `06-Data/raw` 与 `03-Literature/_sources` 只读；衍生数据只写 `06-Data/processed`。
-- 不删除、不移动、不重命名现有 TaxWiki 笔记，除非你明确同意。
+- 不删除、不移动、不重命名现有 Economicresearchwiki 笔记，除非你明确同意。
 - 不编造文献、DOI、法条、数据或结果；查不到就标“未核实”。
 - 区分相关与因果，先说 estimand 与假设。
 - 税法结论要给文号、日期、生效与废止状态。

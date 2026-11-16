@@ -12,12 +12,12 @@
 ## 安装
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\TaxWiki" -WhatIf   # 先预演
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\TaxWiki"           # 仅安装本扩展
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\TaxWiki" -WithHooks            # 可选：安装 hooks（合并 settings.json）
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\TaxWiki" -Update               # 升级：差异文件生成 .new，不覆盖
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\TaxWiki" -WithUpstream -RepoUrl "<上游仓库地址>"
-.\Test-EconomicsResearchCrew.ps1 -VaultPath "D:\TaxWiki"
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WhatIf   # 先预演
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki"           # 仅安装本扩展
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WithHooks            # 可选：安装 hooks（合并 settings.json）
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -Update               # 升级：差异文件生成 .new，不覆盖
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WithUpstream -RepoUrl "<上游仓库地址>"
+.\Test-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki"
 ```
 脚本只新增文件，已存在的文件一律跳过并列出；改动前备份 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json` 到 `_erc-backups/<时间戳>/`。
 

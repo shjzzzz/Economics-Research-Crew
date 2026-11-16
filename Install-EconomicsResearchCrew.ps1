@@ -1,6 +1,6 @@
 ﻿[CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$VaultPath = "D:\TaxWiki",
+    [string]$VaultPath = "D:\Economicresearchwiki",
     [switch]$WithUpstream,
     [switch]$WithHooks,
     [switch]$Update,
@@ -115,7 +115,7 @@ $enc = [System.Text.UTF8Encoding]::new($false)
 if (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
         $tpl = Join-Path $payload "CLAUDE.template.md"
-        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# TaxWiki Research Workspace" }
+        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# Economicresearchwiki Research Workspace" }
         $extra = @($importLines | Where-Object { $body -notmatch [regex]::Escape($_) })
         if ($extra.Count -gt 0) { $body += "`r`n`r`n" + ($extra -join "`r`n") }
         [IO.File]::WriteAllText($rootClaude, $body + "`r`n", $enc)
