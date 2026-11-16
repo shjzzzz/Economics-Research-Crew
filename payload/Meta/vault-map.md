@@ -20,7 +20,7 @@ moc: MOC
 # Vault Map
 
 - `literature_raw` holds immutable original sources (PDFs, clips); never edit them.
-- `resources: .` keeps the existing Economicresearchwiki root and layout; do not move or rename existing notes.
+- `resources: .` keeps the vault root and its pre-existing layout; do not move or rename existing notes.
 - When searching tax-law notes, exclude `.claude`, `_vendor`, `_erc-staging`, `_erc-backups`, `06-Data`, `07-Code`.
 - If this file pre-existed, the installer keeps it; compare mappings manually.
 - This YAML schema is this package's own; if you enable the upstream framework, check its expected keys against its docs.

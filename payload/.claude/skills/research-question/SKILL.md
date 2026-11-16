@@ -1,6 +1,6 @@
 ---
 name: research-question
-description: "Define and refine an economics research question, estimand, contribution and feasible design."
+description: "Define and refine an economics research question, estimand, contribution and feasible design. Use for 选题、确定研究问题、收敛题目、可检验的研究问题、estimand、研究可行性."
 argument-hint: "[research topic or initial question]"
 ---
 

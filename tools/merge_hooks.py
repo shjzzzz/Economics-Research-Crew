@@ -6,7 +6,8 @@ Usage: python merge_hooks.py SETTINGS_JSON SNIPPET_JSON
 - Creates SETTINGS_JSON if missing.
 - Refuses (exit 1, file untouched) if SETTINGS_JSON is not valid JSON.
 - A hook is considered present if some command in the same event already
-  references the same script file name; present hooks are never duplicated.
+  references the same script file name; present hooks are never duplicated,
+  but their matcher is widened when the snippet covers more tools (upgrades).
 - Preserves every other key. Writes only when something changed.
 """
 import json
@@ -43,14 +44,20 @@ def main(settings_path, snippet_path):
     hooks = settings.setdefault("hooks", {})
     for event, groups in snippet.get("hooks", {}).items():
         existing = hooks.setdefault(event, [])
-        have = set()
-        for g in existing:
-            have |= script_names(g)
         for g in groups:
-            if script_names(g) <= have and script_names(g):
+            names = script_names(g)
+            match = next((e for e in existing if names and names & script_names(e)), None)
+            if match is None:
+                existing.append(g)
+                changed = True
                 continue
-            existing.append(g)
-            changed = True
+            # already installed: widen matcher if the snippet covers more tools (upgrade path)
+            want = set(filter(None, g.get("matcher", "").split("|")))
+            have = set(filter(None, match.get("matcher", "").split("|")))
+            if want - have:
+                order = [t for t in g.get("matcher", "").split("|") if t] + sorted(have - want)
+                match["matcher"] = "|".join(order)
+                changed = True
     if changed or not os.path.exists(settings_path):
         os.makedirs(os.path.dirname(os.path.abspath(settings_path)), exist_ok=True)
         with open(settings_path, "w", encoding="utf-8", newline="\n") as fh:

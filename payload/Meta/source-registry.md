@@ -2,7 +2,7 @@
 
 | ID | Source | Type | URL / location | Access date | SHA256 | Notes |
 |---|---|---|---|---|---|---|
-| SRC-001 | Existing Economicresearchwiki corpus | Local Markdown | `D:\Economicresearchwiki` | | | Verify validity of each instrument |
+| SRC-001 | Pre-existing tax-law notes in this vault | Local Markdown | vault root | | | Verify validity of each instrument |
 | SRC-002 | National Laws and Regulations Database | Official legal | https://flk.npc.gov.cn/ | | | Check promulgation/effective dates |
 | SRC-003 | State Taxation Administration | Official | https://www.chinatax.gov.cn/ | | | Prefer original notices |
 | SRC-004 | National Bureau of Statistics | Official statistics | https://www.stats.gov.cn/ | | | Record table, release date, definition |

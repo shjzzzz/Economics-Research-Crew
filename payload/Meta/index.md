@@ -5,7 +5,7 @@ updated: YYYY-MM-DD
 
 # Index（知识库目录）
 
-> 由 `/ingest-source`、`/wiki-lint` 维护：每页一行，`[[页面]]` + 一句话摘要。回答问题时先读本文件，再进入具体页面。只收录研究库新增页面，不收录原有 Economicresearchwiki 税法笔记。
+> 由 `/ingest-source`、`/wiki-lint` 维护：每页一行，`[[页面]]` + 一句话摘要。回答问题时先读本文件，再进入具体页面。只收录研究库新增页面，不收录库内原有的税法笔记。
 
 ## 文献（03-Literature）
 | 页面 | 摘要 | 来源数 | 更新 |

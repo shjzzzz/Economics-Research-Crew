@@ -6,7 +6,7 @@ Usage:
     python wiki_lint.py hash FILE [--vault PATH]
 
 lint  : frontmatter, sources[] resolvability, broken wikilinks, orphan pages,
-        index coverage. Scope = new research folders only (legacy Economicresearchwiki
+        index coverage. Scope = new research folders only (legacy tax-law
         notes are never scanned).
 hash  : print SHA256 of FILE and report whether Meta/source-registry.md
         already contains it (exit 10 if already registered).
@@ -113,7 +113,7 @@ def lint(vault, strict=False):
             add("error", rel, "frontmatter", err)
         if fm is None:
             add("warning", rel, "frontmatter", "no frontmatter")
-        elif fm is not None:
+        elif not err:
             ptype = str(fm.get("type", "")).lower()
             if not ptype:
                 add("warning", rel, "frontmatter", "missing 'type'")
@@ -133,19 +133,29 @@ def lint(vault, strict=False):
             target = m.group(1).strip().replace("\\", "/").split("/")[-1]
             if target.lower().endswith(".md"):
                 target = target[:-3]
-            hits = stems.get(target.lower())
-            if not hits:
+            if not stems.get(target.lower()):
                 add("error", rel, "link", "broken wikilink [[%s]]" % m.group(1).strip())
-            else:
-                for h in hits:
-                    if h in inbound and h != p:
-                        inbound[h].add(p)
         if index_text is not None and p.stem.lower() not in index_targets:
             add("warning", rel, "index", "not listed in Meta/index.md")
 
+    # inbound links may come from any page in the vault (index, MOC, notes), not only scope pages
+    scope_set = set(scope_pages)
+    for src in all_pages:
+        try:
+            src_text = read(src)
+        except OSError:
+            continue
+        for m in WIKILINK.finditer(src_text):
+            target = m.group(1).strip().replace("\\", "/").split("/")[-1]
+            if target.lower().endswith(".md"):
+                target = target[:-3]
+            for h in stems.get(target.lower(), []):
+                if h in scope_set and h != src:
+                    inbound[h].add(src)
+
     for p, srcs in inbound.items():
         if not srcs:
-            add("warning", p.relative_to(vault).as_posix(), "orphan", "no inbound links from other research pages")
+            add("warning", p.relative_to(vault).as_posix(), "orphan", "no inbound links from any page (index, MOC or notes)")
 
     errors = sum(1 for f in findings if f["level"] == "error")
     warnings = sum(1 for f in findings if f["level"] == "warning")

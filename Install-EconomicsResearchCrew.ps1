@@ -85,8 +85,9 @@ if ($WithUpstream) {
         $disp = Join-Path $stagePath "CLAUDE.md"
         $dispDest = Join-Path $claudeDir "MBIFC-DISPATCHER.md"
         if ((Test-Path $disp) -and -not (Test-Path $dispDest)) {
+            # 仅保存供参考，不自动 import：上游 dispatcher 要求“只用上游 Agent、绝不直接回答”，会与本项目路由冲突。
             Copy-Item $disp $dispDest
-            $importLines += "@.claude/MBIFC-DISPATCHER.md"
+            Write-Host "上游 dispatcher 已保存为 .claude/MBIFC-DISPATCHER.md，未自动 import（与本项目路由规则冲突）。" -ForegroundColor Yellow
         }
     }
 }
@@ -115,13 +116,23 @@ $enc = [System.Text.UTF8Encoding]::new($false)
 if (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
         $tpl = Join-Path $payload "CLAUDE.template.md"
-        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# Economicresearchwiki Research Workspace" }
+        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# Research Workspace" }
         $extra = @($importLines | Where-Object { $body -notmatch [regex]::Escape($_) })
         if ($extra.Count -gt 0) { $body += "`r`n`r`n" + ($extra -join "`r`n") }
         [IO.File]::WriteAllText($rootClaude, $body + "`r`n", $enc)
     }
 } else {
     $existing = [IO.File]::ReadAllText($rootClaude, $enc)
+    # -Update：模板有新版且与现有 CLAUDE.md 不同 -> 生成 CLAUDE.md.new 供人工合并（不覆盖）
+    $tpl = Join-Path $payload "CLAUDE.template.md"
+    if ($Update -and (Test-Path $tpl)) {
+        $tplBody = [IO.File]::ReadAllText($tpl, $enc).Replace("`r`n","`n").TrimEnd()
+        if ($existing.Replace("`r`n","`n").TrimEnd() -ne $tplBody) {
+            $newRoot = "$rootClaude.new"
+            if ($PSCmdlet.ShouldProcess($newRoot, "写入 CLAUDE.md 新版模板副本")) { [IO.File]::WriteAllText($newRoot, $tplBody + "`n", $enc) }
+            $script:Pending += $newRoot
+        }
+    }
     $missing = @($importLines | Where-Object { $existing -notmatch [regex]::Escape($_) })
     if ($missing.Count -gt 0 -and $PSCmdlet.ShouldProcess($rootClaude, "追加 import")) {
         [IO.File]::WriteAllText($rootClaude, $existing.TrimEnd() + "`r`n`r`n" + ($missing -join "`r`n") + "`r`n", $enc)
@@ -136,4 +147,5 @@ foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\
     if (-not (Test-Path $p) -and $PSCmdlet.ShouldProcess($p, "创建目录")) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
 }
 if ($script:Pending.Count -gt 0) { Write-Host "以下文件与新版不同，已生成 .new 副本（未覆盖原文件），请人工比对后合并：" -ForegroundColor Cyan; $script:Pending | ForEach-Object { Write-Host "  $_" } }
-Write-Host "完成。备份：$backupDir 。请运行 Test-EconomicsResearchCrew.ps1。" -ForegroundColor Green
+$backupNote = if (Test-Path $backupDir) { "备份：$backupDir" } else { "无需备份（没有已存在的 CLAUDE.md/.mcp.json/settings.json）" }
+Write-Host "完成。$backupNote 。请运行 Test-EconomicsResearchCrew.ps1。" -ForegroundColor Green

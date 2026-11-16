@@ -5,7 +5,7 @@
 ## 1. 它是什么
 一组放进 Claude Code 项目的配置：
 - **6 个 Subagent**（`.claude/agents/`）：各有职责与证据标准的专业角色。
-- **10 个 Skill**（`.claude/skills/`）：固定流程，用 `/名称` 触发。
+- **11 个 Skill**（`.claude/skills/`）：固定流程，用 `/名称` 触发。
 - **项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`）：每次会话自动加载。
 - **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、研究日志、待审队列、来源登记、研究标准，以及文献/数据/分析模板。
 - **脚本与 hooks**（`.claude/scripts/`、`.claude/hooks/`）：知识库体检脚本；可选的原始数据保护与 frontmatter 校验。
@@ -22,7 +22,7 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 6 个 Agent，`/skills` 确认 10 个 Skill。
+再用 `/agents` 确认 6 个 Agent，`/skills` 确认 11 个 Skill。
 
 ## 3. Skill 速查
 | 命令 | 何时用 | 产出 |
@@ -37,13 +37,39 @@ claude
 | `/ingest-source <文件>` | 把 `03-Literature/_sources/` 里的一个来源摄入 wiki | 先输出分析并等你确认；确认后写文献笔记、更新 index/日志/登记 |
 | `/query-wiki <问题>` | 基于已积累的 wiki 回答 | 带引用的回答，区分依据与推断，可回存为笔记 |
 | `/wiki-lint` | 知识库体检 | 断链/孤立页/溯源/index 覆盖 + 矛盾与过时检查报告 |
+| `/research-pipeline <主题或项目>` | 完整推进一个研究、继续上次的研究 | 先给阶段计划并等你同意；之后逐阶段推进，每阶段停在关卡，含 Reviewer 质量闭环 |
 
 例：
 ```text
 /causal-inference-audit 研究金税四期上线对企业税收遵从的影响，处理组为首批试点地区企业，双向固定效应 DID
 ```
 
-## 4. 调用 Agent
+## 4. 路由：Claude 如何决定用什么
+1. 概念性短问题 → 直接回答。
+2. 单项研究任务 → 先调用对应 Skill（Skill 描述里有中文触发词，例如“文献综述”“识别策略”“复现论文”）。
+3. 完整研究、多阶段、“继续上次的研究” → `/research-pipeline`。
+4. Agent 由 Skill 或 pipeline 在内部派出，一次一个；调用 Skill 即视为你同意它派出其指定的 Agent。Skill 之外，只有你点名时才派。
+5. 在本库内，本项目 Skill 优先于范围重叠的全局插件技能；你点名其他技能时以你为准。
+
+想确保走某个流程，直接输入 `/技能名` 最可靠。
+
+**角色映射（你的方案中的 8 个角色加 Director）**
+
+| 角色 | 由谁承担 |
+|---|---|
+| Research Director | `/research-pipeline`（阶段、关卡、质量闭环） |
+| 01 文献研究 | `/literature-review`、`literature-agent`、`/ingest-source` |
+| 02 理论建模 | `/theory-modeling`、`theory-agent` |
+| 03 数据工程 | `/econometric-analysis`、`econometrics-agent` |
+| 04 计量分析 | `/econometric-analysis`、`econometrics-agent`；识别审查由 `/causal-inference-audit`、`causal-inference-agent` 负责 |
+| 05 税收研究 | `/tax-policy-analysis`、`tax-policy-agent` |
+| 06 代码复现 | `/econometric-analysis` 的“复现与代码审计模式” |
+| 07 学术写作 | **不在本项目范围内**：由主会话完成，遵守证据与汇报规则；可按需使用你已安装的写作类技能 |
+| 08 学术审稿 | `/academic-review`、`academic-reviewer`（独立上下文） |
+
+质量闭环：研究 Agent 提方案 → `econometrics-agent` 执行 → `academic-reviewer` 质疑 → Director 与你决定是否接受；有致命问题不得接受。
+
+## 4b. 调用 Agent
 Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实专业化、可并行或需要独立审查时委派。也可以直接点名：
 ```text
 请用 academic-reviewer 审查 01-Research-Projects/XXX/draft.md，只列致命问题和重要问题。
@@ -94,7 +120,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 
 ## 8. 它会遵守的规则
 - `06-Data/raw` 与 `03-Literature/_sources` 只读；衍生数据只写 `06-Data/processed`。
-- 不删除、不移动、不重命名现有 Economicresearchwiki 笔记，除非你明确同意。
+- 不删除、不移动、不重命名库内原有笔记，除非你明确同意。
 - 不编造文献、DOI、法条、数据或结果；查不到就标“未核实”。
 - 区分相关与因果，先说 estimand 与假设。
 - 税法结论要给文号、日期、生效与废止状态。

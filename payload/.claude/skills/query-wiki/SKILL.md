@@ -1,6 +1,6 @@
 ---
 name: query-wiki
-description: "Answer a research question from the accumulated wiki with citations, separating wiki-sourced claims from inference, and offer to file the answer back as a note."
+description: "Answer a research question from the accumulated wiki with citations, separating wiki-sourced claims from inference, and offer to file the answer back as a note. Use for 知识库里有什么、库里有哪些证据、根据知识库回答、查一下我们已有的文献."
 argument-hint: "[question]"
 ---
 

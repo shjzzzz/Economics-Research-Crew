@@ -26,7 +26,7 @@
 | `Meta/` | `purpose`（方向）、`index`（目录）、`research-log`、`review-queue`、`source-registry`、研究规范 |
 | `MOC/` | 主题索引 |
 
-此外，根目录下原有的 Economicresearchwiki 税法资料保持原位，不移动、不重命名、不批量改写；它们是本地资料，不等于现行有效法规。
+此外，库内原有的税法资料保持原位，不移动、不重命名、不批量改写；它们是本地资料，不等于现行有效法规。
 
 ## 硬性规则
 1. `06-Data/raw` 与 `03-Literature/_sources` 不得修改或覆盖；衍生数据只写入 `06-Data/processed`。
@@ -51,8 +51,17 @@
 | `/ingest-source` | 摄入一个来源：先分析、确认后再写入 wiki | 文献笔记、index/日志/登记更新、矛盾进 review-queue |
 | `/query-wiki` | 基于已积累的 wiki 回答问题 | 带引用的回答，可回存为笔记 |
 | `/wiki-lint` | 知识库体检：断链、孤立页、溯源、矛盾、过时 | 错误/警告报告与下一步建议 |
+| `/research-pipeline` | 完整推进一个研究：分阶段、设关卡、Reviewer 质量闭环 | 阶段计划、项目状态 `PROJECT.md`、每阶段产出与决定记录 |
 
-## Agents（Claude 按分派规则委派，也可点名调用）
+## 路由规则
+1. 概念性、事实性的短问题：直接回答。
+2. 属于上表某个 Skill 的单项研究任务：**先用 Skill 工具调用该 Skill**，再按它的步骤做；不要自己凭经验做完、只在口头上提到 Skill。
+3. 完整研究、多阶段、“继续上次的研究”：调用 `/research-pipeline`。
+4. Agent 由 Skill 或 pipeline 在内部派出（一次一个）；调用 Skill 即视为我同意它派出其指定的 Agent。Skill 之外，只有我要求或点名时才派 Agent。
+5. 在本库内，本项目 Skill 优先于范围重叠的全局插件技能；除非我点名其他技能，或本项目没有对应 Skill（如排版、选刊）。
+6. 学术写作不在本项目范围内：由主会话完成，遵守证据与汇报规则。
+
+## Agents（由 Skill 或 pipeline 派出，也可点名调用）
 | Agent | 职责 | 工具 |
 |---|---|---|
 | `literature-agent` | 检索、抽取、比较、综合文献 | Read, Grep, Glob, WebSearch, WebFetch |
@@ -62,11 +71,11 @@
 | `causal-inference-agent` | 识别假设、威胁与稳健性设计 | Read, Grep, Glob, WebSearch, WebFetch, Write |
 | `academic-reviewer` | 独立审查，不改稿 | Read, Grep, Glob, WebSearch, WebFetch |
 
-仅在任务确实专业化、可并行或需要独立审查时委派；简单问题直接处理。启动超过 3 个并发 Agent 前先说明数量。
+同时运行多个 Agent 前先说明数量；超过 3 个须经我同意。质量闭环：研究 Agent 提方案 → `econometrics-agent` 执行 → `academic-reviewer` 质疑 → Director 与我决定是否接受；有致命问题不得接受。
 
 ## 知识库维护（wiki 约定）
 - 每次会话先读 `Meta/purpose.md`；内容为空或未填时提醒我填写，不要替我编造研究方向。
-- 新增页面的 frontmatter：`type`（literature|theory|method|synthesis|query|project）、`sources`（指向 `03-Literature/_sources` 或 DOI/URL）、`updated`、`verification`（verified|unverified）。
+- 新增页面的 frontmatter：`type`（literature|theory|method|synthesis|query|research-project|dataset|analysis-plan|analysis-log）、`sources`（指向 `03-Literature/_sources` 或 DOI/URL）、`updated`、`verification`（verified|unverified）。
 - 摄入一个来源会触及多个页面：先分析、我确认后再写；每次写入后更新 `Meta/index.md`，并在 `Meta/research-log.md` 追加 `## [日期] 类型 | 标题`。
 - 来源之间的矛盾并列写出并记入 `Meta/review-queue.md`，不要擅自裁决。
 - 有价值的回答经我同意后回存为笔记。定期运行 `/wiki-lint`。

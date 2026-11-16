@@ -6,7 +6,7 @@ Blocks (exit 2) modification of anything under 06-Data/raw and
 new raw material); overwriting/editing/deleting existing files is blocked.
 
 Limits (be honest): Write/Edit/MultiEdit/NotebookEdit are checked exactly.
-Bash is checked heuristically (destructive verbs, redirects, copy-to-dest
+Bash and PowerShell tool commands are checked heuristically (destructive verbs, redirects, copy-to-dest
 that mention a protected path); it cannot catch every shell construct.
 Fails open (exit 0) on malformed hook input.
 """
@@ -27,7 +27,8 @@ REDIRECT = re.compile(r"(?:^|[^<\d])>>?\s*[\"']?([^\s\"'|;&]+)")
 
 
 def norm(p):
-    return p.replace("\\", "/").lower()
+    # unify separators and collapse repeats ("06-Data\\raw", "06-Data//raw")
+    return re.sub(r"/+", "/", p.replace("\\", "/")).lower()
 
 
 def is_protected(path):
@@ -62,7 +63,7 @@ def main():
                   "write derived output to 06-Data/processed or a note instead." % (tool, fp))
         sys.exit(0)
 
-    if tool == "Bash":
+    if tool in ("Bash", "PowerShell"):
         cmd = ti.get("command", "") or ""
         n = norm(cmd)
         if not any(pr in n for pr in PROTECTED):

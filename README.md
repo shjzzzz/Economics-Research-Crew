@@ -3,7 +3,8 @@
 面向税收经济学、公共经济学、计量经济学与因果推断的 Claude Code 研究环境扩展。
 
 ## 设计
-- 6 个研究 Subagents、10 个 Skills（含 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
+- 6 个研究 Subagents、11 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
+- 路由规则与角色映射见 [docs/USAGE.md](docs/USAGE.md) 第 4 节。
 - 借鉴 llm_wiki 的“可积累 wiki”思路（purpose / index / log / 两步摄入 / lint）与 My-Brain-Is-Full-Crew 的 hooks 强制执行、安装器回归测试。
 - 不覆盖已有 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`；不安装 MCP、不启用上游 Hooks。
 - 不自动运行任何回归；脚本、数据、环境由研究者确认。
@@ -30,13 +31,14 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 
 ## 用法
-/research-question /literature-review /theory-modeling /tax-policy-analysis /causal-inference-audit /econometric-analysis /academic-review /ingest-source /query-wiki /wiki-lint
+/research-question /literature-review /theory-modeling /tax-policy-analysis /causal-inference-audit /econometric-analysis /academic-review /ingest-source /query-wiki /wiki-lint /research-pipeline
 
 ## 规范摘要
 原始数据只读；不删除文件；不虚构文献/法条/结果；区分相关与因果；结果必须关联脚本、数据版本与样本；法规核验时效。
 
 ## 验证流程
 1. `Test-EconomicsResearchCrew.ps1`：文件存在、frontmatter 合法（name/description）、agent 名与文件名一致、根 CLAUDE.md 含 import。
-2. 在 Claude Code 中运行 `/agents` 应列出 6 个 Agent；`/skills` 应列出 10 个 Skill。
-3. 回归测试：`powershell -NoProfile -File testsun.ps1` 与 `pwsh -NoProfile -File testsun.ps1`（需要 Python；全部在临时目录进行，不碰你的库）。
+2. 在 Claude Code 中运行 `/agents` 应列出 6 个 Agent；`/skills` 应列出 11 个 Skill。
+3. 回归测试：`powershell -NoProfile -File tests\run.ps1` 与 `pwsh -NoProfile -File tests\run.ps1`（需要 Python；全部在临时目录进行，不碰你的库）。
+   路由测试（消耗 Claude 额度）：`python tests/routing_eval.py --vault <装好本扩展的临时库>`。
 4. 冒烟测试：`/causal-inference-audit` 给一个 DID 设想，检查是否先问 estimand 而不是直接跑回归。

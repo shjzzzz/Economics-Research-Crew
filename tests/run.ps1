@@ -49,7 +49,7 @@ Ok ((Run-Install $v) -eq 0) "install exit 0"
 Ok ((Run-Check $v) -eq 0) "checker exit 0"
 $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
-Ok ($skillCount -eq 10) "10 skills (got $skillCount)"
+Ok ($skillCount -eq 11) "11 skills (got $skillCount)"
 Ok ($agentCount -eq 6) "6 agents (got $agentCount)"
 $tpl = [IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n").TrimEnd()
 $got = [IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n").TrimEnd()
@@ -91,8 +91,13 @@ $edited = (Get-Sha $skill)
 Ok ((Run-Install $v @("-Update")) -eq 0) "update exit 0"
 Ok ((Get-Sha $skill) -eq $edited) "edited file not overwritten"
 Ok (Test-Path "$skill.new") ".new copy created for differing file"
-$newCount = (Get-ChildItem $v -Recurse -Filter *.new -Force).Count
+$newCount = (Get-ChildItem $v -Recurse -Filter *.new -Force | Where-Object { $_.Name -ne "CLAUDE.md.new" }).Count
 Ok ($newCount -eq 1) "only the differing file got a .new (got $newCount)"
+Ok (-not (Test-Path (Join-Path $v "CLAUDE.md.new"))) "no CLAUDE.md.new when root CLAUDE.md equals template"
+$v5 = New-Vault
+[IO.File]::WriteAllText((Join-Path $v5 "CLAUDE.md"), "# old`n@.claude/ECONOMICS-RESEARCH.md`n", $enc)
+Run-Install $v5 @("-Update") | Out-Null
+Ok ((Test-Path (Join-Path $v5 "CLAUDE.md.new")) -and ([IO.File]::ReadAllText((Join-Path $v5 "CLAUDE.md"), $enc)).StartsWith("# old")) "-Update writes CLAUDE.md.new, keeps CLAUDE.md"
 
 # --- 6. -WithHooks merge ------------------------------------------------------
 Write-Host "[6] -WithHooks"
@@ -108,6 +113,13 @@ $h1 = (Get-Sha $sj)
 Run-Install $v6 @("-WithHooks") | Out-Null
 Ok ((Get-Sha $sj) -eq $h1) "second merge is idempotent"
 Ok ((Run-Check $v6) -eq 0) "checker exit 0 with hooks"
+Ok ($st.hooks.PreToolUse[0].matcher -match "PowerShell") "PreToolUse matcher covers PowerShell tool"
+# upgrade path: an old install whose matcher lacks PowerShell gets widened, not duplicated
+$old = '{"hooks":{"PreToolUse":[{"matcher":"Write|Edit|Bash","hooks":[{"type":"command","command":"python x/protect_raw.py"}]}]}}'
+[IO.File]::WriteAllText($sj, $old, $enc)
+Run-Install $v6 @("-WithHooks") | Out-Null
+$st2 = [IO.File]::ReadAllText($sj, $enc) | ConvertFrom-Json
+Ok (@($st2.hooks.PreToolUse).Count -eq 1 -and $st2.hooks.PreToolUse[0].matcher -match "PowerShell") "old matcher widened without duplicating hook"
 # without -WithHooks, settings.json is never touched
 $v6b = New-Vault
 New-Item -ItemType Directory (Join-Path $v6b ".claude") | Out-Null
@@ -142,6 +154,8 @@ Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="cp 
 Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="head -3 06-Data/raw/a.csv"}}) -eq 0) "Bash read of raw allowed"
 Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="cp 06-Data/raw/a.csv 06-Data/processed/a.csv"}}) -eq 0) "Bash copy FROM raw allowed"
 Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v; tool_input=@{command="rm tmp.txt"}}) -eq 0) "unrelated rm allowed"
+Ok ((Hook "protect_raw.py" @{tool_name="PowerShell"; cwd=$v; tool_input=@{command="Remove-Item .\06-Data\raw\a.csv"}}) -eq 2) "PowerShell TOOL Remove-Item raw blocked"
+Ok ((Hook "protect_raw.py" @{tool_name="PowerShell"; cwd=$v; tool_input=@{command="Get-Content .\06-Data\raw\a.csv"}}) -eq 0) "PowerShell TOOL read raw allowed"
 "not json" | & $py -X utf8 (Join-Path $payload ".claude\hooks\protect_raw.py") 2>$null
 Ok ($LASTEXITCODE -eq 0) "malformed input fails open"
 
@@ -179,6 +193,8 @@ Ok (@($j.findings | Where-Object { $_.check -eq "link" }).Count -ge 1) "broken w
 Ok (@($j.findings | Where-Object { $_.check -eq "sources" -and $_.level -eq "error" }).Count -ge 1) "unresolvable source found"
 Ok (@($j.findings | Where-Object { $_.check -eq "frontmatter" -and $_.level -eq "error" }).Count -ge 1) "unclosed frontmatter found"
 Ok (@($j.findings | Where-Object { $_.check -eq "orphan" }).Count -ge 1) "orphan page found"
+Ok (@($j.findings | Where-Object { $_.check -eq "orphan" -and $_.file -match "good|other" }).Count -eq 0) "pages linked from index/notes are not orphans"
+Ok (@($j.findings | Where-Object { $_.file -match "nofm" -and $_.check -eq "frontmatter" -and $_.level -eq "warning" }).Count -eq 0) "no follow-on warnings after frontmatter error"
 $legacy = Join-Path $v "旧税法笔记.md"
 [IO.File]::WriteAllText($legacy, "[[ghost]] no frontmatter", $enc)
 $out2 = (& $py -X utf8 $lint lint --vault $v --json) -join "`n"
@@ -191,7 +207,7 @@ Add-Content -LiteralPath (Join-Path $v "Meta\source-registry.md") -Value "| SRC-
 Ok ($LASTEXITCODE -eq 10) "registered source detected (exit 10)"
 
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$v3,$v4,$v6,$v6b,$v6c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

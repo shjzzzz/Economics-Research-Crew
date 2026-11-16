@@ -1,6 +1,6 @@
 ---
 name: ingest-source
-description: "Ingest one source (paper, report, legal document, data note) into the research wiki in two steps: analyze first, write only after the researcher approves."
+description: "Ingest one source (paper, report, legal document, data note) into the research wiki in two steps: analyze first, write only after the researcher approves. Use for 摄入文献、入库、把这篇论文加入知识库、处理 _sources 里的文件."
 argument-hint: "[path to a file under 03-Literature/_sources/]"
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: theory-modeling
-description: "Build or audit a formal economic model, mechanism, comparative statics and testable hypotheses."
+description: "Build or audit a formal economic model, mechanism, comparative statics and testable hypotheses. Use for 理论模型、建模、机制分析、均衡推导、比较静态、博弈模型、委托代理、研究假说."
 argument-hint: "[mechanism or research question]"
 ---
 

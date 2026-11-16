@@ -3,6 +3,7 @@ type: research-project
 project_id: ""
 title: ""
 status: idea
+stage: S1
 field: [Tax Economics, Public Economics]
 created: YYYY-MM-DD
 ---
@@ -21,3 +22,8 @@ created: YYYY-MM-DD
 # 12. Limitations
 # 13. Reproducibility
 # 14. Research log
+
+# 当前阶段与待决事项
+- 当前阶段：S1 问题
+- 已通过关卡：
+- 待决事项：

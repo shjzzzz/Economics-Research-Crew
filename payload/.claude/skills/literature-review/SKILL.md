@@ -1,6 +1,6 @@
 ---
 name: literature-review
-description: "Conduct a source-grounded literature review and evidence matrix for economics research."
+description: "Conduct a source-grounded literature review and evidence matrix for economics research. Use for 文献综述、梳理文献、国内外研究现状、研究缺口、文献矩阵、找文献."
 argument-hint: "[topic, question or scope]"
 ---
 
