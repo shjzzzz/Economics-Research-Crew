@@ -471,13 +471,30 @@ Ok ((PT @("--project","demo","refine","start",$d1)) -match "v0") "refine start s
 $vd = Join-Path $dr "versions"
 foreach ($n in "v1","v2") { Copy-Item (Join-Path $vd "v0.md") (Join-Path $vd "$n.md") }
 Ok ((PT @("--project","demo","refine","record","--version","v0","--fatal","1","--major","4","--scores","a=5,b=6")) -match "baseline") "baseline recorded"
-Ok ((PT @("--project","demo","refine","record","--version","v1","--fatal","1","--major","2","--scores","a=6,b=6")) -match "accept") "fewer Major -> accept"
-Ok ((PT @("--project","demo","refine","record","--version","v2","--fatal","2","--major","1","--scores","a=7,b=7")) -match "revert") "new Fatal -> revert even if scores rise"
+Ok ((PT @("--project","demo","refine","record","--version","v1","--fatal","1","--major","2","--scores","a=6,b=6")) -match "复评必须按基线清单") "re-review with direct counts is refused (baseline only)"
+Ok ((PT @("--project","demo","refine","record","--version","v1","--carried-fatal","1","--carried-major","2","--scores","a=6,b=6")) -match "accept") "fewer Major (checklist) -> accept"
+Ok ((PT @("--project","demo","refine","record","--version","v2","--carried-fatal","1","--new-fatal","1","--carried-major","1","--scores","a=7,b=7")) -match "revert") "new Fatal -> revert even if scores rise"
 Ok ((PT @("--project","demo","refine","status")) -match "当前采用：v1") "current version stays v1 after revert"
 Copy-Item (Join-Path $vd "v0.md") (Join-Path $vd "v3.md")
 Ok ((PT @("--project","demo","refine","record","--version","v3","--carried-fatal","0","--carried-major","1","--new-major","0","--scores","a=7,b=7")) -match "v3：accept") "checklist counts (carried+new) accepted when issues are resolved"
 [IO.File]::WriteAllText((Join-Path $dr "worklog-v9.md"), "未改动：[@zzz] 与 {{res:zzz}}`n", $enc)
 Ok ((PT @("--project","demo","report")) -notmatch "不在表中 [1-9]") "report ignores worklogs and versions"
+# refinement rule: regressions found in review (Fatal down but Major up, bad counts, dimension mismatch)
+$dr2 = Join-Path $v12 "01-Research-Projects\demo2\paper"
+New-Item -ItemType Directory -Force $dr2 | Out-Null
+[IO.File]::WriteAllText((Join-Path $dr2 "draft.md"), "draft`n", $enc)
+$null = PT @("--project","demo2","refine","start",(Join-Path $dr2 "draft.md"))
+foreach ($n in "v1","v2","v3") { Copy-Item (Join-Path $dr2 "versions\v0.md") (Join-Path $dr2 "versions\$n.md") }
+Ok ((PT @("--project","demo2","refine","record","--version","v0","--fatal","2","--major","2","--scores","a=5,b=5")) -match "baseline") "demo2 baseline recorded"
+Ok ((PT @("--project","demo2","refine","record","--version","v1","--carried-fatal","1","--carried-major","3","--scores","a=5,b=5")) -match "不能超过基线") "carried above baseline is refused"
+Ok ((PT @("--project","demo2","refine","record","--version","v1","--carried-fatal","1","--carried-major","2","--new-major","-1","--scores","a=5,b=5")) -match "不能为负") "negative count is refused"
+Ok ((PT @("--project","demo2","refine","record","--version","v1","--fatal","1","--major","1","--carried-fatal","0","--carried-major","0")) -match "只能二选一") "direct and checklist counts together are refused"
+$o = PT @("--project","demo2","refine","record","--version","v1","--carried-fatal","1","--carried-major","2","--new-major","3","--scores","a=5,b=5")
+Ok ($o -match "v1：revert") "Fatal down but Major up -> revert"
+$o = PT @("--project","demo2","refine","record","--version","v2","--carried-fatal","2","--carried-major","1","--scores","a=5")
+Ok ($o -match "v2：revert" -and $o -match "评分维度不一致") "missing score dimension -> revert (cannot compare)"
+$rv = [IO.File]::ReadAllText((Join-Path $dr2 "reviews.json"), $enc) | ConvertFrom-Json
+Ok ($rv.rounds[0].method -eq "direct" -and $rv.rounds[1].method -eq "checklist" -and $rv.rounds[1].carried.major -eq 2 -and $rv.current -eq "v0") "method labels recorded; reverts keep v0 as current"
 # protection + hook
 function G2([string]$Tool, [hashtable]$In) { $ErrorActionPreference = "Continue"
     $json = @{tool_name=$Tool; tool_input=$In; cwd=$v12} | ConvertTo-Json -Depth 5 -Compress

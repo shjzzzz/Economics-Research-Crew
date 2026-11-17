@@ -497,18 +497,22 @@ def parse_scores(s):
 
 
 def decide(prev, cur):
-    """Accept a revision only if it did not add Fatal problems and improved (fewer Major, or equal Major
-    with a total score not lower), and no single dimension dropped by 2 or more points."""
+    """Accept a revision only if Fatal did not increase AND either Major strictly decreased, or Major is equal
+    and the total score (same dimensions in both reviews) is not lower. Revert when the scored dimensions differ
+    (not comparable) or any dimension dropped by 2 or more points."""
     if cur["fatal"] > prev["fatal"]:
         return "revert", "Fatal 数增加（%d → %d）" % (prev["fatal"], cur["fatal"])
-    drops = [k for k in prev["scores"] if k in cur["scores"] and prev["scores"][k] - cur["scores"][k] >= 2]
+    if set(prev["scores"]) != set(cur["scores"]):
+        diff = sorted(set(prev["scores"]) ^ set(cur["scores"]))
+        return "revert", "两次评审的评分维度不一致，无法比较：" + ", ".join(diff)
+    drops = [k for k in prev["scores"] if prev["scores"][k] - cur["scores"][k] >= 2]
     if drops:
         return "revert", "维度分下降 ≥2：" + ", ".join(drops)
-    if cur["fatal"] < prev["fatal"] or cur["major"] < prev["major"]:
-        return "accept", "Fatal/Major 问题减少"
-    if cur["major"] == prev["major"] and sum(cur["scores"].values()) >= sum(prev["scores"].values()) and cur["scores"]:
-        return "accept", "问题数未增加且总分不低于上一版"
-    return "revert", "没有可确认的改进（Major %d → %d）" % (prev["major"], cur["major"])
+    if cur["major"] < prev["major"]:
+        return "accept", "Fatal 未增加，Major 减少（%d → %d）" % (prev["major"], cur["major"])
+    if cur["major"] == prev["major"] and cur["scores"] and sum(cur["scores"].values()) >= sum(prev["scores"].values()):
+        return "accept", "Fatal 与 Major 未增加，总分不低于上一采用版"
+    return "revert", "没有可确认的改进（Fatal %d → %d，Major %d → %d）" % (prev["fatal"], cur["fatal"], prev["major"], cur["major"])
 
 
 def cmd_refine_start(a):
@@ -543,18 +547,41 @@ def cmd_refine_record(a):
     # Two ways to report counts. Direct (--fatal/--major): a fresh independent count. Checklist
     # (--carried-* / --new-*): the reviewer re-checks the baseline's numbered issues and lists new ones, so
     # the counts are comparable across rounds even when a different reviewer instance does the re-review.
-    if a.fatal is None or a.major is None:
-        if None in (a.carried_fatal, a.carried_major):
-            sys.exit("给出 --fatal 和 --major，或给出 --carried-fatal 和 --carried-major（可加 --new-fatal / --new-major）。")
+    direct = a.fatal is not None or a.major is not None
+    checklist = any(x is not None for x in (a.carried_fatal, a.carried_major, a.new_fatal, a.new_major))
+    if direct and checklist:
+        sys.exit("直接计数（--fatal/--major）与清单计数（--carried-*/--new-*）只能二选一。")
+    if direct:
+        if a.fatal is None or a.major is None:
+            sys.exit("直接计数需要同时给出 --fatal 和 --major。")
+        if st["rounds"]:
+            sys.exit("复评必须按基线清单复核：请用 --carried-fatal/--carried-major（可加 --new-*），直接计数只用于基线。")
+    elif checklist:
+        if a.carried_fatal is None or a.carried_major is None:
+            sys.exit("清单计数需要同时给出 --carried-fatal 和 --carried-major（可加 --new-fatal / --new-major）。")
+        if not st["rounds"]:
+            sys.exit("基线没有可复核的上一轮清单，请用 --fatal/--major 直接计数。")
+    else:
+        sys.exit("给出 --fatal 和 --major，或给出 --carried-fatal 和 --carried-major（可加 --new-fatal / --new-major）。")
+    for name, val in (("fatal", a.fatal), ("major", a.major), ("minor", a.minor), ("carried-fatal", a.carried_fatal),
+                      ("carried-major", a.carried_major), ("new-fatal", a.new_fatal), ("new-major", a.new_major)):
+        if val is not None and val < 0:
+            sys.exit("--%s 不能为负数：%d" % (name, val))
+    base = next((r for r in st["rounds"] if r["version"] == st["current"]), None)
+    if checklist:
+        if a.carried_fatal > base["fatal"] or a.carried_major > base["major"]:
+            sys.exit("carried 不能超过基线（%s）的条数：Fatal %d、Major %d。" % (base["version"], base["fatal"], base["major"]))
         a.fatal = a.carried_fatal + (a.new_fatal or 0)
         a.major = a.carried_major + (a.new_major or 0)
     rec = {"version": ver, "fatal": a.fatal, "major": a.major, "minor": a.minor, "scores": parse_scores(a.scores),
-           "method": "checklist" if a.carried_major is not None else "direct", "note": a.note or "", "ts": now()}
+           "method": "checklist" if checklist else "direct", "note": a.note or "", "ts": now()}
+    if checklist:
+        rec["carried"] = {"fatal": a.carried_fatal, "major": a.carried_major}
+        rec["new"] = {"fatal": a.new_fatal or 0, "major": a.new_major or 0}
     if not st["rounds"]:
         rec["decision"], rec["reason"] = "baseline", "基线"
         st["current"] = ver
     else:
-        base = next(r for r in st["rounds"] if r["version"] == st["current"])
         rounds_done = len(st["rounds"]) - 1
         if rounds_done >= st["max_rounds"]:
             sys.exit("已达最多 %d 轮精修；交研究者在 C4 检查点决定。" % st["max_rounds"])

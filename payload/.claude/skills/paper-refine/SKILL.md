@@ -19,7 +19,8 @@ argument-hint: "[project folder / draft path]"
    - 评审要求的新实验、新稳健性、新基线：**不要忽略，也不要自己做**，逐条追加到 `Meta/review-queue.md`（标“需要新分析，待研究者决定”）。
    - 每轮写 `paper/worklog-vN.md`：回应了哪些弱点、整合了哪些答案、做了哪些改动。
 4. 对新版本再次评审。**必须按基线清单逐条复核**（已解决 / 部分 / 仍存在），再单独列出**新增**问题，不要重新数一遍；最好用 `SendMessage` 让同一个 reviewer 复评以保持口径。不同 reviewer 各自独立数条数不可比（冒烟测试中 Major 4→6 就是口径差异）。登记：`paper_tools.py refine record --version v1 --carried-fatal a --carried-major b --new-fatal c --new-major d --minor m --scores ...`（仍存在与部分解决的计入 carried）。脚本给出**接受 / 回退**：
-   - 接受条件：Fatal 数不增加，且 Major 数下降，或 Major 持平而总分不低于上一采用版；任何维度下降 ≥2 分一律回退。
+   - 接受条件：Fatal 数不增加，且 Major 数严格下降，或 Major 持平而总分不低于上一采用版；Fatal 下降但 Major 上升一律回退；任何维度下降 ≥2 分一律回退；两次评审的评分维度必须完全一致，否则无法比较、一律回退。
+   - 复评只接受清单计数（`--carried-*`/`--new-*`），直接计数只用于基线；`carried` 不能超过基线条数，计数不能为负。
    - 回退时：当前采用版本不变，**回到该版本再改**，不要在被回退的版本上继续。
 5. 停止：3 轮用完、Fatal 与 Major 都为 0，或连续回退。`paper_tools.py refine status` 查看轨迹。
 
