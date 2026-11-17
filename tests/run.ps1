@@ -474,6 +474,10 @@ Ok ((PT @("--project","demo","refine","record","--version","v0","--fatal","1","-
 Ok ((PT @("--project","demo","refine","record","--version","v1","--fatal","1","--major","2","--scores","a=6,b=6")) -match "accept") "fewer Major -> accept"
 Ok ((PT @("--project","demo","refine","record","--version","v2","--fatal","2","--major","1","--scores","a=7,b=7")) -match "revert") "new Fatal -> revert even if scores rise"
 Ok ((PT @("--project","demo","refine","status")) -match "当前采用：v1") "current version stays v1 after revert"
+Copy-Item (Join-Path $vd "v0.md") (Join-Path $vd "v3.md")
+Ok ((PT @("--project","demo","refine","record","--version","v3","--carried-fatal","0","--carried-major","1","--new-major","0","--scores","a=7,b=7")) -match "v3：accept") "checklist counts (carried+new) accepted when issues are resolved"
+[IO.File]::WriteAllText((Join-Path $dr "worklog-v9.md"), "未改动：[@zzz] 与 {{res:zzz}}`n", $enc)
+Ok ((PT @("--project","demo","report")) -notmatch "不在表中 [1-9]") "report ignores worklogs and versions"
 # protection + hook
 function G2([string]$Tool, [hashtable]$In) { $ErrorActionPreference = "Continue"
     $json = @{tool_name=$Tool; tool_input=$In; cwd=$v12} | ConvertTo-Json -Depth 5 -Compress

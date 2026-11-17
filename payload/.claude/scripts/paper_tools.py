@@ -540,8 +540,16 @@ def cmd_refine_record(a):
         sys.exit("找不到 versions/%s.md" % ver)
     if any(r["version"] == ver for r in st["rounds"]):
         sys.exit("%s 已登记过评审。" % ver)
+    # Two ways to report counts. Direct (--fatal/--major): a fresh independent count. Checklist
+    # (--carried-* / --new-*): the reviewer re-checks the baseline's numbered issues and lists new ones, so
+    # the counts are comparable across rounds even when a different reviewer instance does the re-review.
+    if a.fatal is None or a.major is None:
+        if None in (a.carried_fatal, a.carried_major):
+            sys.exit("给出 --fatal 和 --major，或给出 --carried-fatal 和 --carried-major（可加 --new-fatal / --new-major）。")
+        a.fatal = a.carried_fatal + (a.new_fatal or 0)
+        a.major = a.carried_major + (a.new_major or 0)
     rec = {"version": ver, "fatal": a.fatal, "major": a.major, "minor": a.minor, "scores": parse_scores(a.scores),
-           "note": a.note or "", "ts": now()}
+           "method": "checklist" if a.carried_major is not None else "direct", "note": a.note or "", "ts": now()}
     if not st["rounds"]:
         rec["decision"], rec["reason"] = "baseline", "基线"
         st["current"] = ver
@@ -605,8 +613,8 @@ def cmd_report(a):
         pass
     drafts = []
     if pd and os.path.isdir(pd):
-        for root, _, fs in os.walk(pd):
-            drafts += [os.path.join(root, f) for f in fs if f.endswith(".md")]
+        # only the live manuscript files: versions/ and worklogs quote keys and ids in prose
+        drafts = [os.path.join(pd, f) for f in ("outline.md", "draft.md", "final.md") if os.path.isfile(os.path.join(pd, f))]
     cited = set()
     unknown, linked, bare, openq = 0, 0, 0, 0
     for f in drafts:
@@ -674,7 +682,9 @@ def main(argv=None):
     f = top.add_parser("refine").add_subparsers(dest="cmd", required=True)
     p = f.add_parser("start"); p.add_argument("draft"); p.set_defaults(f=cmd_refine_start)
     p = f.add_parser("record"); p.add_argument("--version", required=True)
-    p.add_argument("--fatal", type=int, required=True); p.add_argument("--major", type=int, required=True)
+    p.add_argument("--fatal", type=int); p.add_argument("--major", type=int)
+    p.add_argument("--carried-fatal", type=int); p.add_argument("--carried-major", type=int)
+    p.add_argument("--new-fatal", type=int); p.add_argument("--new-major", type=int)
     p.add_argument("--minor", type=int, default=0); p.add_argument("--scores", default=""); p.add_argument("--note")
     p.set_defaults(f=cmd_refine_record)
     p = f.add_parser("status"); p.set_defaults(f=cmd_refine_status)
