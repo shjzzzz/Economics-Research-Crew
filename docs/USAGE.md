@@ -145,6 +145,13 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 - 如果被 hook 拦住而你确认是残留记录：`orchestrator.py recover`；要临时关闭拦截：`orchestrator.py enforce off`（仍会记录）。
 - 派出 Agent 的交接单模板：`Templates/handoff.md`（只给产物路径，不给推理，保持独立审查）。
 
+## 9c. 论文写作：大纲、引文、成稿、精修
+1. `/paper-outline` 产出 `paper/outline.md`（主张清单：每条主张的证据 id 与允许的措辞强度）。
+2. 登记结果：`python .claude/scripts/paper_tools.py results import <csv> --prefix t2` 或 `results register`；登记引文：`cite add --key k --title "…" --year Y [--doi D]`，状态为 verified / mismatch / unverified / manual；`cite confirm` 由研究者人工确认（会触发权限提示）。
+3. `/paper-draft` 只用引文表与结果登记簿写作；`cite check`、`results check`、`questions` 检查草稿。
+4. `/paper-refine`：评审→修改→`refine record` 给出接受/回退，最多 3 轮；需要新分析的意见进入 `Meta/review-queue.md`。
+5. `paper_tools.py report` 查看已核验引文率、数字链接率、未答问题数。
+
 ## 9b. 在 Antigravity（agy）或 Codex CLI 中使用
 - 安装：`-Platform auto` 会自动为本机已有的 CLI 生成文件；也可用 `-Platform agy` / `codex` / `all` 指定。
 - 规则在研究库根目录 `AGENTS.md` 的 `ERC:BEGIN … ERC:END` 区块里，内容与 `CLAUDE.md` 一致；Skills 在 `.agents/skills/`，Agent 说明在 `.agents/agents/`，脚本在 `.agents/scripts/`。

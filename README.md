@@ -29,6 +29,14 @@ Set-ExecutionPolicy -Scope Process Bypass
 - **Claude Code 下的强制（`-WithHooks`）：** 不能派出后续阶段的 Agent、重试（每个 Agent 每阶段最多 2 次）用尽后不能再派、同时运行数不得超过阶段上限（默认 1，S3 为 2，硬上限 3）；直接编辑 `STATE.json` / 账本会被拦。`orchestrator.py enforce off` 可关闭拦截，`recover` 清理残留记录。
 - agy / Codex 没有这层 hook，命令照常可用，规则靠遵守。
 
+### 论文写作与人机协作（S8–S12）
+借鉴 PaperOrchestra 的思路（只借想法，不含其代码）：写作输入受限，引文与数字机械地可追溯。
+- 流程：大纲 `/paper-outline` → 引文 → 成稿 `/paper-draft` → 精修 `/paper-refine`（最多 3 轮，改进才接受）→ 终检；每步有研究者检查点 C1–C5，规则见 `Meta/collaboration-protocol.md`。
+- `paper_tools.py`：引文表（Crossref 联网核验，**只发送被引文献的标题/DOI，不发送研究内容**；中文文献与法规文件标为人工核验，法规须写文号与生效日期；`--offline` 或 `ERC_OFFLINE=1` 可关闭）、结果登记簿（正文数字写成 `{{res:id}}`）、精修判定、`report` 指标。
+- 稿内标记：引用 `[@key]`、数字 `{{res:id}}`、AI 提问 `⟦问：…⟧`、研究者回答 `⟦答：…⟧`。
+- 期刊模板 `Templates/venues/` 只给通用章节骨架，篇幅与格式要求须由研究者对照官网核对；`Meta/mechanism-library.md` 的参考文献全部标“待核实”。
+- 源稿为 Markdown，可用 pandoc 导出 docx / LaTeX（`paper_tools.py cite bib` 生成 BibTeX）。
+
 ### 多平台（自适应）
 `-Platform auto`（默认）检测本机已安装的 `claude`、`agy`、`codex`，只为检测到的平台生成文件；都没检测到时安装 Claude Code 版。`payload/.claude/` 是唯一源，其他平台的文件在安装时生成（需要 python）。
 

@@ -9,7 +9,7 @@
 3. 完整研究、多阶段、“继续上次的研究”：调用 `/research-pipeline`。
 4. Agent 由 Skill 或 pipeline 在内部派出（一次一个）；调用 Skill 即视为我同意它派出其指定的 Agent。Skill 之外，只有我要求或点名时才派 Agent。
 5. 在本库内，本项目 Skill 优先于范围重叠的全局插件技能；除非我点名其他技能，或本项目没有对应 Skill（如排版、选刊）。
-6. 学术写作不在本项目范围内：由主会话完成，遵守证据与汇报规则。
+6. 论文写作：大纲用 `/paper-outline`，成稿用 `/paper-draft`，精修用 `/paper-refine`；引文只用 `[@key]`（须在引文表）、数字只用 `{{res:id}}`（须在结果登记簿），不确定就用 `⟦问：…⟧` 问我，协作规则见 `Meta/collaboration-protocol.md`。
 
 ## 工作区定位
 - 用户是经济学研究者与教师；Claude 的职责是研究协作者，而不是结论的最终裁决者。学术判断由研究者负责。
@@ -60,6 +60,9 @@
 | `/ingest-source` | 摄入一个来源：先分析、确认后再写入 wiki | 文献笔记、index/日志/登记更新、矛盾进 review-queue |
 | `/query-wiki` | 基于已积累的 wiki 回答问题 | 带引用的回答，可回存为笔记 |
 | `/wiki-lint` | 知识库体检：断链、孤立页、溯源、矛盾、过时 | 错误/警告报告与下一步建议 |
+| `/paper-outline` | 把冻结的研究产物变成论文架构：主张清单、章节计划、文献布局 | `paper/outline.md`（主张—证据—措辞强度） |
+| `/paper-draft` | 依据大纲分节写作；只用引文表与结果登记簿 | `paper/draft.md`、主张—证据对照表 |
+| `/paper-refine` | 评审—修改—接受/回退，最多 3 轮 | `paper/versions/`、`reviews.json`、`final.md` |
 | `/research-pipeline` | 完整推进一个研究：分阶段、设关卡、Reviewer 质量闭环 | 阶段计划、项目状态 `PROJECT.md`、每阶段产出与决定记录 |
 
 ## Agents（由 Skill 或 pipeline 派出，也可点名调用）
@@ -71,6 +74,7 @@
 | `econometrics-agent` | 数据审计、估计实现与输出核对 | Read, Grep, Glob, Bash, Write, Edit |
 | `causal-inference-agent` | 识别假设、威胁与稳健性设计 | Read, Grep, Glob, WebSearch, WebFetch, Write |
 | `academic-reviewer` | 独立审查，不改稿 | Read, Grep, Glob, WebSearch, WebFetch |
+| `paper-writer-agent` | 在隔离上下文中写作或修改论文的一部分 | Read, Write, Edit, Grep, Glob |
 
 同时运行多个 Agent 前先说明数量；超过 3 个须经我同意。质量闭环：研究 Agent 提方案 → `econometrics-agent` 执行 → `academic-reviewer` 质疑 → Director 与我决定是否接受；有致命问题不得接受。
 

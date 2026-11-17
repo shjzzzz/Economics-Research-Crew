@@ -2,8 +2,8 @@
 param([string]$VaultPath = "D:\Economicresearchwiki")
 $ErrorActionPreference = "Stop"
 $VaultPath = [System.IO.Path]::GetFullPath($VaultPath)
-$agents = "literature-agent","theory-agent","tax-policy-agent","econometrics-agent","causal-inference-agent","academic-reviewer"
-$skills = "research-question","literature-review","theory-modeling","tax-policy-analysis","causal-inference-audit","econometric-analysis","academic-review","ingest-source","query-wiki","wiki-lint","research-pipeline"
+$agents = "literature-agent","theory-agent","tax-policy-agent","econometrics-agent","causal-inference-agent","academic-reviewer","paper-writer-agent"
+$skills = "research-question","literature-review","theory-modeling","tax-policy-analysis","causal-inference-audit","econometric-analysis","academic-review","ingest-source","query-wiki","wiki-lint","research-pipeline","paper-outline","paper-draft","paper-refine"
 $errors = @()
 function Get-Front([string]$Path) {
     $t = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
@@ -39,7 +39,7 @@ foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Pat
 
 if ($hasClaude) {
     Test-Defs ".claude"
-    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\pipeline-stages.json","Templates\handoff.md") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
+    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Meta\collaboration-protocol.md") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
     $rc = Join-Path $VaultPath "CLAUDE.md"
     if (-not (Test-Path $rc) -or (Get-Content $rc -Raw) -notmatch [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md")) { $errors += "根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md" }
     $sj = Join-Path $VaultPath ".claude\settings.json"
@@ -52,7 +52,7 @@ if ($hasClaude) {
 }
 if ($hasAgents) {
     Test-Defs ".agents"
-    foreach ($m in ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\pipeline-stages.json") {
+    foreach ($m in ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\scripts\paper_tools.py",".agents\pipeline-stages.json") {
         if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" }
     }
     $am = Join-Path $VaultPath "AGENTS.md"

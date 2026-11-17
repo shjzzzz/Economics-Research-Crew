@@ -36,10 +36,13 @@ Decide in this order and act; do not ask which tool to use.
 | 04 Econometrics | `/econometric-analysis`, `econometrics-agent`; identification by `/causal-inference-audit`, `causal-inference-agent` |
 | 05 Tax research | `/tax-policy-analysis`, `tax-policy-agent` |
 | 06 Code replication | `/econometric-analysis` replication & code-audit mode |
-| 07 Academic writing | Out of scope for this package: the main session writes, under the Output and evidence rules; installed writing skills may be used if the researcher wants |
+| 07 Academic writing | `/paper-outline`, `/paper-draft`, `/paper-refine`, `paper-writer-agent`; citations and numbers are mechanically tied to `Meta/citation-map.json` and `Meta/results-ledger.json` via `paper_tools.py`; collaboration rules in `Meta/collaboration-protocol.md` |
 | 08 Academic review | `/academic-review`, `academic-reviewer` (independent context) |
 
 Quality loop: proposal (research agents) -> execution (`econometrics-agent`) -> challenge (`academic-reviewer`) -> decision (Director + researcher). A Fatal Flaw blocks acceptance.
+
+### Paper writing and human-AI collaboration
+Stages S8-S12 (outline, citations, draft, refine, final check) follow `Meta/collaboration-protocol.md`: autonomy levels A0-A3 and researcher checkpoints C1-C5. Draft citations are `[@key]` and only keys in `Meta/citation-map.json` are allowed; numbers are `{{res:id}}` from `Meta/results-ledger.json`; the AI asks with `⟦问：…⟧` instead of inventing. A revision is accepted only if it did not add Fatal problems and reduced Major ones (`paper_tools.py refine record`); requests for new analysis go to `Meta/review-queue.md` for the researcher. The AI never decides identification strategy or causal wording strength, never invents sources, data or results, and never decides submission. Behavioral mechanisms are starting points from `Meta/mechanism-library.md`, not evidence.
 
 ### Orchestration layer (whole projects)
 `/research-pipeline` keeps project state in `01-Research-Projects/<project>/STATE.json` and a run ledger in `Meta/run-ledger.jsonl`, both modified only through `python .claude/scripts/orchestrator.py` (`init`, `status`, `next`, `artifact`, `verify`, `gate`, `fail`, `recover`). Only the researcher decides a gate: never run `gate --decision pass` on your own judgment. Each Agent gets at most 2 retries per stage, then stop and report. In Claude Code, hooks block skipping stages, exhausted retries and parallel dispatch beyond the stage limit.

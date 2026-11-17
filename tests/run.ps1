@@ -52,8 +52,8 @@ Ok ((Run-Install $v) -eq 0) "install exit 0"
 Ok ((Run-Check $v) -eq 0) "checker exit 0"
 $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
-Ok ($skillCount -eq 11) "11 skills (got $skillCount)"
-Ok ($agentCount -eq 6) "6 agents (got $agentCount)"
+Ok ($skillCount -eq 14) "14 skills (got $skillCount)"
+Ok ($agentCount -eq 7) "7 agents (got $agentCount)"
 $tpl = [IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n").TrimEnd()
 $got = [IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n").TrimEnd()
 Ok ($got -eq $tpl) "root CLAUDE.md equals template (UTF-8, no mojibake)"
@@ -240,11 +240,11 @@ Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform in
 Ok ((Run-Check $v10) -eq 0) "checker passes for all platforms"
 Ok ((Test-Path (Join-Path $v10 "CLAUDE.md")) -and (Test-Path (Join-Path $v10 ".claude\skills"))) "Claude files present"
 $sk = @(Get-ChildItem (Join-Path $v10 ".agents\skills") -Directory)
-Ok ($sk.Count -eq 11) ".agents has 11 skills (got $($sk.Count))"
+Ok ($sk.Count -eq 14) ".agents has 14 skills (got $($sk.Count))"
 $badName = @($sk | Where-Object { ([IO.File]::ReadAllText((Join-Path $_.FullName "SKILL.md"), $enc)) -notmatch ("(?m)^name:\s*" + [regex]::Escape($_.Name) + "\s*$") })
 Ok ($badName.Count -eq 0) "every SKILL.md name equals its folder"
 $ag = @(Get-ChildItem (Join-Path $v10 ".agents\agents") -Filter *.md)
-Ok ($ag.Count -eq 6 -and @($ag | Where-Object { ([IO.File]::ReadAllText($_.FullName, $enc)) -notmatch "(?m)^subagent: true" }).Count -eq 0) "6 agy subagents with subagent: true"
+Ok ($ag.Count -eq 7 -and @($ag | Where-Object { ([IO.File]::ReadAllText($_.FullName, $enc)) -notmatch "(?m)^subagent: true" }).Count -eq 0) "7 agy subagents with subagent: true"
 $am = [IO.File]::ReadAllText((Join-Path $v10 "AGENTS.md"), $enc)
 Ok ([IO.File]::ReadAllBytes((Join-Path $v10 "AGENTS.md")).Length -le 24000) "AGENTS.md within 24,000 bytes"
 Ok ($am -match "ERC:BEGIN" -and $am -notmatch "(?m)^@\.claude/" -and $am -match "\.agents/scripts/wiki_lint\.py" -and $am -notmatch "Skill 工具") "AGENTS.md self-contained, paths and wording rewritten"
@@ -425,8 +425,97 @@ Ok ($LASTEXITCODE -eq 0) ".agents orchestrator runs (finds .agents/pipeline-stag
 $sk = [IO.File]::ReadAllText((Join-Path $v11b ".agents\skills\research-pipeline\SKILL.md"), $enc)
 Ok ($sk -match "\.agents/scripts/orchestrator\.py" -and $sk -notmatch "\.claude/scripts") "agy research-pipeline skill points to .agents/scripts"
 
+# --- 12. paper architecture (paper_tools, stages S8-S12, validate_paper) -------------
+Write-Host "[12] paper architecture"
+$v12 = New-Vault
+Ok ((Run-Install $v12 @("-Platform","all","-WithHooks")) -eq 0 -and (Run-Check $v12) -eq 0) "install + checker pass with paper files"
+$pt = Join-Path $v12 ".claude\scripts\paper_tools.py"
+$mock = Join-Path $v12 "mock.json"
+$mockObj = [ordered]@{ "title:salience and taxation theory and evidence" = @(@{doi="10.1257/aer.99.4.1145"; title="Salience and Taxation: Theory and Evidence"; year=2009; venue="AER"; authors=@("Raj Chetty")}) ;
+    "doi:10.0/wrong" = @(@{doi="10.0/wrong"; title="Some Other Paper"; year=2001; venue="X"; authors=@()}) }
+[IO.File]::WriteAllText($mock, ($mockObj | ConvertTo-Json -Depth 6), $enc)
+function PT([string[]]$A) { $ErrorActionPreference = "Continue"; $env:ERC_CROSSREF_MOCK = $mock; $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+    try { $o = ((& $py -X utf8 $pt --vault $v12 @A 2>&1) -join "`n"); return "$o|rc=$LASTEXITCODE" } finally { [Console]::OutputEncoding = $prev; Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue } }
+Ok ((PT @("cite","add","--key","chetty2009","--title","Salience and Taxation: Theory and Evidence","--year","2009")) -match "verified") "cite add: matching Crossref record -> verified"
+Ok ((PT @("cite","add","--key","bad1","--title","Salience and Taxation: Theory and Evidence","--year","2009","--doi","10.0/wrong")) -match "mismatch") "cite add: DOI pointing to another title -> mismatch"
+Ok ((PT @("cite","add","--key","ghostpaper","--title","Totally Invented Paper","--year","2015")) -match "unverified") "cite add: unknown work -> unverified"
+Ok ((PT @("cite","add","--key","zh1","--title","某中文文献","--type","chinese")) -match "manual") "Chinese literature -> manual"
+Ok ((PT @("cite","add","--key","law1","--title","某通知","--type","legal")) -match "文号") "legal source without doc number refused"
+Ok ((PT @("cite","add","--key","law1","--title","某通知","--type","legal","--doc-no","X号","--effective","2020-01-01")) -match "manual") "legal source with doc number and date accepted (manual)"
+Ok ((PT @("cite","add","--key","off1","--title","Salience and Taxation: Theory and Evidence","--offline")) -match "unverified") "--offline never queries Crossref"
+Ok ((PT @("cite","confirm","--key","zh1")) -match "rc=1") "confirm without --note refused"
+Ok ((PT @("cite","confirm","--key","zh1","--note","已在知网核对原文")) -match "已由研究者确认") "researcher confirm works with note"
+$res = Join-Path $v12 "06-Data\processed\t.csv"
+New-Item -ItemType Directory -Force (Split-Path $res) | Out-Null
+[IO.File]::WriteAllText($res, "row,coef`nDID,-0.12345`n", $enc)
+Ok ((PT @("results","import","06-Data\processed\t.csv","--prefix","t2")) -match "已登记 1") "results import registers cells"
+Ok ((PT @("results","register","--id","n","--value","1000","--source","06-Data\processed\t.csv")) -match "n = 1000") "results register with source"
+$dr = Join-Path $v12 "01-Research-Projects\demo\paper"
+New-Item -ItemType Directory -Force $dr | Out-Null
+$d1 = Join-Path $dr "draft.md"
+[IO.File]::WriteAllText($d1, "系数为 {{res:t2.DID.coef:3}}，样本 {{res:n}} [@chetty2009; @zh1]。`n⟦问：是否加机制检验？⟧`n", $enc)
+Ok ((PT @("cite","check",$d1)) -match "rc=0") "cite check passes when all keys are in the table"
+Ok ((PT @("results","check",$d1)) -match "错误 0") "results check passes for registered ids"
+Ok ((PT @("questions",$d1)) -match "rc=1") "unanswered researcher question detected"
+Ok ((PT @("results","render",$d1,"-o",(Join-Path $dr "r.md"))) -match "rc=0" -and ([IO.File]::ReadAllText((Join-Path $dr "r.md"), $enc) -match "系数为 -0\.123，")) "render fills placeholders with requested decimals"
+$d2 = Join-Path $dr "bad.md"
+[IO.File]::WriteAllText($d2, "引用 [@nobody2000]，数字 {{res:nope}}，另有 0.045 与 12.5% 未链接。`n", $enc)
+$o = PT @("cite","check",$d2); Ok ($o -match "rc=1" -and $o -match "nobody2000") "unknown citation key is an error"
+$o = PT @("results","check",$d2); Ok ($o -match "rc=1" -and $o -match "nope" -and $o -match "没有链接") "unknown result id is an error; bare statistics warned"
+Ok ((PT @("cite","check",$d1,"--strict")) -match "rc=0") "--strict passes when every cited work is verified or confirmed"
+# source change makes a result stale
+[IO.File]::WriteAllText($res, "row,coef`nDID,-0.99`n", $enc)
+Ok ((PT @("results","check",$d1)) -match "已变化") "changed source file flags stale results"
+# refinement rule
+Ok ((PT @("--project","demo","refine","start",$d1)) -match "v0") "refine start snapshots v0"
+$vd = Join-Path $dr "versions"
+foreach ($n in "v1","v2") { Copy-Item (Join-Path $vd "v0.md") (Join-Path $vd "$n.md") }
+Ok ((PT @("--project","demo","refine","record","--version","v0","--fatal","1","--major","4","--scores","a=5,b=6")) -match "baseline") "baseline recorded"
+Ok ((PT @("--project","demo","refine","record","--version","v1","--fatal","1","--major","2","--scores","a=6,b=6")) -match "accept") "fewer Major -> accept"
+Ok ((PT @("--project","demo","refine","record","--version","v2","--fatal","2","--major","1","--scores","a=7,b=7")) -match "revert") "new Fatal -> revert even if scores rise"
+Ok ((PT @("--project","demo","refine","status")) -match "当前采用：v1") "current version stays v1 after revert"
+# protection + hook
+function G2([string]$Tool, [hashtable]$In) { $ErrorActionPreference = "Continue"
+    $json = @{tool_name=$Tool; tool_input=$In; cwd=$v12} | ConvertTo-Json -Depth 5 -Compress
+    $out = $json | & $py (Join-Path $v12 ".claude\hooks\orchestrator_guard.py") 2>$null; return "$(($out -join ' '))|rc=$LASTEXITCODE" }
+Ok ((G2 "Write" @{file_path=(Join-Path $v12 "Meta\citation-map.json")}) -match "rc=2") "direct write of citation-map.json blocked"
+Ok ((G2 "Edit" @{file_path=(Join-Path $v12 "Meta\results-ledger.json")}) -match "rc=2") "direct edit of results-ledger.json blocked"
+Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite confirm --key a --note x"}) -match "permissionDecision.*ask") "cite confirm via Bash forces a permission prompt"
+Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite list"}) -match "^\|rc=0") "cite list not prompted"
+function VP([string]$File) { $ErrorActionPreference = "Continue"
+    $json = @{tool_name="Write"; tool_input=@{file_path=$File}; cwd=$v12} | ConvertTo-Json -Depth 5 -Compress
+    $out = $json | & $py (Join-Path $v12 ".claude\hooks\validate_paper.py") 2>&1; return "$(($out -join ' '))|rc=$LASTEXITCODE" }
+Ok ((VP $d2) -match "rc=2" -and (VP $d2) -match "nobody2000") "validate_paper warns on unknown citation key in a draft"
+Ok ((VP $d1) -match "rc=0") "validate_paper silent on a clean draft"
+Ok ((VP (Join-Path $v12 "Meta\note.md")) -match "rc=0") "validate_paper ignores non-paper files"
+# stage definitions
+$cfg = [IO.File]::ReadAllText((Join-Path $v12 ".claude\pipeline-stages.json"), $enc) | ConvertFrom-Json
+Ok (($cfg.stages.id -join ",") -eq "S1,S2,S3,S4,S5,S6,S7,S8,S9,S10,S11,S12") "stages S1..S12 defined"
+# stage S10 verify uses the citation check
+$orc12 = Join-Path $v12 ".claude\scripts\orchestrator.py"
+function O12([string[]]$A) { $ErrorActionPreference = "Continue"; $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+    try { $o = ((& $py -X utf8 $orc12 --vault $v12 @A 2>&1) -join "`n"); return "$o|rc=$LASTEXITCODE" } finally { [Console]::OutputEncoding = $prev } }
+$null = O12 @("init","01-Research-Projects\demo")
+$stFile = Join-Path $v12 "01-Research-Projects\demo\STATE.json"
+$stj = [IO.File]::ReadAllText($stFile, $enc) | ConvertFrom-Json
+$stj.stage = "S10"; $stj.stages.S10.status = "in_progress"; foreach ($i in 1..9) { $stj.stages."S$i".status = "passed" }
+[IO.File]::WriteAllText($stFile, ($stj | ConvertTo-Json -Depth 8), $enc)
+$null = O12 @("artifact","01-Research-Projects\demo\paper\bad.md")
+Ok ((O12 @("verify")) -match "不在引文表中|rc=1") "S10 verify fails for a draft with unknown citation key"
+# routing
+function Hint([string]$P) { $j = @{prompt=$P} | ConvertTo-Json -Compress; $b = $enc.GetBytes($j)
+    $psi = New-Object Diagnostics.ProcessStartInfo $py, ("`"" + (Join-Path $v12 ".claude\hooks\routing_hint.py") + "`""); $psi.RedirectStandardInput = $true; $psi.RedirectStandardOutput = $true; $psi.UseShellExecute = $false; $psi.StandardOutputEncoding = $enc
+    $pr = [Diagnostics.Process]::Start($psi); $pr.StandardInput.BaseStream.Write($b, 0, $b.Length); $pr.StandardInput.Close(); $o = $pr.StandardOutput.ReadToEnd(); $pr.WaitForExit(); return $o }
+Ok ((Hint "把大纲写成论文初稿") -match "paper-draft") "routing: draft request -> paper-draft"
+Ok ((Hint "写论文大纲和主张清单") -match "paper-outline") "routing: outline request -> paper-outline"
+Ok ((Hint "按审稿意见修改稿件") -match "paper-refine") "routing: revise request -> paper-refine"
+# agy build includes new pieces
+Ok ((Test-Path (Join-Path $v12 ".agents\skills\paper-draft\SKILL.md")) -and (Test-Path (Join-Path $v12 ".agents\agents\paper-writer-agent.md"))) "agy gets paper skills and agent"
+Ok ((Get-Item (Join-Path $v12 "AGENTS.md")).Length -le 24000) "AGENTS.md still within 24000 bytes"
+Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

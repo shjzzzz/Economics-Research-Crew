@@ -26,7 +26,11 @@ argument-hint: "[research topic, or project folder to resume]"
 | S5 执行 | `econometrics-agent` | 代码、样本核算、结果表、日志（`Templates/analysis-log.md`） | 是否按计划执行？偏离是否记录？ |
 | S6 独立审查 | `academic-reviewer`（独立上下文） | Fatal / Major / Minor / 修改建议 | — |
 | S7 决定 | Research Director + 研究者 | 接受 / 退回到某阶段 / 停止 | 致命问题是否已解决？ |
-| S8 报告 | 主会话（可借助已安装的写作类技能） | 研究报告/论文草稿，含局限与复现说明 | 主张是否不超过证据？ |
+| S8 论文大纲 | `/paper-outline` | `paper/outline.md`：主张清单（含证据与措辞强度）、章节计划、文献布局 | C1：主张与结构是否确定？ |
+| S9 引文 | `/literature-review` + `paper_tools.py cite` | 引文表 `Meta/citation-map.json`（核验状态）、`paper/citations.bib` | C2：引文表是否可接受？ |
+| S10 成稿 | `/paper-draft`（长节可派 `paper-writer-agent`） | `paper/draft.md`，引用只用引文键、数字只用结果登记簿 | C3：主张—证据对照是否准确？ |
+| S11 精修 | `/paper-refine`（评审用 `academic-reviewer`） | `paper/versions/`、`paper/reviews.json`，最多 3 轮，改进才接受 | C4：精修结果与剩余问题是否可接受？ |
+| S12 终检 | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`；引文全部核验、数字全部链接、无未答问题 | C5：投稿前清单是否完成？ |
 
 ## 1b. 每个阶段怎么走（编排命令）
 1. `ORC next`：看当前阶段、负责人、还缺什么、各 Agent 的重试额度。
@@ -48,6 +52,7 @@ argument-hint: "[research topic, or project folder to resume]"
 4. 最终接受与否由研究者决定；把决定与理由写入 `Meta/review-queue.md` 和 `PROJECT.md`。
 
 ## 3. 调度规则
+- S8–S12 是论文写作阶段，协作规则见 `Meta/collaboration-protocol.md`（自治等级 A0–A3 与检查点 C1–C5）：AI 不得做 A3 事项，A2 事项须研究者确认。
 - 研究者调用本 Skill，即视为同意按阶段派出上表列出的 Agent（一次一个）；超出上表或同时多个，需先说明。
 - 一次只推进一个阶段；每步默认最多派 1 个 Agent。只有彼此独立的子任务（例如 S2 文献与 S3 制度背景）才可并行，并先说明数量与原因；超过 3 个必须先征得同意。
 - 简单问题、单阶段任务不必进入本流程，直接用对应 Skill 或直接回答。

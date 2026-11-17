@@ -218,6 +218,16 @@ def verify_stage(vault, cfg, st, sid):
     for pat in s.get("require_text", []):
         if not re.search(pat, blob, re.I):
             problems.append("产物中找不到必需内容：%s" % pat)
+    checks = s.get("checks", [])
+    if checks:
+        files = [os.path.join(vault, a) for a in arts if os.path.isfile(os.path.join(vault, a))]
+        try:
+            import paper_tools  # same folder; imported lazily (it imports this module)
+        except ImportError:
+            problems.append("缺少 paper_tools.py，无法执行检查项：%s" % ", ".join(checks))
+        else:
+            for chk in checks:
+                problems += paper_tools.stage_check(vault, chk, files)
     return problems
 
 

@@ -12,7 +12,9 @@ Matcher: Agent|Task|Bash|PowerShell|Write|Edit|MultiEdit
    (and recorded in the run ledger).
 2. `orchestrator.py gate ...` through Bash/PowerShell: forces a permission prompt, so a gate can
    only pass when the researcher confirms it.
-3. Direct Write/Edit of STATE.json or Meta/run-ledger.jsonl is blocked: use orchestrator.py.
+3. `paper_tools.py cite confirm ...` (the researcher's manual source verification) also forces a prompt.
+4. Direct Write/Edit of STATE.json, run-ledger.jsonl, citation-map.json, results-ledger.json or
+   reviews.json is blocked: use orchestrator.py / paper_tools.py.
 
 Fails open: any unexpected error allows the call. `orchestrator.py enforce off` turns blocking off
 for a project (the ledger still records).
@@ -27,7 +29,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
 
 GATE_CMD = re.compile(r"orchestrator\.py[\"']?\s+(?:--\S+\s+\S+\s+)*gate\b")
-PROTECTED_FILE = re.compile(r"(?:^|/)(?:STATE\.json|run-ledger\.jsonl)$", re.I)
+PROTECTED_FILE = re.compile(r"(?:^|/)(?:STATE\.json|run-ledger\.jsonl|citation-map\.json|results-ledger\.json|reviews\.json)$", re.I)
+CONFIRM_CMD = re.compile(r"paper_tools\.py[\"']?\s+(?:--\S+\s+\S+\s+)*cite\s+confirm\b")
 
 
 def block(msg):
@@ -60,12 +63,15 @@ def main():
         if tool in ("Write", "Edit", "MultiEdit"):
             fp = (ti.get("file_path") or "").replace("\\", "/")
             if PROTECTED_FILE.search(fp):
-                block("%s 由 orchestrator.py 维护，不要直接编辑；用 orchestrator.py 的命令（status / artifact / gate / fail）。" % os.path.basename(fp))
+                block("%s 由脚本维护，不要直接编辑；用 orchestrator.py / paper_tools.py 的命令。" % os.path.basename(fp))
             return
 
         if tool in ("Bash", "PowerShell"):
-            if GATE_CMD.search(ti.get("command", "") or ""):
+            cmd = ti.get("command", "") or ""
+            if GATE_CMD.search(cmd):
                 ask("这是研究关卡决定：只有研究者表态后才应通过。请确认研究者已作出该决定（--decision / --note 与其一致）。")
+            if CONFIRM_CMD.search(cmd):
+                ask("这是研究者对引文来源的人工核验：只有研究者亲自核对原文后才应确认。请确认 --note 如实反映了核对方式。")
             return
 
         if tool not in ("Agent", "Task"):

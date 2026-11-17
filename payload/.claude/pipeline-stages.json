@@ -1,24 +1,163 @@
 {
-  "_comment": "Stage definitions for the Research Director (/research-pipeline). Read by scripts/orchestrator.py and hooks/orchestrator_guard.py. 'agents' = project Agents that may be dispatched in that stage (an agent may be dispatched in its own stage or any later stage, never earlier). 'min_artifacts' = artifacts that must be registered (and non-empty) before the gate can pass. 'require_name' / 'require_text' are regexes (case-insensitive) that some artifact path / the artifacts' text must match.",
+  "_comment": "Stage definitions for the Research Director (/research-pipeline). Read by scripts/orchestrator.py and hooks/orchestrator_guard.py. 'agents' = project Agents that may be dispatched in that stage (an agent may be dispatched in its own stage or any later stage, never earlier). 'min_artifacts' = artifacts that must be registered (and non-empty) before the gate can pass. 'require_name' / 'require_text' are regexes (case-insensitive) that some artifact path / the artifacts' text must match. 'checks' = named mechanical checks run by verify (see scripts/paper_tools.py stage_check): citations_resolved, citations_verified, results_linked, no_open_questions.",
   "max_retries": 2,
   "stale_minutes": 30,
   "max_parallel_cap": 3,
   "stages": [
-    {"id": "S1", "name": "问题", "owner": "/research-question", "agents": [], "min_artifacts": 1,
-     "gate": "问题与 estimand 是否确定？"},
-    {"id": "S2", "name": "文献", "owner": "/literature-review", "agents": ["literature-agent"], "min_artifacts": 1,
-     "gate": "缺口是否真实、文献是否遗漏？"},
-    {"id": "S3", "name": "机制", "owner": "theory-agent / tax-policy-agent", "agents": ["theory-agent", "tax-policy-agent"],
-     "max_parallel": 2, "min_artifacts": 1, "gate": "假说能否由机制推出？法源是否核实？"},
-    {"id": "S4", "name": "设计", "owner": "/causal-inference-audit", "agents": ["causal-inference-agent"],
-     "min_artifacts": 2, "require_name": ["analysis-plan|分析计划"], "gate": "识别假设是否可辩护？计划是否冻结？"},
-    {"id": "S5", "name": "执行", "owner": "econometrics-agent", "agents": ["econometrics-agent"],
-     "min_artifacts": 2, "require_name": ["log|日志"], "gate": "是否按计划执行？偏离是否记录？"},
-    {"id": "S6", "name": "独立审查", "owner": "academic-reviewer", "agents": ["academic-reviewer"],
-     "min_artifacts": 1, "require_text": ["Fatal", "Major", "Minor"], "gate": "审查意见是否已完整汇报？"},
-    {"id": "S7", "name": "决定", "owner": "Research Director + 研究者", "agents": [],
-     "min_artifacts": 0, "gate": "致命问题是否已解决？接受 / 退回 / 停止"},
-    {"id": "S8", "name": "报告", "owner": "主会话", "agents": [],
-     "min_artifacts": 1, "gate": "主张是否不超过证据？"}
+    {
+      "id": "S1",
+      "name": "问题",
+      "owner": "/research-question",
+      "agents": [],
+      "min_artifacts": 1,
+      "gate": "问题与 estimand 是否确定？"
+    },
+    {
+      "id": "S2",
+      "name": "文献",
+      "owner": "/literature-review",
+      "agents": [
+        "literature-agent"
+      ],
+      "min_artifacts": 1,
+      "gate": "缺口是否真实、文献是否遗漏？"
+    },
+    {
+      "id": "S3",
+      "name": "机制",
+      "owner": "theory-agent / tax-policy-agent",
+      "agents": [
+        "theory-agent",
+        "tax-policy-agent"
+      ],
+      "max_parallel": 2,
+      "min_artifacts": 1,
+      "gate": "假说能否由机制推出？法源是否核实？"
+    },
+    {
+      "id": "S4",
+      "name": "设计",
+      "owner": "/causal-inference-audit",
+      "agents": [
+        "causal-inference-agent"
+      ],
+      "min_artifacts": 2,
+      "require_name": [
+        "analysis-plan|分析计划"
+      ],
+      "gate": "识别假设是否可辩护？计划是否冻结？"
+    },
+    {
+      "id": "S5",
+      "name": "执行",
+      "owner": "econometrics-agent",
+      "agents": [
+        "econometrics-agent"
+      ],
+      "min_artifacts": 2,
+      "require_name": [
+        "log|日志"
+      ],
+      "gate": "是否按计划执行？偏离是否记录？"
+    },
+    {
+      "id": "S6",
+      "name": "独立审查",
+      "owner": "academic-reviewer",
+      "agents": [
+        "academic-reviewer"
+      ],
+      "min_artifacts": 1,
+      "require_text": [
+        "Fatal",
+        "Major",
+        "Minor"
+      ],
+      "gate": "审查意见是否已完整汇报？"
+    },
+    {
+      "id": "S7",
+      "name": "决定",
+      "owner": "Research Director + 研究者",
+      "agents": [],
+      "min_artifacts": 0,
+      "gate": "致命问题是否已解决？接受 / 退回 / 停止"
+    },
+    {
+      "id": "S8",
+      "name": "论文大纲",
+      "owner": "/paper-outline",
+      "agents": [],
+      "min_artifacts": 1,
+      "require_name": [
+        "outline|大纲"
+      ],
+      "checks": [
+        "no_open_questions"
+      ],
+      "gate": "C1：主张清单、结构与引言/文献布局是否确定？"
+    },
+    {
+      "id": "S9",
+      "name": "引文",
+      "owner": "/literature-review + paper_tools cite",
+      "agents": [],
+      "min_artifacts": 1,
+      "require_name": [
+        "citation|引文"
+      ],
+      "gate": "C2：引文表（已核验/待核验）是否可接受？"
+    },
+    {
+      "id": "S10",
+      "name": "成稿",
+      "owner": "/paper-draft",
+      "agents": [
+        "paper-writer-agent"
+      ],
+      "min_artifacts": 1,
+      "require_name": [
+        "draft|成稿|v0"
+      ],
+      "checks": [
+        "citations_resolved",
+        "results_linked"
+      ],
+      "gate": "C3：主张—证据对照是否准确？"
+    },
+    {
+      "id": "S11",
+      "name": "精修",
+      "owner": "/paper-refine",
+      "agents": [
+        "paper-writer-agent"
+      ],
+      "min_artifacts": 2,
+      "require_name": [
+        "reviews"
+      ],
+      "checks": [
+        "citations_resolved",
+        "results_linked"
+      ],
+      "gate": "C4：精修结果与剩余问题是否可接受？"
+    },
+    {
+      "id": "S12",
+      "name": "终检",
+      "owner": "Research Director + 研究者",
+      "agents": [],
+      "min_artifacts": 1,
+      "require_name": [
+        "final|终稿"
+      ],
+      "checks": [
+        "citations_resolved",
+        "citations_verified",
+        "results_linked",
+        "no_open_questions"
+      ],
+      "gate": "C5：投稿前清单（含 AI 使用披露）是否完成？"
+    }
   ]
 }
