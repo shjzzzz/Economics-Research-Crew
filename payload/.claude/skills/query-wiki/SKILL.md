@@ -9,7 +9,7 @@ task_type: open-ended
 # Query Wiki
 
 ## 流程
-1. 读取 `Meta/purpose.md`、`Meta/index.md` 与 `Meta/link-map.md`；据 index 与枢纽页选出相关页面，再读页面本身，并沿 `[[链接]]`（邻接表）展开相邻页。必要时用检索补充，但不要在 `.claude`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中找税法笔记。
+1. 读取 `Meta/purpose.md`、`Meta/index.md` 与 `Meta/link-map.md`；据 index 与枢纽页选出相关页面，再读页面本身，并沿 `[[链接]]`（邻接表）展开相邻页。必要时用检索补充，但不要在 `.claude`、`.agents`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中找税法笔记。
 2. 回答结构：
    - **结论**（先给答案）；
    - **依据**：每条主张标 `[[页面]]` 与其 `sources` 中的原始来源（页码/表/节）；
