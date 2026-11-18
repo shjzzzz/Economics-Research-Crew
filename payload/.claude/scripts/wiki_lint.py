@@ -403,7 +403,7 @@ def render_compact(vault, g=None):
          "### 文件夹地图（实际磁盘）"]
     for rp, _, nm, na, role, flags in rows:
         tag = ("〔%s〕" % "、".join(flags)) if flags else ""
-        L.append("- `%s/` %s：%d 页%s" % (rp, role, nm, tag))
+        L.append("- `%s/`%s：%d 页%s" % (rp, (" " + role) if role else "", nm, tag))
     L += ["### 双链地图（研究库）",
           "- 规模：%d 页、%d 条页间链接；断链 %d、无入链 %d、重名 %d。" % (len(g["graph"]), n_links, len(g["broken"]), len(g["orphans"]), len(g["dups"])),
           "- 枢纽页（入链/出链）：" + ("、".join("`%s`（%d/%d）" % (p.stem, len(g["in_res"][p]), len(g["out"][p])) for p in _hubs(g, COMPACT_HUBS)) or "暂无"),
