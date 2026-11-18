@@ -2,6 +2,8 @@
 name: literature-agent
 description: "Find, screen, extract, compare and synthesize academic literature in tax and public economics."
 tools: Read, Grep, Glob, WebSearch, WebFetch
+data_access_level: redacted
+task_type: open-ended
 ---
 
 # Literature Agent

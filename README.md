@@ -3,9 +3,10 @@
 面向税收经济学、公共经济学、计量经济学与因果推断的研究环境扩展，支持 Claude Code、Antigravity CLI（`agy`）与 Codex CLI。
 
 ## 设计
-- 6 个研究 Subagents、11 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
+- 7 个研究 Subagents、14 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
+- 两张自动生成的地图（文件夹地图 `Meta/folder-map.md`、双链地图 `Meta/link-map.md`）及其精简版写在 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成；旧税法笔记只做目录级汇总。
 - 路由规则与角色映射见 [docs/USAGE.md](docs/USAGE.md) 第 4 节。
-- 借鉴 llm_wiki 的“可积累 wiki”思路（purpose / index / log / 两步摄入 / lint）与 My-Brain-Is-Full-Crew 的 hooks 强制执行、安装器回归测试。
+- 借鉴 `llm_wiki` 的“可积累 wiki”思路（purpose / index / log / 两步摄入 / lint）、`My-Brain-Is-Full-Crew` 的 hooks 强制执行与安装器回归测试，以及 `Imbad0202/academic-research-skills` 的设计理念（苏格拉底防越位、魔鬼代言人让步门槛与框架锁定检测、L3 引文锚点与主张对齐审计、`data_access_level` 数据隔离、7 类 AI 失效模式闸门、文风校准与 R&R 返修追溯矩阵；仅借设计模式并在本项目原生重写，不含其代码）。
 - 不覆盖已有 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`；不安装 MCP、不启用上游 Hooks。
 - 不自动运行任何回归；脚本、数据、环境由研究者确认。
 - 上游框架（My-Brain-Is-Full-Crew）为**可选**：加 `-WithUpstream` 才会克隆并在隔离目录构建。
@@ -66,7 +67,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 ## 验证流程
 1. `Test-EconomicsResearchCrew.ps1`：文件存在、frontmatter 合法（name/description）、agent 名与文件名一致、根 CLAUDE.md 含 import。
-2. 在 Claude Code 中运行 `/agents` 应列出 6 个 Agent；`/skills` 应列出 11 个 Skill。
+2. 在 Claude Code 中运行 `/agents` 应列出 7 个 Agent；`/skills` 应列出 14 个 Skill。
 3. 回归测试：`powershell -NoProfile -File tests\run.ps1` 与 `pwsh -NoProfile -File tests\run.ps1`（需要 Python；全部在临时目录进行，不碰你的库）。
    路由测试（消耗 Claude 额度）：`python tests/routing_eval.py --vault <装好本扩展的临时库>`。
 4. 冒烟测试：`/causal-inference-audit` 给一个 DID 设想，检查是否先问 estimand 而不是直接跑回归。

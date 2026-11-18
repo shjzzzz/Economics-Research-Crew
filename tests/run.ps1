@@ -54,8 +54,9 @@ $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
 Ok ($skillCount -eq 14) "14 skills (got $skillCount)"
 Ok ($agentCount -eq 7) "7 agents (got $agentCount)"
-$tpl = [IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n").TrimEnd()
-$got = [IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n").TrimEnd()
+$mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
+$tpl = ([IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
+$got = ([IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
 Ok ($got -eq $tpl) "root CLAUDE.md equals template (UTF-8, no mojibake)"
 Ok (Test-Path (Join-Path $v "03-Literature\_sources")) "_sources dir created"
 
@@ -431,18 +432,18 @@ $v12 = New-Vault
 Ok ((Run-Install $v12 @("-Platform","all","-WithHooks")) -eq 0 -and (Run-Check $v12) -eq 0) "install + checker pass with paper files"
 $pt = Join-Path $v12 ".claude\scripts\paper_tools.py"
 $mock = Join-Path $v12 "mock.json"
-$mockObj = [ordered]@{ "title:salience and taxation theory and evidence" = @(@{doi="10.1257/aer.99.4.1145"; title="Salience and Taxation: Theory and Evidence"; year=2009; venue="AER"; authors=@("Raj Chetty")}) ;
+$mockObj = [ordered]@{ "title:example study of tax salience" = @(@{doi="10.9999/example.001"; title="Example Study of Tax Salience"; year=2009; venue="Example Journal"; authors=@("A. Author")}) ;
     "doi:10.0/wrong" = @(@{doi="10.0/wrong"; title="Some Other Paper"; year=2001; venue="X"; authors=@()}) }
 [IO.File]::WriteAllText($mock, ($mockObj | ConvertTo-Json -Depth 6), $enc)
 function PT([string[]]$A) { $ErrorActionPreference = "Continue"; $env:ERC_CROSSREF_MOCK = $mock; $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
     try { $o = ((& $py -X utf8 $pt --vault $v12 @A 2>&1) -join "`n"); return "$o|rc=$LASTEXITCODE" } finally { [Console]::OutputEncoding = $prev; Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue } }
-Ok ((PT @("cite","add","--key","chetty2009","--title","Salience and Taxation: Theory and Evidence","--year","2009")) -match "verified") "cite add: matching Crossref record -> verified"
-Ok ((PT @("cite","add","--key","bad1","--title","Salience and Taxation: Theory and Evidence","--year","2009","--doi","10.0/wrong")) -match "mismatch") "cite add: DOI pointing to another title -> mismatch"
+Ok ((PT @("cite","add","--key","author2009","--title","Example Study of Tax Salience","--year","2009")) -match "verified") "cite add: matching Crossref record -> verified"
+Ok ((PT @("cite","add","--key","bad1","--title","Example Study of Tax Salience","--year","2009","--doi","10.0/wrong")) -match "mismatch") "cite add: DOI pointing to another title -> mismatch"
 Ok ((PT @("cite","add","--key","ghostpaper","--title","Totally Invented Paper","--year","2015")) -match "unverified") "cite add: unknown work -> unverified"
 Ok ((PT @("cite","add","--key","zh1","--title","某中文文献","--type","chinese")) -match "manual") "Chinese literature -> manual"
 Ok ((PT @("cite","add","--key","law1","--title","某通知","--type","legal")) -match "文号") "legal source without doc number refused"
 Ok ((PT @("cite","add","--key","law1","--title","某通知","--type","legal","--doc-no","X号","--effective","2020-01-01")) -match "manual") "legal source with doc number and date accepted (manual)"
-Ok ((PT @("cite","add","--key","off1","--title","Salience and Taxation: Theory and Evidence","--offline")) -match "unverified") "--offline never queries Crossref"
+Ok ((PT @("cite","add","--key","off1","--title","Example Study of Tax Salience","--offline")) -match "unverified") "--offline never queries Crossref"
 Ok ((PT @("cite","confirm","--key","zh1")) -match "rc=1") "confirm without --note refused"
 Ok ((PT @("cite","confirm","--key","zh1","--note","已在知网核对原文")) -match "已由研究者确认") "researcher confirm works with note"
 $res = Join-Path $v12 "06-Data\processed\t.csv"
@@ -453,7 +454,7 @@ Ok ((PT @("results","register","--id","n","--value","1000","--source","06-Data\p
 $dr = Join-Path $v12 "01-Research-Projects\demo\paper"
 New-Item -ItemType Directory -Force $dr | Out-Null
 $d1 = Join-Path $dr "draft.md"
-[IO.File]::WriteAllText($d1, "系数为 {{res:t2.DID.coef:3}}，样本 {{res:n}} [@chetty2009; @zh1]。`n⟦问：是否加机制检验？⟧`n", $enc)
+[IO.File]::WriteAllText($d1, "系数为 {{res:t2.DID.coef:3}}，样本 {{res:n}} [@author2009; @zh1]。`n⟦问：是否加机制检验？⟧`n", $enc)
 Ok ((PT @("cite","check",$d1)) -match "rc=0") "cite check passes when all keys are in the table"
 Ok ((PT @("results","check",$d1)) -match "错误 0") "results check passes for registered ids"
 Ok ((PT @("questions",$d1)) -match "rc=1") "unanswered researcher question detected"
@@ -493,6 +494,18 @@ $o = PT @("--project","demo2","refine","record","--version","v1","--carried-fata
 Ok ($o -match "v1：revert") "Fatal down but Major up -> revert"
 $o = PT @("--project","demo2","refine","record","--version","v2","--carried-fatal","2","--carried-major","1","--scores","a=5")
 Ok ($o -match "v2：revert" -and $o -match "评分维度不一致") "missing score dimension -> revert (cannot compare)"
+# ARS-inspired L3 claim-source alignment & locator anchors
+Ok ((PT @("cite","add","--key","loc1","--title","Tax Salience","--locator","p.112, Table 3","--claim-scope","US state panel","--offline")) -match "unverified") "cite add accepts --locator and --claim-scope"
+$o_claim = PT @("claim","check",$d1)
+Ok ($o_claim -match "anchorless" -and $o_claim -match "缺少 <!-- claim:") "claim check flags anchorless citation and untagged result block"
+Ok ((PT @("claim","check",$d1,"--strict")) -match "rc=1") "claim check --strict fails on anchorless citation"
+[IO.File]::WriteAllText((Join-Path $dr "outline.md"), "| C1 | 税收征管强化与逃税率负相关 | 相关 | ATT | {{res:t2.DID.coef}} | 仅相关性 | 样本期短 |`n", $enc)
+$d3 = Join-Path $dr "aligned.md"
+[IO.File]::WriteAllText($d3, "<!-- claim: C1 -->`n研究发现系数为 {{res:t2.DID.coef:3}} [@loc1]。`n", $enc)
+Ok ((PT @("claim","check",$d3,"--strict")) -match "rc=0") "claim check --strict passes with locator and aligned causal wording"
+$d4 = Join-Path $dr "overstated.md"
+[IO.File]::WriteAllText($d4, "<!-- claim: C1 -->`n税收征管强化显著降低了逃税率 {{res:t2.DID.coef:3}} [@loc1]。`n", $enc)
+Ok ((PT @("claim","check",$d4,"--strict")) -match "rc=1" -and (PT @("claim","check",$d4,"--strict")) -match "OVERSTATED") "claim check --strict flags causal verb overstatement against outline"
 $rv = [IO.File]::ReadAllText((Join-Path $dr2 "reviews.json"), $enc) | ConvertFrom-Json
 Ok ($rv.rounds[0].method -eq "direct" -and $rv.rounds[1].method -eq "checklist" -and $rv.rounds[1].carried.major -eq 2 -and $rv.current -eq "v0") "method labels recorded; reverts keep v0 as current"
 # protection + hook
@@ -533,6 +546,41 @@ Ok ((Hint "按审稿意见修改稿件") -match "paper-refine") "routing: revise
 # agy build includes new pieces
 Ok ((Test-Path (Join-Path $v12 ".agents\skills\paper-draft\SKILL.md")) -and (Test-Path (Join-Path $v12 ".agents\agents\paper-writer-agent.md"))) "agy gets paper skills and agent"
 Ok ((Get-Item (Join-Path $v12 "AGENTS.md")).Length -le 24000) "AGENTS.md still within 24000 bytes"
+
+# two maps: folder map + wikilink map, embedded in CLAUDE.md and AGENTS.md
+$lintPy = Join-Path $v12 ".claude\scripts\wiki_lint.py"
+$builderPy = Join-Path $pkg "tools\build_platform.py"
+function LM([string[]]$A) { $ErrorActionPreference = "Continue"; return ((& $py -X utf8 $lintPy @A 2>&1) -join "`n") + "|rc=$LASTEXITCODE" }
+function MapBlock([string]$File) { $t = [IO.File]::ReadAllText($File, $enc).Replace("`r`n","`n"); $m = [regex]::Match($t, "(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->"); return $m.Value }
+Ok ((Test-Path (Join-Path $v12 "Meta\folder-map.md")) -and (Test-Path (Join-Path $v12 "Meta\link-map.md"))) "install generates folder-map and link-map"
+$cb = MapBlock (Join-Path $v12 "CLAUDE.md"); $ab = MapBlock (Join-Path $v12 "AGENTS.md")
+Ok ($cb -match "文件夹地图" -and $cb -match "双链地图" -and $cb -notmatch "尚未生成") "CLAUDE.md carries both maps (generated, not placeholder)"
+Ok ($cb.Length -gt 0 -and $cb -eq $ab) "AGENTS.md carries the identical map block"
+$lit = Join-Path $v12 "03-Literature"; $legacy = Join-Path $v12 "00-Inbox\old-tax"
+New-Item -ItemType Directory -Force $legacy | Out-Null
+[IO.File]::WriteAllText((Join-Path $lit "alpha.md"), "---`ntype: literature`n---`n链接 [[beta]] 与 [[ghost]] 与 [[图.base]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $lit "beta.md"), "---`ntype: literature`n---`n回链 [[alpha]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $legacy "law1.md"), "旧税法 [[alpha]] [[law2]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $legacy "law2.md"), "旧税法二`n", $enc)
+$r1 = LM @("map","--vault",$v12)
+$lm = [IO.File]::ReadAllText((Join-Path $v12 "Meta\link-map.md"), $enc)
+Ok ($r1 -match "link-map.md: written" -and $lm -match "alpha" -and $lm -match "beta") "map: research pages enter the wikilink graph"
+Ok ($lm -match "ghost" -and $lm -notmatch "图\.base") "map: broken link listed; non-page link (.base) ignored"
+$adj = [regex]::Match($lm, "(?s)## 邻接表.*?## 无入链页").Value
+Ok ($lm -match "旧资料" -and $lm -match "00-Inbox" -and $adj -notmatch "law1" -and $adj -notmatch "law2") "map: legacy notes summarised per folder, not in the graph"
+$ab2 = MapBlock (Join-Path $v12 "AGENTS.md")
+Ok ($ab2 -match "alpha" -and $ab2 -eq (MapBlock (Join-Path $v12 "CLAUDE.md")) -and $ab2 -ne $ab) "map: compact block refreshed in both files and still identical"
+$r2 = LM @("map","--vault",$v12)
+Ok ($r2 -notmatch "written|updated|drift" -and $r2 -match "rc=0") "map: second run changes nothing (deterministic)"
+Ok ((LM @("map","--vault",$v12,"--check")) -match "rc=0") "map --check: no drift right after generating"
+[IO.File]::WriteAllText((Join-Path $lit "gamma.md"), "---`ntype: literature`n---`n[[alpha]]`n", $enc)
+Ok ((LM @("map","--vault",$v12,"--check")) -match "drift.*rc=1|rc=1") "map --check: drift after a new note"
+$null = LM @("map","--vault",$v12)
+Ok ((Get-Item (Join-Path $v12 "AGENTS.md")).Length -le 24000) "AGENTS.md within 24000 bytes after map refresh"
+Ok ((& $py -X utf8 $builderPy sync-vault $v12 --check 2>&1) -match "in-sync") "sync-vault --check: AGENTS.md block still in sync with CLAUDE.md after map"
+[IO.File]::WriteAllText((Join-Path $v12 "04-Theories\alpha.md"), "---`ntype: theory`n---`n同名页`n", $enc)
+Ok ((LM @("lint","--vault",$v12)) -match "duplicate") "lint warns about duplicate page names"
+Remove-Item (Join-Path $v12 "04-Theories\alpha.md") -Force
 Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
 
 # --- cleanup + summary ----------------------------------------------------------

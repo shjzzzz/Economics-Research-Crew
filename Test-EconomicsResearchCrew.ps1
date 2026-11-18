@@ -13,17 +13,21 @@ function Get-Front([string]$Path) {
     $h
 }
 function Test-Defs([string]$Root) {
+    $validAccess = "raw","redacted","verified_only"
+    $validTask = "open-ended","outcome-gradable"
     foreach ($a in $agents) {
         $p = Join-Path $VaultPath "$Root\agents\$a.md"
         if (-not (Test-Path $p)) { $script:errors += "缺少 agent: $Root\agents\$a.md"; continue }
         $f = Get-Front $p
         if (-not $f -or $f.name -ne $a -or -not $f.description) { $script:errors += "agent frontmatter 无效: $Root\agents\$a.md" }
+        if ($f -and ($validAccess -notcontains $f.data_access_level -or $validTask -notcontains $f.task_type)) { $script:errors += "agent 缺少或无效的 data_access_level/task_type: $Root\agents\$a.md" }
     }
     foreach ($s in $skills) {
         $p = Join-Path $VaultPath "$Root\skills\$s\SKILL.md"
         if (-not (Test-Path $p)) { $script:errors += "缺少 skill: $Root\skills\$s"; continue }
         $f = Get-Front $p
         if (-not $f -or $f.name -ne $s -or -not $f.description) { $script:errors += "skill frontmatter 无效（name 须等于目录名）: $Root\skills\$s" }
+        if ($f -and ($validAccess -notcontains $f.data_access_level -or $validTask -notcontains $f.task_type)) { $script:errors += "skill 缺少或无效的 data_access_level/task_type: $Root\skills\$s" }
     }
 }
 
@@ -39,7 +43,7 @@ foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Pat
 
 if ($hasClaude) {
     Test-Defs ".claude"
-    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Meta\collaboration-protocol.md") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
+    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Templates\rebuttal-matrix.md","Meta\collaboration-protocol.md") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
     $rc = Join-Path $VaultPath "CLAUDE.md"
     if (-not (Test-Path $rc) -or (Get-Content $rc -Raw) -notmatch [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md")) { $errors += "根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md" }
     $sj = Join-Path $VaultPath ".claude\settings.json"

@@ -2,6 +2,8 @@
 name: paper-writer-agent
 description: "Write or revise one bounded part of an economics paper in an isolated context, using only the approved outline, registered citations and registered results."
 tools: Read, Write, Edit, Grep, Glob
+data_access_level: verified_only
+task_type: open-ended
 ---
 
 # Paper Writer Agent

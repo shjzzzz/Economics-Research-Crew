@@ -2,6 +2,8 @@
 name: ingest-source
 description: "Ingest one source (paper, report, legal document, data note) into the research wiki in two steps: analyze first, write only after the researcher approves. Use for 摄入文献、入库、把这篇论文加入知识库、处理 _sources 里的文件."
 argument-hint: "[path to a file under 03-Literature/_sources/]"
+data_access_level: raw
+task_type: open-ended
 ---
 
 # Ingest Source
@@ -26,7 +28,7 @@ argument-hint: "[path to a file under 03-Literature/_sources/]"
 1. 用 `Templates/literature-note.md` 新建文献笔记，frontmatter 必须包含：`type`、`title`、`sources`（指向 `_sources` 里的文件路径）、`sha256`、`updated`、`verification`（verified | unverified）。
 2. 更新已有页面时只追加或修改相关段落，保留原文，不整页重写；每处改动在页面末尾“更新记录”注明日期与来源。
 3. 矛盾：在相关页面并列写出两侧主张与各自引用；同时记入 `Meta/review-queue.md`（状态 open）。
-4. 更新 `Meta/index.md`（每页一行）。
+4. 更新 `Meta/index.md`（每页一行），再运行 `python .claude/scripts/wiki_lint.py map --vault .` 刷新文件夹地图与双链地图。
 5. 在 `Meta/source-registry.md` 登记该来源（含 SHA256、访问日期）。
 6. 在 `Meta/research-log.md` 追加：`## [YYYY-MM-DD] ingest | 标题`，下附改动页面清单。
 7. 运行 `python .claude/scripts/wiki_lint.py lint --vault .`，把结果告知研究者；错误必须先修再收尾。

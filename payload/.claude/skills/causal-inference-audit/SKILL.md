@@ -2,6 +2,8 @@
 name: causal-inference-audit
 description: "Audit a causal design: estimand, identification assumptions, threats, inference and robustness. Use for 识别策略、因果识别、DID、双重差分、事件研究、IV、工具变量、RDD、断点回归、平行趋势、内生性、稳健性设计."
 argument-hint: "[design, model or proposal]"
+data_access_level: redacted
+task_type: open-ended
 ---
 
 # Causal Inference Audit

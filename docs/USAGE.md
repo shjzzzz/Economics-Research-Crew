@@ -22,7 +22,7 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 6 个 Agent，`/skills` 确认 11 个 Skill。
+再用 `/agents` 确认 7 个 Agent，`/skills` 确认 14 个 Skill。
 
 ## 3. Skill 速查
 | 命令 | 何时用 | 产出 |
@@ -104,6 +104,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 - **摄入**：把 PDF/剪藏放进 `03-Literature/_sources/`，运行 `/ingest-source 路径`。它先算 SHA256 去重，再输出分析（抽取、与已有页面的矛盾、拟改动清单、未核实项），**等你确认**后才写页面、更新 `Meta/index.md`、追加日志、登记来源。
 - **提问**：`/query-wiki 问题`，先读 index 再读页面，回答区分“库内依据”和“推断”，并询问是否回存为 `08-Research-Notes/` 笔记。
 - **体检**：`/wiki-lint`，先跑确定性脚本再做语义检查；默认只报告不修改。也可直接运行 `python .claude/scripts/wiki_lint.py lint --vault .`。扫描范围只含新增研究目录，**不扫描原有 Economicresearchwiki 税法笔记**。
+- **两张地图**：`python .claude/scripts/wiki_lint.py map --vault .` 生成 `Meta/folder-map.md`（实际文件夹、只读与旧资料标记）和 `Meta/link-map.md`（双链图：枢纽页、邻接表、无入链页、断链、重名），并刷新 `CLAUDE.md` / `AGENTS.md` 里 `ERC:MAP` 标记之间的精简版；`--check` 只报告漂移，`--no-embed` 只写 Meta 两个文件。摄入来源和体检后会自动提示重新生成。旧税法笔记只在目录级汇总，不进图。同一图的内容在重复运行时保持不变。
 - **日志**：`Meta/research-log.md` 条目以 `## [日期] 类型 | 标题` 开头，可用 `grep "^## \[" Meta/research-log.md | tail` 查看近期记录。
 - **矛盾**：来源之间的冲突并列记录并进入 `Meta/review-queue.md`，由你裁决。
 - 页面 frontmatter 约定：`type`、`sources`、`updated`、`verification`（verified | unverified）。
@@ -148,7 +149,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 ## 9c. 论文写作：大纲、引文、成稿、精修
 1. `/paper-outline` 产出 `paper/outline.md`（主张清单：每条主张的证据 id 与允许的措辞强度）。
 2. 登记结果：`python .claude/scripts/paper_tools.py results import <csv> --prefix t2` 或 `results register`；登记引文：`cite add --key k --title "…" --year Y [--doi D]`，状态为 verified / mismatch / unverified / manual；`cite confirm` 由研究者人工确认（会触发权限提示）。
-3. `/paper-draft` 只用引文表与结果登记簿写作；`cite check`、`results check`、`questions` 检查草稿。
+3. `/paper-draft` 只用引文表与结果登记簿写作；`cite check`、`results check`、`questions` 检查草稿；`claim check` 核对引文定位锚点、结果段落的 `<!-- claim: Cn -->` 标注与措辞强度，终检（S12）会强制执行。
 4. `/paper-refine`：评审→修改→`refine record` 给出接受/回退，最多 3 轮；需要新分析的意见进入 `Meta/review-queue.md`。
 5. `paper_tools.py report` 查看已核验引文率、数字链接率、未答问题数。
 

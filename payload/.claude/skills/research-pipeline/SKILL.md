@@ -2,6 +2,8 @@
 name: research-pipeline
 description: "Research Director workflow: plan and advance a whole economics research project stage by stage (question -> literature -> theory -> design -> estimation -> independent review -> decision -> report), with researcher gates and a reviewer quality loop. Use for 完整做一个研究、推进研究、规划研究、继续上次的研究."
 argument-hint: "[research topic, or project folder to resume]"
+data_access_level: verified_only
+task_type: open-ended
 ---
 
 # Research Pipeline（Research Director）
@@ -24,13 +26,13 @@ argument-hint: "[research topic, or project folder to resume]"
 | S3 机制 | `theory-agent`；制度背景 `tax-policy-agent` | 模型/机制、可检验假说、制度事实与法源 | 假说能否由机制推出？法源是否核实？ |
 | S4 设计 | `/causal-inference-audit` + `Templates/analysis-plan.md` | 识别策略、预设分析计划（冻结） | 识别假设是否可辩护？计划是否冻结？ |
 | S5 执行 | `econometrics-agent` | 代码、样本核算、结果表、日志（`Templates/analysis-log.md`） | 是否按计划执行？偏离是否记录？ |
-| S6 独立审查 | `academic-reviewer`（独立上下文） | Fatal / Major / Minor / 修改建议 | — |
+| S6 独立审查 | `academic-reviewer`（独立上下文） | Fatal / Major / Minor / 框架锁定与 7 类 AI 失效模式核查 | — |
 | S7 决定 | Research Director + 研究者 | 接受 / 退回到某阶段 / 停止 | 致命问题是否已解决？ |
 | S8 论文大纲 | `/paper-outline` | `paper/outline.md`：主张清单（含证据与措辞强度）、章节计划、文献布局 | C1：主张与结构是否确定？ |
-| S9 引文 | `/literature-review` + `paper_tools.py cite` | 引文表 `Meta/citation-map.json`（核验状态）、`paper/citations.bib` | C2：引文表是否可接受？ |
+| S9 引文 | `/literature-review` + `paper_tools.py cite` | 引文表 `Meta/citation-map.json`（核验状态与 locator 锚点）、`paper/citations.bib` | C2：引文表是否可接受？ |
 | S10 成稿 | `/paper-draft`（长节可派 `paper-writer-agent`） | `paper/draft.md`，引用只用引文键、数字只用结果登记簿 | C3：主张—证据对照是否准确？ |
 | S11 精修 | `/paper-refine`（评审用 `academic-reviewer`） | `paper/versions/`、`paper/reviews.json`，最多 3 轮，改进才接受 | C4：精修结果与剩余问题是否可接受？ |
-| S12 终检 | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`；引文全部核验、数字全部链接、无未答问题 | C5：投稿前清单是否完成？ |
+| S12 终检 | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`；引文/锚点/数字/7 类失效模式全清 | C5：投稿前清单是否完成？ |
 
 ## 1b. 每个阶段怎么走（编排命令）
 1. `ORC next`：看当前阶段、负责人、还缺什么、各 Agent 的重试额度。

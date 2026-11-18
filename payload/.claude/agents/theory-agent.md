@@ -2,6 +2,8 @@
 name: theory-agent
 description: "Develop and audit formal economic models, mechanisms, optimization problems and testable hypotheses."
 tools: Read, Grep, Glob, Write, Edit
+data_access_level: verified_only
+task_type: open-ended
 ---
 
 # Theory Agent

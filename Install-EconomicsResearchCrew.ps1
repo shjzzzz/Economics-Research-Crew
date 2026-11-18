@@ -174,7 +174,9 @@ if (-not $doClaude) {
     $tpl = Join-Path $payload "CLAUDE.template.md"
     if ($Update -and (Test-Path $tpl)) {
         $tplBody = [IO.File]::ReadAllText($tpl, $enc).Replace("`r`n","`n").TrimEnd()
-        if ($existing.Replace("`r`n","`n").TrimEnd() -ne $tplBody) {
+        # 带标记的地图区块由 wiki_lint.py map 生成，比较时忽略
+        $mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
+        if (($existing.Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd() -ne ($tplBody -replace $mapRe,"MAP")) {
             $newRoot = "$rootClaude.new"
             if ($PSCmdlet.ShouldProcess($newRoot, "写入 CLAUDE.md 新版模板副本")) { [IO.File]::WriteAllText($newRoot, $tplBody + "`n", $enc) }
             $script:Pending += $newRoot
@@ -192,6 +194,13 @@ foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\
                "08-Research-Notes","09-Writing","10-Archive","MOC") {
     $p = Join-Path $VaultPath $d
     if (-not (Test-Path $p) -and $PSCmdlet.ShouldProcess($p, "创建目录")) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
+}
+# 5b. 生成两张地图（文件夹地图、双链地图），并刷新 CLAUDE.md / AGENTS.md 中带标记的精简版
+$lintPy = Join-Path $VaultPath ".claude\scripts\wiki_lint.py"
+if ((Test-Path $lintPy) -and (Get-Command python -ErrorAction SilentlyContinue) -and $PSCmdlet.ShouldProcess($VaultPath, "生成 Meta/folder-map.md 与 Meta/link-map.md")) {
+    $mapOut = (& python -X utf8 $lintPy map --vault $VaultPath | Out-String).Trim()
+    Write-Host $mapOut
+    if ($mapOut -match "CLAUDE\.md: no-markers") { Write-Host "  现有 CLAUDE.md 没有 ERC:MAP 标记，精简版未写入；合并 CLAUDE.md.new（或把模板里的 ERC:MAP 区块加进去）后再运行 wiki_lint.py map。" -ForegroundColor Yellow }
 }
 if ($script:Pending.Count -gt 0) { Write-Host "以下文件与新版不同，已生成 .new 副本（未覆盖原文件），请人工比对后合并：" -ForegroundColor Cyan; $script:Pending | ForEach-Object { Write-Host "  $_" } }
 $backupNote = if (Test-Path $backupDir) { "备份：$backupDir" } else { "无需备份（没有已存在的 CLAUDE.md/.mcp.json/settings.json/AGENTS.md/hooks.json）" }

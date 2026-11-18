@@ -2,6 +2,8 @@
 name: tax-policy-analysis
 description: "Analyze tax policy, administration, compliance, incidence and Chinese tax-law institutions. Use for 税法适用、税目判定、税收政策分析、税收征管、税收遵从、税负归宿、财税制度、政策评估."
 argument-hint: "[policy, rule or institutional question]"
+data_access_level: redacted
+task_type: open-ended
 ---
 
 # Tax Policy Analysis

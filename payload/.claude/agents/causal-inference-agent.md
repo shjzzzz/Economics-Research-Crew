@@ -2,6 +2,8 @@
 name: causal-inference-agent
 description: "Audit causal estimands, identification assumptions, threats to validity and robustness strategies."
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write
+data_access_level: redacted
+task_type: open-ended
 ---
 
 # Causal Inference Agent

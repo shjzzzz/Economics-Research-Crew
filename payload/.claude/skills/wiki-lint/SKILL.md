@@ -2,6 +2,8 @@
 name: wiki-lint
 description: "Health-check the research wiki: run the deterministic lint script, then review contradictions, stale claims and missing concept pages. Reports first; fixes only after approval. Use for 知识库体检、检查知识库、断链、孤立页、矛盾、过时内容."
 argument-hint: "[optional: folder or topic to focus on]"
+data_access_level: redacted
+task_type: open-ended
 ---
 
 # Wiki Lint
@@ -9,6 +11,7 @@ argument-hint: "[optional: folder or topic to focus on]"
 ## 流程
 1. 读取 `Meta/purpose.md`、`Meta/index.md`、`Meta/review-queue.md`。
 2. 运行确定性检查：`python .claude/scripts/wiki_lint.py lint --vault .`。它只扫描新增研究目录（`01-Research-Projects`、`03-Literature`、`04-Theories`、`05-Methods`、`08-Research-Notes`、`09-Writing`），**不扫描库内原有的税法笔记**。检查项：frontmatter、`sources[]` 可解析、断链、孤立页、index 覆盖。
+   地图：运行 `python .claude/scripts/wiki_lint.py map --vault .` 刷新两张地图；断链、重名主干名、无入链页写进报告。
 3. 语义检查（模型完成，必须逐条给出证据位置）：
    - 页面之间的**矛盾**（同一问题不同结论、同一数据不同口径）；
    - **过时**：新来源是否已取代旧主张；法规是否已修订/废止；

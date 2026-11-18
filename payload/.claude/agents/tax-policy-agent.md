@@ -2,6 +2,8 @@
 name: tax-policy-agent
 description: "Analyze tax law, administration, compliance, incidence and public-finance policy from authoritative sources."
 tools: Read, Grep, Glob, WebSearch, WebFetch
+data_access_level: redacted
+task_type: open-ended
 ---
 
 # Tax Policy Agent

@@ -101,8 +101,13 @@ def convert_agent(text, fallback_name):
                     tools.append(t)
     else:
         tools = ["read_file", "edit_file", "write_file", "run_command", "manage_task", "search_web"]
-    head = "---\nname: %s\ndescription: %s\nsubagent: true\nmainAgent: false\ntools: [%s]\n---\n" % (
-        name, desc, ", ".join(tools))
+    extra = ""
+    for k in ("data_access_level", "task_type"):
+        v = fm_value(fm, k)
+        if v:
+            extra += "%s: %s\n" % (k, v)
+    head = "---\nname: %s\ndescription: %s\nsubagent: true\nmainAgent: false\ntools: [%s]\n%s---\n" % (
+        name, desc, ", ".join(tools), extra)
     return head + rewrite(body, TEXT_REWRITES)
 
 

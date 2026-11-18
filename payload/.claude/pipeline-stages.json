@@ -155,6 +155,7 @@
         "citations_resolved",
         "citations_verified",
         "results_linked",
+        "claims_aligned",
         "no_open_questions"
       ],
       "gate": "C5：投稿前清单（含 AI 使用披露）是否完成？"

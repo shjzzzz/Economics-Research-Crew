@@ -2,6 +2,8 @@
 name: academic-review
 description: "Conduct a skeptical, independent peer review of an economics manuscript, proposal or empirical strategy. Use for 审稿、匿名审稿、挑刺、审查研究设计、审查论文、投稿前自查."
 argument-hint: "[manuscript, proposal or design]"
+data_access_level: verified_only
+task_type: open-ended
 ---
 
 # Academic Review Workflow
@@ -13,7 +15,8 @@ Independence first: if this session helped design or write the work under review
 3. Check literature positioning and source quality; check legal/institutional facts.
 4. Audit data, variables, sample, identification.
 5. Compare text claims with tables, equations, code.
-6. Classify issues: Fatal / Major / Minor.
-7. Give evidence-based revisions and claims to weaken.
+6. Classify issues: Fatal / Major / Minor, and run a **Frame-Lock Check** (challenge whether the core identification/theoretical framework itself holds, not just internal details).
+7. **Concession Threshold**: When the author pushes back on an issue, score the rebuttal 1–5; only concede at ≥4 with verifiable evidence/derivation, and never concede twice in a row.
+8. Give evidence-based revisions and claims to weaken.
 
 Tie each criticism to a specific passage, equation, table or missing evidence.

@@ -2,6 +2,8 @@
 name: paper-draft
 description: "Draft an economics paper section by section from an approved outline, using only registered citations and registered results; unsupported claims become researcher questions, not text. Use for 起草论文、写初稿、成稿、分节写作、撰写全文、把大纲写成论文."
 argument-hint: "[project folder, sections to draft]"
+data_access_level: verified_only
+task_type: open-ended
 ---
 
 # Paper Draft（受限输入的分节写作）
@@ -16,16 +18,18 @@ argument-hint: "[project folder, sections to draft]"
 | `Meta/style-guide.md`、`Templates/venues/*.md` | 文风、格式 |
 
 ## 步骤
-0. `orchestrator.py status`：确认大纲关卡已通过；`paper_tools.py cite list` 看有哪些可引用的键，状态不是 verified/confirmed 的在正文里照常引用，但会在终检被挡，提醒研究者核验。
+0. `orchestrator.py status`：确认大纲关卡已通过；`paper_tools.py cite list` 看有哪些可引用的键，状态不是 verified/confirmed 的在正文里照常引用，但会在终检被挡，提醒研究者核验。先读 `Meta/style-guide.md` 完成**文风校准**（目标期刊语域、既有文本锚定与术语锁定）。
 1. 逐节写，一次一节（长节可派出 `paper-writer-agent`，一次一个，交接单按 `Templates/handoff.md`，只给上表所列文件的路径）。写入 `paper/draft.md`。
 2. 每个结果段落开头加注释 `<!-- claim: C3 -->`，说明它支撑哪条主张。措辞强度不得超过大纲里该主张允许的强度。
 3. **数字**：只能写成 `{{res:id}}`。表里没有的数字不要写；不要心算、不要四舍五入后手写。
-4. **引用**：只能引 `[@key]`，key 必须在引文表里。想引的文献不在表里时，写 `⟦问：需要引用…，请先登记⟧`，不要自己编 key 或作者。
+4. **引用**：只能引 `[@key]`，key 必须在引文表里（优先附带 `locator` 锚点以防 L3 错配）。想引的文献不在表里时，写 `⟦问：需要引用…，请先登记⟧`，不要自己编 key 或作者。
 5. **证据不足**：不要用“显然、众所周知”绕过；写 `⟦问：…⟧` 交研究者（补分析 / 降级为推测 / 删除）。**不新增分析、不补数据。**
 6. 起草后依次运行并处理：
    - `paper_tools.py cite check paper/draft.md`（未知 key 为错误，未核验为警告）
    - `paper_tools.py results check paper/draft.md`（未知 id 为错误，未链接的统计量为警告，必须逐个处理）
+   - `paper_tools.py claim check paper/draft.md`（检查 L3 引文定位锚点 `anchorless`、结果段落 `<!-- claim: Cn -->` 标注及因果动词越界）
    - `paper_tools.py questions paper/draft.md`（列出未回答的问题）
+   - 对照 `Meta/style-guide.md` 的**去 AI 味负面清单**做写作质检（删机械套话与空洞修饰，核对因果措辞分级）。
 7. 生成 **主张—证据对照表**（C3 检查点用）：主张编号 → 正文位置 → 结果 id → 实际使用的措辞强度 → 是否超出大纲。
 
 ## 停点

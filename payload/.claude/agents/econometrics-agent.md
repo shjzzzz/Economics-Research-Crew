@@ -2,6 +2,8 @@
 name: econometrics-agent
 description: "Inspect, implement and validate reproducible data workflows and estimation in Stata, R or Python."
 tools: Read, Grep, Glob, Bash, Write, Edit
+data_access_level: raw
+task_type: open-ended
 ---
 
 # Econometrics Agent

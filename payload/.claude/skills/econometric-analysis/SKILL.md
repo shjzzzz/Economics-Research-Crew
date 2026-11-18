@@ -2,6 +2,8 @@
 name: econometric-analysis
 description: "Plan, implement, inspect, reproduce or audit an econometric analysis in Stata, R or Python. Use for 数据清洗、变量构造、描述统计、回归分析、基准回归、异质性分析、复现论文、代码审计、稳健性检验执行."
 argument-hint: "[dataset, model or task]"
+data_access_level: raw
+task_type: open-ended
 ---
 
 # Econometric Analysis Workflow

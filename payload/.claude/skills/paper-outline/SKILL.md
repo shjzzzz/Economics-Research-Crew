@@ -2,6 +2,8 @@
 name: paper-outline
 description: "Turn frozen research outputs (design, analysis plan, registered results) into a structured economics paper outline: claim list with evidence, section plan, literature positioning plan, table/figure plan. Use for 论文大纲、论文框架、论文结构、写作大纲、主张清单、贡献定位、引言怎么布局."
 argument-hint: "[project folder, target journal template]"
+data_access_level: verified_only
+task_type: open-ended
 ---
 
 # Paper Outline（论文架构：先有大纲，再写正文）

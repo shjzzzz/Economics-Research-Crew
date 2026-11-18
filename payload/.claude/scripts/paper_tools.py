@@ -201,6 +201,10 @@ def cmd_cite_add(a):
     e = {"key": a.key, "title": a.title, "authors": [x.strip() for x in (a.authors or "").split(";") if x.strip()],
          "year": a.year, "doi": (a.doi or "").strip() or None, "venue": a.venue or "", "type": a.type,
          "status": "unverified", "added": now()}
+    if getattr(a, "locator", None) and a.locator.strip():
+        e["locator"] = a.locator.strip()
+    if getattr(a, "claim_scope", None) and a.claim_scope.strip():
+        e["claim_scope"] = a.claim_scope.strip()
     if a.type == "legal":
         if not (a.doc_no and a.effective):
             sys.exit("法规文件必须提供 --doc-no（文号）和 --effective（生效日期）。")
@@ -608,6 +612,72 @@ def cmd_refine_status(a):
 
 
 # ------------------------------------------------------------------ stage checks (used by orchestrator.verify)
+CLAIM_TAG_RE = re.compile(r"<!--\s*claim:\s*([A-Za-z0-9_-]+)\s*-->")
+OUTLINE_CLAIM_ROW_RE = re.compile(r"^\|\s*(C[A-Za-z0-9_-]+)\s*\|([^\n]+)", re.M)
+CAUSAL_VERB_RE = re.compile(r"(导致|致使|引起|显著提高|显著降低|显著促进|显著抑制|因果效应|\bcauses?\b|\binduces?\b|\bdrives?\b)")
+
+
+def claim_limited_to_association(rest):
+    """Outline row after the id: | claim | type | estimand | evidence | allowed wording | limits |.
+    Limited when the type cell says association, or the allowed-wording cell says association only."""
+    cells = [c.strip() for c in rest.split("|")]
+    typ = cells[1] if len(cells) > 1 else ""
+    wording = cells[4] if len(cells) > 4 else ""
+    return any(w in typ for w in ("相关", "关联")) or any(w in wording for w in ("相关", "关联", "仅描述"))
+
+
+def claim_problems(vault, files, strict=False, project=None):
+    """L3 claim-source alignment checks: anchorless citations, untagged result blocks, and causal overstatement."""
+    _, cm = cmap(vault)
+    errors, warns = [], []
+    outline_claims = {}
+    op = None
+    try:
+        pd = paper_dir(argparse.Namespace(project=project), vault)
+        cand = os.path.join(pd, "outline.md")
+        if os.path.isfile(cand):
+            op = cand
+    except SystemExit:
+        pass
+    if op is None and files:
+        cand = os.path.join(os.path.dirname(os.path.abspath(files[0])), "outline.md")
+        if os.path.isfile(cand):
+            op = cand
+    if op is not None:
+        for cid, rest in OUTLINE_CLAIM_ROW_RE.findall(read_text(op)):
+            outline_claims[cid] = rest
+
+    for f in files:
+        rel = os.path.relpath(f, vault).replace("\\", "/")
+        txt = strip_code(read_text(f))
+        for k in draft_keys(txt):
+            e = cm["entries"].get(k)
+            if e is not None and not e.get("locator"):
+                (errors if strict else warns).append("%s：@%s 缺少定位锚点 locator（L3 anchorless 风险）" % (rel, k))
+        for para in re.split(r"\r?\n\s*\r?\n", txt):
+            cids = CLAIM_TAG_RE.findall(para)
+            if PLACEHOLDER.search(para) and not cids:
+                warns.append("%s：含 {{res:...}} 的段落缺少 <!-- claim: Cn --> 标注" % rel)
+            for cid in cids:
+                if outline_claims and cid not in outline_claims:
+                    errors.append("%s：主张 %s 未在 outline.md 主张清单中定义" % (rel, cid))
+                elif cid in outline_claims:
+                    if claim_limited_to_association(outline_claims[cid]) and CAUSAL_VERB_RE.search(para):
+                        (errors if strict else warns).append("%s：%s 在大纲中限定为相关/关联，但正文疑似使用强因果动词（OVERSTATED）" % (rel, cid))
+    return sorted(set(errors)), sorted(set(warns))
+
+
+def cmd_claim_check(a):
+    vault = vault_of(a)
+    errors, warns = claim_problems(vault, a.files, a.strict, getattr(a, "project", None))
+    for x in errors:
+        print("错误  " + x)
+    for x in warns:
+        print("警告  " + x)
+    print("主张审计：错误 %d，警告 %d。" % (len(errors), len(warns)))
+    sys.exit(1 if errors else 0)
+
+
 def stage_check(vault, name, files):
     md = [f for f in files if f.lower().endswith(".md") and os.path.isfile(f)]
     if name == "citations_resolved":
@@ -618,6 +688,9 @@ def stage_check(vault, name, files):
         return e
     if name == "results_linked":
         e, _ = results_problems(vault, md)
+        return e
+    if name == "claims_aligned":
+        e, _ = claim_problems(vault, md, strict=True)
         return e
     if name == "no_open_questions":
         return ["%s：有未回答的 ⟦问：%s⟧" % (os.path.relpath(f, vault).replace("\\", "/"), q[:30])
@@ -685,7 +758,8 @@ def main(argv=None):
     p.add_argument("--key", required=True); p.add_argument("--title", required=True); p.add_argument("--authors")
     p.add_argument("--year"); p.add_argument("--doi"); p.add_argument("--venue", default="")
     p.add_argument("--type", default="article", choices=["article", "book", "chinese", "legal"])
-    p.add_argument("--doc-no"); p.add_argument("--effective"); p.add_argument("--replace", action="store_true")
+    p.add_argument("--doc-no"); p.add_argument("--effective"); p.add_argument("--locator")
+    p.add_argument("--claim-scope"); p.add_argument("--replace", action="store_true")
     p.add_argument("--offline", action="store_true"); p.set_defaults(f=cmd_cite_add)
     p = c.add_parser("verify"); p.add_argument("--key"); p.add_argument("--all", action="store_true")
     p.add_argument("--offline", action="store_true"); p.set_defaults(f=cmd_cite_verify)
@@ -715,6 +789,10 @@ def main(argv=None):
     p.add_argument("--minor", type=int, default=0); p.add_argument("--scores", default=""); p.add_argument("--note")
     p.set_defaults(f=cmd_refine_record)
     p = f.add_parser("status"); p.set_defaults(f=cmd_refine_status)
+
+    cl = top.add_parser("claim").add_subparsers(dest="cmd", required=True)
+    p = cl.add_parser("check"); p.add_argument("files", nargs="+"); p.add_argument("--strict", action="store_true")
+    p.set_defaults(f=cmd_claim_check)
 
     p = top.add_parser("questions"); p.add_argument("files", nargs="+"); p.set_defaults(f=cmd_questions)
     p = top.add_parser("report"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_report)
