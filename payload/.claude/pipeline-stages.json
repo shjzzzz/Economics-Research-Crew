@@ -1,5 +1,5 @@
 {
-  "_comment": "Stage definitions for the Research Director (/research-pipeline). Read by scripts/orchestrator.py and hooks/orchestrator_guard.py. 'agents' = project Agents that may be dispatched in that stage (an agent may be dispatched in its own stage or any later stage, never earlier). 'min_artifacts' = artifacts that must be registered (and non-empty) before the gate can pass. 'require_name' / 'require_text' are regexes (case-insensitive) that some artifact path / the artifacts' text must match. 'checks' = named mechanical checks run by verify (see scripts/paper_tools.py stage_check): citations_resolved, citations_verified, results_linked, no_open_questions.",
+  "_comment": "Stage definitions for the Research Director (/research-pipeline). Read by scripts/orchestrator.py and hooks/orchestrator_guard.py. 'agents' = project Agents that may be dispatched in that stage (an agent may be dispatched in its own stage or any later stage, never earlier). 'min_artifacts' = artifacts that must be registered (and non-empty) before the gate can pass. 'require_name' / 'require_text' are regexes (case-insensitive) that some artifact path / the artifacts' text must match. 'checks' = named mechanical checks run by verify (see scripts/paper_tools.py stage_check): citations_resolved, citations_verified, results_linked, claims_aligned, no_open_questions.",
   "max_retries": 2,
   "stale_minutes": 30,
   "max_parallel_cap": 3,
@@ -10,7 +10,7 @@
       "owner": "/research-question",
       "agents": [],
       "min_artifacts": 1,
-      "gate": "问题与 estimand 是否确定？"
+      "gate": "研究问题、estimand 与可行性是否确定？"
     },
     {
       "id": "S2",
@@ -20,19 +20,19 @@
         "literature-agent"
       ],
       "min_artifacts": 1,
-      "gate": "缺口是否真实、文献是否遗漏？"
+      "gate": "文献争论簇、精确缺口与未核实清单是否完整？"
     },
     {
       "id": "S3",
       "name": "机制",
-      "owner": "theory-agent / tax-policy-agent",
+      "owner": "/theory-modeling + /tax-policy-analysis",
       "agents": [
         "theory-agent",
         "tax-policy-agent"
       ],
       "max_parallel": 2,
       "min_artifacts": 1,
-      "gate": "假说能否由机制推出？法源是否核实？"
+      "gate": "竞争性假说能否由机制推出？制度/法源与政策冲击时点是否核实？"
     },
     {
       "id": "S4",
@@ -45,12 +45,12 @@
       "require_name": [
         "analysis-plan|分析计划"
       ],
-      "gate": "识别假设是否可辩护？计划是否冻结？"
+      "gate": "识别假设与威胁—检验矩阵是否可辩护？分析计划与因果措辞上限是否冻结？"
     },
     {
       "id": "S5",
       "name": "执行",
-      "owner": "econometrics-agent",
+      "owner": "/econometric-analysis (econometrics-agent)",
       "agents": [
         "econometrics-agent"
       ],
@@ -58,12 +58,12 @@
       "require_name": [
         "log|日志"
       ],
-      "gate": "是否按计划执行？偏离是否记录？"
+      "gate": "是否按计划执行、记录偏离，并把核心结果登记入 Meta/results-ledger.json？"
     },
     {
       "id": "S6",
       "name": "独立审查",
-      "owner": "academic-reviewer",
+      "owner": "/academic-review (academic-reviewer)",
       "agents": [
         "academic-reviewer"
       ],
@@ -73,7 +73,7 @@
         "Major",
         "Minor"
       ],
-      "gate": "审查意见是否已完整汇报？"
+      "gate": "独立审查意见（含框架锁定与 7 类 AI 失效模式核查）是否完整汇报？"
     },
     {
       "id": "S7",
@@ -81,7 +81,7 @@
       "owner": "Research Director + 研究者",
       "agents": [],
       "min_artifacts": 0,
-      "gate": "致命问题是否已解决？接受 / 退回 / 停止"
+      "gate": "致命问题是否已解决？接受进入写作 / 退回 / 停止"
     },
     {
       "id": "S8",
@@ -95,7 +95,7 @@
       "checks": [
         "no_open_questions"
       ],
-      "gate": "C1：主张清单、结构与引言/文献布局是否确定？"
+      "gate": "C1：论证脊柱、主张清单、6 步引言蓝图与文献/图表布局是否确定？"
     },
     {
       "id": "S9",
@@ -106,7 +106,7 @@
       "require_name": [
         "citation|引文"
       ],
-      "gate": "C2：引文表（已核验/待核验）是否可接受？"
+      "gate": "C2：引文表核验状态与三层定位锚点（locator）是否可接受？"
     },
     {
       "id": "S10",
@@ -123,12 +123,12 @@
         "citations_resolved",
         "results_linked"
       ],
-      "gate": "C3：主张—证据对照是否准确？"
+      "gate": "C3：主张—证据对照、主张覆盖度与经济量级表述是否准确？"
     },
     {
       "id": "S11",
-      "name": "精修",
-      "owner": "/paper-refine",
+      "name": "精修与润色",
+      "owner": "/paper-refine (+ 可选 /paper-polish)",
       "agents": [
         "paper-writer-agent"
       ],
@@ -140,7 +140,7 @@
         "citations_resolved",
         "results_linked"
       ],
-      "gate": "C4：精修结果与剩余问题是否可接受？"
+      "gate": "C4：精修结果、剩余问题与可选语言润色（polish check 通过）是否可接受？"
     },
     {
       "id": "S12",
@@ -158,7 +158,7 @@
         "claims_aligned",
         "no_open_questions"
       ],
-      "gate": "C5：投稿前清单（含 AI 使用披露）是否完成？"
+      "gate": "C5：投稿前清单（含 7 类失效清零、AI 披露与知识库回流）是否完成？"
     }
   ]
 }

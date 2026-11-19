@@ -75,6 +75,27 @@ def parse_frontmatter(text):
     return fm, None
 
 
+def _is_paper_version(rel):
+    parts = [x.lower() for x in rel.parts]
+    return any(parts[i] == "paper" and i + 1 < len(parts) and parts[i + 1] == "versions" for i in range(len(parts)))
+
+
+def _is_project_entry(rel):
+    """True for 01-Research-Projects/<project>/PROJECT.md (the single wiki entry page per project)."""
+    return len(rel.parts) == 3 and rel.parts[0] == "01-Research-Projects" and rel.parts[2].lower() == "project.md"
+
+
+def _is_project_subartifact(rel):
+    """True for project-internal files (paper drafts, worklogs, analysis logs) under 01-Research-Projects/<project>/."""
+    return len(rel.parts) >= 3 and rel.parts[0] == "01-Research-Projects" and not _is_project_entry(rel)
+
+
+def _page_label(p, vault):
+    """Human-readable node label; qualifies PROJECT.md with its project folder name."""
+    rel = p.relative_to(vault)
+    return "%s/PROJECT" % rel.parts[1] if _is_project_entry(rel) else p.stem
+
+
 def md_files(root, dirs=None):
     bases = [root / d for d in dirs] if dirs else [root]
     for base in bases:
@@ -83,6 +104,8 @@ def md_files(root, dirs=None):
         for p in base.rglob("*.md"):
             rel = p.relative_to(root)
             if any(part in SKIP_PARTS or part.startswith("_erc") for part in rel.parts):
+                continue
+            if _is_paper_version(rel):
                 continue
             yield p
 
@@ -104,6 +127,19 @@ def _stem_index(pages):
     return stems
 
 
+def _index_targets(index_text):
+    """Return (stems_set, rel_targets_set) extracted from [[wikilinks]] in Meta/index.md."""
+    stems, rels = set(), set()
+    for m in WIKILINK.finditer(index_text):
+        raw = m.group(1).strip().replace("\\", "/")
+        if raw.lower().endswith(".md"):
+            raw = raw[:-3]
+        low = raw.lower()
+        rels.add(low)
+        stems.add(low.split("/")[-1])
+    return stems, rels
+
+
 def lint(vault, strict=False):
     findings = []
 
@@ -112,61 +148,80 @@ def lint(vault, strict=False):
 
     scope_pages = sorted(md_files(vault, SCOPE))
     all_pages = list(md_files(vault))
+    non_sub_pages = [p for p in all_pages if not _is_project_subartifact(p.relative_to(vault))]
     stems = _stem_index(all_pages)
+    wiki_stems = _stem_index(non_sub_pages)
 
     index = vault / "Meta" / "index.md"
     index_text = read(index) if index.exists() else None
     if index_text is None:
         add("warning", "Meta/index.md", "index", "Meta/index.md not found; index coverage not checked")
 
-    inbound = {p: set() for p in scope_pages}
-    index_targets = set()
-    if index_text:
-        index_targets = {m.group(1).strip().split("/")[-1].lower() for m in WIKILINK.finditer(index_text)}
+    wiki_scope_pages = [p for p in scope_pages if not _is_project_subartifact(p.relative_to(vault))]
+    inbound = {p: set() for p in wiki_scope_pages}
+    index_stems, index_rels = _index_targets(index_text) if index_text else (set(), set())
 
     for p in scope_pages:
-        rel = p.relative_to(vault).as_posix()
+        rel_path = p.relative_to(vault)
+        rel = rel_path.as_posix()
+        subartifact = _is_project_subartifact(rel_path)
         text = read(p)
         fm, err = parse_frontmatter(text)
         if err:
             add("error", rel, "frontmatter", err)
-        if fm is None:
-            add("warning", rel, "frontmatter", "no frontmatter")
-        elif not err:
-            ptype = str(fm.get("type", "")).lower()
-            if not ptype:
-                add("warning", rel, "frontmatter", "missing 'type'")
-            if ptype in NEEDS_SOURCES:
-                if "sources" not in fm:
-                    add("warning", rel, "sources", "type '%s' requires a 'sources' field" % ptype)
-                if "verification" not in fm:
-                    add("warning", rel, "verification", "missing 'verification' (verified|unverified)")
-            srcs = fm.get("sources", [])
-            if isinstance(srcs, str):
-                srcs = [srcs]
-            for s in srcs:
-                if looks_like_path(s):
-                    if not ((vault / s).exists() or (p.parent / s).exists()):
-                        add("error", rel, "sources", "source path not found: %s" % s)
+        if not subartifact:
+            if fm is None:
+                add("warning", rel, "frontmatter", "no frontmatter")
+            elif not err:
+                ptype = str(fm.get("type", "")).lower()
+                if not ptype:
+                    add("warning", rel, "frontmatter", "missing 'type'")
+                if ptype in NEEDS_SOURCES:
+                    if "sources" not in fm:
+                        add("warning", rel, "sources", "type '%s' requires a 'sources' field" % ptype)
+                    if "verification" not in fm:
+                        add("warning", rel, "verification", "missing 'verification' (verified|unverified)")
+                srcs = fm.get("sources", [])
+                if isinstance(srcs, str):
+                    srcs = [srcs]
+                for s in srcs:
+                    if looks_like_path(s):
+                        if not ((vault / s).exists() or (p.parent / s).exists()):
+                            add("error", rel, "sources", "source path not found: %s" % s)
         for m in WIKILINK.finditer(text):
             target = _target(m.group(1))
             if not stems.get(target) and not target.endswith(NON_PAGE_EXT):
                 add("error", rel, "link", "broken wikilink [[%s]]" % m.group(1).strip())
-        if index_text is not None and p.stem.lower() not in index_targets:
-            add("warning", rel, "index", "not listed in Meta/index.md")
-        if len(stems.get(p.stem.lower(), [])) > 1:
-            add("warning", rel, "duplicate", "file name is not unique in the vault, so [[%s]] is ambiguous" % p.stem)
+        if not subartifact:
+            if index_text is not None:
+                if _is_project_entry(rel_path):
+                    proj_name = rel_path.parts[1].lower()
+                    in_idx = (proj_name in index_stems or (proj_name + "/project") in index_rels
+                              or rel[:-3].lower() in index_rels or "project" in index_stems)
+                else:
+                    in_idx = p.stem.lower() in index_stems
+                if not in_idx:
+                    add("warning", rel, "index", "not listed in Meta/index.md")
+            same = wiki_stems.get(p.stem.lower(), [])
+            if len(same) > 1 and not all(_is_project_entry(x.relative_to(vault)) for x in same):
+                add("warning", rel, "duplicate", "file name is not unique in the vault, so [[%s]] is ambiguous" % p.stem)
 
     # inbound links may come from any page in the vault (index, MOC, notes), not only scope pages
-    scope_set = set(scope_pages)
+    wiki_scope_set = set(wiki_scope_pages)
     for src in all_pages:
         try:
             src_text = read(src)
         except OSError:
             continue
         for m in WIKILINK.finditer(src_text):
-            for h in stems.get(_target(m.group(1)), []):
-                if h in scope_set and h != src:
+            raw = m.group(1).strip().replace("\\", "/")
+            raw_no_ext = raw[:-3].lower() if raw.lower().endswith(".md") else raw.lower()
+            for h in stems.get(_target(raw), []):
+                if h in wiki_scope_set and h != src:
+                    if _is_project_entry(h.relative_to(vault)) and "/" in raw_no_ext:
+                        proj_name = h.relative_to(vault).parts[1].lower()
+                        if not (raw_no_ext.endswith(proj_name + "/project")):
+                            continue
                     inbound[h].add(src)
 
     for p, srcs in inbound.items():
@@ -193,16 +248,16 @@ GENERATED_MAPS = {"folder-map.md", "link-map.md"}
 ROOT_RULE_FILES = {"claude.md", "agents.md"}
 ROLES = {
     "00-Inbox": "待整理（含旧税法资料）",
-    "01-Research-Projects": "研究项目（每项目一个子目录，论文在 paper/）",
+    "01-Research-Projects": "研究项目（每项目一目录；PROJECT.md 为入口，论文在 paper/）",
     "03-Literature": "文献笔记与证据矩阵",
     "04-Theories": "理论与机制笔记",
     "05-Methods": "计量与识别方法笔记",
     "06-Data": "数据（raw 只读）",
     "07-Code": "分析脚本",
-    "08-Research-Notes": "研究笔记",
-    "09-Writing": "论文与报告",
+    "08-Research-Notes": "研究笔记与综合页",
+    "09-Writing": "独立文稿（政策简报/评论/讲义，非项目主线）",
     "10-Archive": "已完成项目",
-    "Meta": "目录、日志、登记簿、研究规范",
+    "Meta": "规范、账本与机读状态",
     "MOC": "主题索引",
     "Templates": "模板",
 }
@@ -213,8 +268,10 @@ ADJ_CAP = 12
 
 
 def _map_pages(vault):
-    """(graph_pages, legacy_pages, all_pages) for the maps. Generated maps and the root rule files
-    (CLAUDE.md / AGENTS.md) are left out so regenerating never changes the graph it describes."""
+    """(graph_pages, legacy_pages, all_pages) for the maps. Generated maps, root rule files
+    (CLAUDE.md / AGENTS.md) and project-internal sub-artifacts (paper drafts/worklogs/logs under
+    01-Research-Projects/<proj>/) are left out so regenerating never changes the graph and
+    multi-project manuscripts do not pollute the cross-project wikilink graph."""
     def keep(p):
         rel = p.relative_to(vault)
         if any(part in MAP_HIDDEN for part in rel.parts):
@@ -224,6 +281,8 @@ def _map_pages(vault):
         if rel.parts[0] == "Meta" and len(rel.parts) == 2 and p.name in GENERATED_MAPS:
             return False
         if rel.parts[0] == "Meta" and len(rel.parts) > 1 and rel.parts[1] in ("backups", "extras"):
+            return False
+        if _is_project_subartifact(rel):
             return False
         return True
     graph = sorted(p for p in md_files(vault, GRAPH_DIRS) if keep(p))
@@ -273,7 +332,8 @@ def build_graph(vault):
                     st["links"] += 1
                     if h in gset:
                         st["to_graph"] += 1
-    dups = sorted((k, sorted(rel(p) for p in v)) for k, v in stems.items() if len(v) > 1)
+    dups = sorted((k, sorted(rel(p) for p in v)) for k, v in stems.items()
+                  if len(v) > 1 and not all(_is_project_entry(p.relative_to(vault)) for p in v))
     dups = [(k, v) for k, v in dups if any((vault / x) in gset for x in v)]
     orphans = sorted(rel(p) for p in graph if not inbound_any[p] and rel(p).split("/")[0] not in ("Meta", "MOC"))
     return {"graph": graph, "legacy": legacy, "rel": rel, "out": out_edges, "in_any": inbound_any,
@@ -364,7 +424,7 @@ def render_link_map(vault, g=None):
              "- 用法：先读枢纽页，再沿“邻接表”展开；回答时注明来源页。", "",
              "## 枢纽页（被研究页与 MOC 链入最多）", "| 页面 | 路径 | 入链 | 出链 |", "|---|---|---|---|"]
     for p in _hubs(g, FULL_HUBS):
-        lines.append("| `%s` | `%s` | %d | %d |" % (p.stem, rel(p), len(g["in_res"][p]), len(g["out"][p])))
+        lines.append("| `%s` | `%s` | %d | %d |" % (_page_label(p, vault), rel(p), len(g["in_res"][p]), len(g["out"][p])))
     lines += ["", "## 按文件夹", "| 文件夹 | 页数 | 出链 | 入链 | 无入链 |", "|---|---|---|---|---|"]
     for top, a in sorted(_folder_summary(g).items()):
         lines.append("| `%s` | %d | %d | %d | %d |" % (top, a["pages"], a["out"], a["in"], a["orphans"]))
@@ -372,9 +432,9 @@ def render_link_map(vault, g=None):
     for p in g["graph"]:
         if rel(p).split("/")[0] == "Meta" or not g["out"][p]:
             continue
-        outs = sorted(q.stem for q in g["out"][p])
+        outs = sorted(_page_label(q, vault) for q in g["out"][p])
         more = "" if len(outs) <= ADJ_CAP else " …（另 %d 条）" % (len(outs) - ADJ_CAP)
-        lines.append("- `%s` → %s%s" % (p.stem, "、".join("`%s`" % o for o in outs[:ADJ_CAP]), more))
+        lines.append("- `%s` → %s%s" % (_page_label(p, vault), "、".join("`%s`" % o for o in outs[:ADJ_CAP]), more))
     lines += ["", "## 无入链页"] + (["- `%s`" % o for o in g["orphans"]] or ["- 无"])
     lines += ["", "## 断链"] + (["- `%s` → [%s]" % (a, b) for a, b in g["broken"]] or ["- 无"])
     lines += ["", "## 重名主干名（`[[链接]]` 指向不明，建议改名）"]
@@ -401,7 +461,7 @@ def render_compact(vault, g=None):
         L.append("- `%s/`%s：%d 页%s" % (rp, (" " + role) if role else "", nm, tag))
     L += ["### 双链地图（研究库）",
           "- 规模：%d 页、%d 条页间链接；断链 %d、无入链 %d、重名 %d。" % (len(g["graph"]), n_links, len(g["broken"]), len(g["orphans"]), len(g["dups"])),
-          "- 枢纽页（入链/出链）：" + ("、".join("`%s`（%d/%d）" % (p.stem, len(g["in_res"][p]), len(g["out"][p])) for p in _hubs(g, COMPACT_HUBS)) or "暂无"),
+          "- 枢纽页（入链/出链）：" + ("、".join("`%s`（%d/%d）" % (_page_label(p, vault), len(g["in_res"][p]), len(g["out"][p])) for p in _hubs(g, COMPACT_HUBS)) or "暂无"),
           "- 检索顺序：`Meta/index.md` 与枢纽页 → 沿 `[[链接]]` 展开（邻接表见 `Meta/link-map.md`）→ 回答注明来源页；旧税法笔记按文件夹检索，不进图。",
           MAP_END]
     return "\n".join(L)

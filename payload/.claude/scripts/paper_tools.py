@@ -6,6 +6,8 @@ cite keys that exist in a verified citation table, and every number must trace t
 
   cite add --key K --title T [--authors "A; B"] [--year Y] [--doi D] [--venue V]
            [--type article|book|chinese|legal] [--doc-no NO --effective DATE] [--offline]
+  cite from-note NOTE.md... [--offline] [--replace]
+                                              bridge 03-Literature/*.md frontmatter into citation-map.json
   cite verify [--key K | --all] [--offline]   re-check unverified/mismatch entries against Crossref
   cite confirm --key K --note TEXT            the researcher confirms a source by hand (asks for permission)
   cite check DRAFT.md...                      unknown keys (error), unverified keys (warning), unused entries
@@ -325,6 +327,65 @@ def cmd_cite_list(a):
     print("共 %d 条。" % len(m["entries"]))
 
 
+def cmd_cite_from_note(a):
+    """Bridge one or more 03-Literature/*.md notes into Meta/citation-map.json via frontmatter."""
+    import wiki_lint as wl  # same folder, standard library only
+    vault = vault_of(a)
+    path, m = cmap(vault)
+    added = 0
+    for raw in a.files:
+        np = in_vault(vault, raw)
+        if not os.path.isfile(np):
+            sys.exit("找不到文献笔记：%s" % raw)
+        fm, err = wl.parse_frontmatter(read_text(np))
+        if err or not fm:
+            sys.exit("文献笔记缺少有效 frontmatter：%s（%s）" % (raw, err or "无 frontmatter"))
+        key = str(fm.get("cite_key") or "").strip()
+        if not key:
+            stem = os.path.splitext(os.path.basename(np))[0]
+            if KEY_RE.match(stem):
+                key = stem
+            else:
+                sys.exit("%s 缺少 frontmatter 字段 cite_key（且文件名不能直接作为英文 key）。" % raw)
+        if not KEY_RE.match(key):
+            sys.exit("cite_key 格式非法：%s（仅允许字母开头及字母数字下划线冒号连字符）" % key)
+        if key in m["entries"] and not a.replace:
+            print("%s -> 跳过（已存在；要更新请加 --replace）" % key)
+            continue
+        title = str(fm.get("title") or "").strip()
+        if not title:
+            sys.exit("%s 缺少 frontmatter 字段 title。" % raw)
+        authors = fm.get("authors") or []
+        if isinstance(authors, str):
+            authors = [x.strip() for x in re.split(r"[;,]", authors) if x.strip()]
+        year = str(fm.get("year") or "").strip() or None
+        doi = str(fm.get("doi") or "").strip() or None
+        venue = str(fm.get("journal") or fm.get("venue") or "").strip()
+        ctype = str(fm.get("cite_type") or "").strip().lower()
+        if ctype not in ("article", "book", "chinese", "legal"):
+            ctype = "chinese" if is_zh(title) else "article"
+        e = {"key": key, "title": title, "authors": authors, "year": year, "doi": doi, "venue": venue,
+             "type": ctype, "status": "unverified", "note_path": relpath(np, vault), "added": now()}
+        for fld in ("locator", "claim_scope"):
+            val = str(fm.get(fld) or "").strip()
+            if val:
+                e[fld] = val
+        if ctype == "legal":
+            doc_no = str(fm.get("doc_no") or "").strip()
+            eff = str(fm.get("effective") or "").strip()
+            if not (doc_no and eff):
+                sys.exit("%s 为法规条目，frontmatter 需包含 doc_no 与 effective。" % raw)
+            e["doc_no"], e["effective"] = doc_no, eff
+        st = verify_entry(e, offline(a))
+        m["entries"][key] = e
+        orc.ledger_append(vault, "cite_add", key=key, status=st, from_note=e["note_path"])
+        print("%s -> %s（来自 %s）" % (key, st, e["note_path"]))
+        added += 1
+    if added:
+        save(path, m)
+    print("共桥接登记 %d 条。" % added)
+
+
 # ------------------------------------------------------------------ results
 def rmap(vault):
     path = os.path.join(vault, RES_REL)
@@ -625,11 +686,12 @@ CAUSAL_VERB_RE = re.compile(r"(导致|致使|引起|显著提高|显著降低|�
 
 def claim_limited_to_association(rest):
     """Outline row after the id: | claim | type | estimand | evidence | allowed wording | limits |.
-    Limited when the type cell says association, or the allowed-wording cell says association only."""
+    Limited when the type cell says association/speculation, or the allowed-wording cell restricts causal verbs."""
     cells = [c.strip() for c in rest.split("|")]
     typ = cells[1] if len(cells) > 1 else ""
     wording = cells[4] if len(cells) > 4 else ""
-    return any(w in typ for w in ("相关", "关联")) or any(w in wording for w in ("相关", "关联", "仅描述"))
+    return (any(w in typ for w in ("相关", "关联", "描述"))
+            or any(w in wording for w in ("相关", "关联", "仅描述", "推测", "一致", "探索性", "假说")))
 
 
 def find_outline(vault, files, project):
@@ -651,8 +713,12 @@ def claim_problems(vault, files, strict=False, project=None):
     op = find_outline(vault, files, project)
     outline_claims = dict(OUTLINE_CLAIM_ROW_RE.findall(read_text(op))) if op else {}
 
+    seen_claims = set()
+    checked_non_outline = False
     for f in files:
         rel = relpath(f, vault)
+        if os.path.basename(f).lower() != "outline.md":
+            checked_non_outline = True
         txt = strip_code(read_text(f))
         for k in draft_keys(txt):
             e = cm["entries"].get(k)
@@ -660,6 +726,7 @@ def claim_problems(vault, files, strict=False, project=None):
                 (errors if strict else warns).append("%s：@%s 缺少定位锚点 locator（L3 anchorless 风险）" % (rel, k))
         for para in re.split(r"\r?\n\s*\r?\n", txt):
             cids = CLAIM_TAG_RE.findall(para)
+            seen_claims.update(cids)
             if PLACEHOLDER.search(para) and not cids:
                 warns.append("%s：含 {{res:...}} 的段落缺少 <!-- claim: Cn --> 标注" % rel)
             for cid in cids:
@@ -668,6 +735,10 @@ def claim_problems(vault, files, strict=False, project=None):
                 elif cid in outline_claims:
                     if claim_limited_to_association(outline_claims[cid]) and CAUSAL_VERB_RE.search(para):
                         (errors if strict else warns).append("%s：%s 在大纲中限定为相关/关联，但正文疑似使用强因果动词（OVERSTATED）" % (rel, cid))
+    if outline_claims and checked_non_outline:
+        for cid in sorted(outline_claims):
+            if cid not in seen_claims:
+                warns.append("大纲主张 %s 尚未在正文通过 <!-- claim: %s --> 落地（请核对是否遗漏）" % (cid, cid))
     return sorted(set(errors)), sorted(set(warns))
 
 
@@ -842,15 +913,21 @@ def cmd_report(a):
     drafts = []
     if pd and os.path.isdir(pd):
         # only the live manuscript files: versions/ and worklogs quote keys and ids in prose
-        drafts = [os.path.join(pd, f) for f in ("outline.md", "draft.md", "final.md") if os.path.isfile(os.path.join(pd, f))]
+        drafts = [os.path.join(pd, f) for f in ("outline.md", "draft.md", "polished.md", "final.md") if os.path.isfile(os.path.join(pd, f))]
     cited = set()
     linked, bare, openq = 0, 0, 0
+    seen_claims = set()
     for f in drafts:
         t = read_text(f)
         cited |= set(draft_keys(t))
         linked += len(PLACEHOLDER.findall(strip_code(t)))
         bare += len(bare_stats(t))
         openq += len(open_questions(t))
+        if os.path.basename(f).lower() != "outline.md":
+            seen_claims.update(CLAIM_TAG_RE.findall(strip_code(t)))
+    outline_path = os.path.join(pd, "outline.md") if pd else None
+    defined_claims = set(OUTLINE_CLAIM_ROW_RE.findall(read_text(outline_path))) if (outline_path and os.path.isfile(outline_path)) else set()
+    defined_ids = {x[0] for x in defined_claims}
     unknown = len([k for k in cited if k not in cm["entries"]])
     ok = len([k for k in cited if cm["entries"].get(k, {}).get("status") in OK_STATUS])
     rv = load(os.path.join(pd, "reviews.json"), None) if pd else None
@@ -859,6 +936,7 @@ def cmd_report(a):
            "cited_verified_rate": round(ok / len(cited), 3) if cited else None,
            "results_registered": len(rm["entries"]), "numbers_linked": linked, "bare_statistics": bare,
            "numbers_linked_rate": round(linked / (linked + bare), 3) if (linked + bare) else None,
+           "claims_defined": len(defined_ids), "claims_covered": len(defined_ids & seen_claims),
            "open_questions": openq,
            "refine": {"current": rv["current"], "rounds": [{k: r[k] for k in ("version", "decision", "fatal", "major", "minor")}
                                                            for r in rv["rounds"]]} if rv else None}
@@ -869,6 +947,9 @@ def cmd_report(a):
         rep["citations_total"], st_counts, rep["cited_keys"], ok, unknown, rep["cited_verified_rate"]))
     print("结果登记 %d 个；正文已链接 %d 处、未链接统计量 %d 处（链接率 %s）" % (
         rep["results_registered"], linked, bare, rep["numbers_linked_rate"]))
+    if defined_ids:
+        print("主张覆盖：%d/%d（已定义 %d 条，正文已锚定 %d 条）" % (
+            rep["claims_covered"], rep["claims_defined"], rep["claims_defined"], rep["claims_covered"]))
     print("未回答的 ⟦问⟧：%d" % openq)
     if rv:
         print("精修：当前 %s；" % rv["current"] + "；".join("%s %s" % (r["version"], r["decision"]) for r in rv["rounds"]))
@@ -897,6 +978,9 @@ def main(argv=None):
     p.set_defaults(f=cmd_cite_check)
     p = c.add_parser("bib"); p.add_argument("-o", "--output"); p.set_defaults(f=cmd_cite_bib)
     p = c.add_parser("list"); p.set_defaults(f=cmd_cite_list)
+    p = c.add_parser("from-note"); p.add_argument("files", nargs="+")
+    p.add_argument("--replace", action="store_true"); p.add_argument("--offline", action="store_true")
+    p.set_defaults(f=cmd_cite_from_note)
 
     r = top.add_parser("results").add_subparsers(dest="cmd", required=True)
     p = r.add_parser("register")

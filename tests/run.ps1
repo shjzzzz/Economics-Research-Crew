@@ -603,8 +603,65 @@ Ok ((PT @("polish","check","--before",$orig,"--after",$bad)) -match "正文数�
 Ok ((Hint "帮我润色这一节的表达") -match "paper-polish") "routing: polish request -> paper-polish"
 Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
 
+# --- 13. architecture, wiki isolation & argument spine upgrades ---------------
+Write-Host "[13] architecture & spine upgrades"
+# 13a. checker verifies all 15 skills (including paper-polish)
+$chkText = ((& $shell -NoProfile -File $checker -VaultPath $v12 2>&1) -join "`n")
+Ok ($LASTEXITCODE -eq 0 -and $chkText -match "15 skills") "checker reports and validates all 15 skills"
+# 13b. pure agy & codex installs generate folder-map / link-map via .agents/scripts/wiki_lint.py
+Ok ((Test-Path (Join-Path $v10b "Meta\folder-map.md")) -and (Test-Path (Join-Path $v10b "Meta\link-map.md"))) "agy-only install generates both maps"
+Ok ((MapBlock (Join-Path $v10b "AGENTS.md")) -notmatch "尚未生成") "agy-only AGENTS.md map block refreshed"
+Ok ((Test-Path (Join-Path $v10c "Meta\folder-map.md")) -and (MapBlock (Join-Path $v10c "AGENTS.md")) -notmatch "尚未生成") "codex-only install generates maps and refreshes AGENTS.md"
+# 13c. de-duplicated AGENTS.md has comfortable headroom below 24,000 bytes
+$freshAgyBytes = (Get-Item (Join-Path $v10c "AGENTS.md")).Length
+Ok ($freshAgyBytes -le 17500) "de-duplicated AGENTS.md <= 17,500 bytes (got $freshAgyBytes)"
+# 13d. multi-project wiki_lint isolation (PROJECT.md vs paper/ sub-artifacts & versions/)
+$v13 = New-Vault
+Ok ((Run-Install $v13 @("-Platform","claude")) -eq 0) "v13 fresh install exit 0"
+$lint13 = Join-Path $v13 ".claude\scripts\wiki_lint.py"
+$pt13 = Join-Path $v13 ".claude\scripts\paper_tools.py"
+foreach ($pn in "projA","projB") {
+    $pdir = Join-Path $v13 "01-Research-Projects\$pn"
+    New-Item -ItemType Directory -Force (Join-Path $pdir "paper\versions") | Out-Null
+    [IO.File]::WriteAllText((Join-Path $pdir "PROJECT.md"), "---`ntype: research-project`nupdated: 2026-11-19`n---`n# $pn`n", $enc)
+    [IO.File]::WriteAllText((Join-Path $pdir "paper\draft.md"), "草稿正文（无 frontmatter，不应报孤立/重名/缺索引）`n", $enc)
+    [IO.File]::WriteAllText((Join-Path $pdir "paper\versions\v0.md"), "旧版本快照 [[ghost_in_snapshot]]`n", $enc)
+}
+[IO.File]::WriteAllText((Join-Path $v13 "Meta\index.md"), "---`ntype: index`n---`n- [[projA/PROJECT]]`n- [[projB/PROJECT]]`n", $enc)
+& $py -X utf8 $lint13 map --vault $v13 *> $null
+$l13Out = (& $py -X utf8 $lint13 lint --vault $v13 --json) -join "`n"
+$l13Rc = $LASTEXITCODE
+$l13j = $l13Out | ConvertFrom-Json
+Ok ($l13Rc -eq 0 -and $l13j.errors -eq 0 -and $l13j.warnings -eq 0) "multi-project lint: 0 errors, 0 warnings (PROJECT.md + paper/ + versions/)"
+$lm13 = [IO.File]::ReadAllText((Join-Path $v13 "Meta\link-map.md"), $enc)
+Ok ($lm13 -notmatch "draft\.md" -and $lm13 -notmatch "v0\.md" -and $lm13 -notmatch "ghost_in_snapshot") "link-map excludes paper drafts and version snapshots"
+# broken wikilink inside paper/draft.md is still caught as an error
+[IO.File]::WriteAllText((Join-Path $v13 "01-Research-Projects\projA\paper\draft.md"), "引用不存在页 [[broken_in_draft]]`n", $enc)
+$l13b = (& $py -X utf8 $lint13 lint --vault $v13 --json) -join "`n"
+Ok ($LASTEXITCODE -eq 1 -and $l13b -match "broken_in_draft") "broken wikilink in paper/draft.md still caught"
+# 13e. paper_tools cite from-note bridges 03-Literature cards into citation-map.json
+$noteEn = Join-Path $v13 "03-Literature\chetty2009.md"
+$noteZh = Join-Path $v13 "03-Literature\tax_cn_2024.md"
+[IO.File]::WriteAllText($noteEn, "---`ntype: literature`ncite_key: chetty2009salience`ntitle: Salience and Taxation`nauthors: [Raj Chetty, Adam Looney]`nyear: 2009`njournal: AER`ndoi: 10.1257/aer.99.4.1145`nlocator: p.1146, Table 2`nclaim_scope: US grocery stores`n---`n# 笔记`n", $enc)
+[IO.File]::WriteAllText($noteZh, "---`ntype: literature`ncite_key: zhang2024tax`ntitle: 税收征管数字化与企业税收遵从`nauthors: [张三]`nyear: 2024`njournal: 经济研究`nlocator: 第45页, 表3`nclaim_scope: 中国上市公司`n---`n# 笔记`n", $enc)
+function PT13([string[]]$A) { $ErrorActionPreference = "Continue"; $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+    try { return ((& $py -X utf8 $pt13 --vault $v13 @A 2>&1) -join "`n") + "|rc=$LASTEXITCODE" } finally { [Console]::OutputEncoding = $prev } }
+$fnOut = PT13 @("cite","from-note",$noteEn,$noteZh,"--offline")
+Ok ($fnOut -match "chetty2009salience -> unverified" -and $fnOut -match "zhang2024tax -> manual" -and $fnOut -match "共桥接登记 2 条") "cite from-note bridges EN/ZH literature notes with locators"
+$cm13 = [IO.File]::ReadAllText((Join-Path $v13 "Meta\citation-map.json"), $enc) | ConvertFrom-Json
+Ok ($cm13.entries.chetty2009salience.locator -eq "p.1146, Table 2" -and $cm13.entries.zhang2024tax.type -eq "chinese") "bridged citations retain locator and detected type"
+# 13f. claim check: coverage warning + expanded non-causal restriction ("与……一致") + report coverage
+$p13 = Join-Path $v13 "01-Research-Projects\projA\paper"
+[IO.File]::WriteAllText((Join-Path $p13 "outline.md"), "| C1 | 机制检验 | 机制 | ATT | res:m1 | 与威慑机制一致 | 局限 |`n| C2 | 异质性发现 | 描述 | — | res:h1 | 仅描述 | 局限 |`n", $enc)
+$null = PT13 @("results","register","--id","m1","--value","0.08")
+[IO.File]::WriteAllText((Join-Path $p13 "draft.md"), "<!-- claim: C1 -->`n征管数字化显著提高了企业遵从 {{res:m1}} [@chetty2009salience]。`n", $enc)
+$cc13 = PT13 @("--project","projA","claim","check",(Join-Path $p13 "draft.md"),"--strict")
+Ok ($cc13 -match "OVERSTATED" -and $cc13 -match "C2 尚未在正文") "claim check catches mechanism-consistent overstatement and uncovered outline claim C2"
+$rep13 = PT13 @("--project","projA","report","--json")
+Ok ($rep13 -match '"claims_defined": 2' -and $rep13 -match '"claims_covered": 1') "report --json outputs claims_defined and claims_covered"
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

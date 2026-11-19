@@ -1,22 +1,42 @@
 ---
 name: academic-review
-description: "Conduct a skeptical, independent peer review of an economics manuscript, proposal or empirical strategy. Use for 审稿、匿名审稿、挑刺、审查研究设计、审查论文、投稿前自查."
+description: "Conduct a skeptical, independent peer review of an economics manuscript, proposal or empirical strategy with numbered issues (F1/M1/m1), 5-dimension scores, Frame-Lock Check, Concession Threshold and 7-Mode AI Failure Gate. Use for 审稿、匿名审稿、挑刺、审查研究设计、审查论文、投稿前自查."
 argument-hint: "[manuscript, proposal or design]"
 data_access_level: verified_only
 task_type: open-ended
 ---
 
-# Academic Review Workflow
+# Academic Review（S6 / S11：独立对抗式审稿与质量闸门）
 
-Independence first: if this session helped design or write the work under review, dispatch the review to the `academic-reviewer` agent and pass it only the artifacts (question, design/plan, manuscript, tables, code paths), not your own reasoning. Then present its report unchanged and add, separately labeled, any disagreement you have. If the subagent is unavailable, say so and review here, noting the reduced independence.
+## 1. 目标与边界
+以顶刊匿名审稿人视角对研究设计或论文稿件进行**独立、可证伪、证据导向**的挑刺与评级，输出与 `/paper-refine` 完全兼容的结构化审稿报告。**审稿方绝不直接改稿**，避免“既当运动员又当裁判”。
 
-1. Identify central claim and contribution.
-2. Reconstruct theory-to-hypothesis chain.
-3. Check literature positioning and source quality; check legal/institutional facts.
-4. Audit data, variables, sample, identification.
-5. Compare text claims with tables, equations, code.
-6. Classify issues: Fatal / Major / Minor, and run a **Frame-Lock Check** (challenge whether the core identification/theoretical framework itself holds, not just internal details).
-7. **Concession Threshold**: When the author pushes back on an issue, score the rebuttal 1–5; only concede at ≥4 with verifiable evidence/derivation, and never concede twice in a row.
-8. Give evidence-based revisions and claims to weaken.
+## 2. 前置读取与独立性铁律
+- **独立性优先**：若当前会话参与了该研究的设计或写作，**必须**派出独立上下文的 `academic-reviewer`（按 `Templates/handoff.md` 交接），**只传递产物路径**（研究问题、分析计划、分析日志、结果表/登记簿、稿件、代码路径），不传递作者的推理辩护过程；原样呈现其报告，若有异议单列标注。若子 Agent 不可用，须在报告开头声明“独立性降低”。
+- 必读基准：`Meta/research-standards.md`（含 7 类 AI 研究失效模式闸门）。
 
-Tie each criticism to a specific passage, equation, table or missing evidence.
+## 3. 核心审查流程（八步对抗协议）
+1. **重构核心主张与边际贡献**：用审稿人自己的话复述论文到底在主张什么，与文献相比增量是否真实、经济量级是否重要。
+2. **检验理论—假说—实证链条**：假说是否真正由机制推导得出？竞争性机制是否被设计有效排除？
+3. **核查文献定位与制度/法源准确性**：是否存在漏引关键文献、L3 文献错配（以摘要代全文）或中国税法文号/时效错误？
+4. **审计数据、变量、样本与识别策略**：样本瀑布是否透明？聚类、固定效应、坏控制、交错 DID 权重、IV 排他性、RDD/聚束操纵是否存在硬伤？
+5. **交叉核对正文、表图、公式与代码**：数字是否全部可追溯到 `Meta/results-ledger.json`？正文因果措辞是否超出设计识别上限？
+6. **框架锁定检测（Frame-Lock Check）**：跳出作者既定模型与识别框架，显式检验“核心识别假设或问题设定本身是否站不住脚？是否存在更干净的替代识别框架或解释？”
+7. **7 类 AI 研究失效模式核查（S6/S12 阻断项）**：逐条核查 `Meta/research-standards.md` 第 5 节（实现缺陷 / 结果幻觉 / 捷径依赖 / 把 Bug 当洞见 / 方法论编造 / 框架锁定 / 引文幻觉与 L3 错配），任一项未清零须标为 Fatal 或 Major。
+8. **魔鬼代言人让步门槛（反谄媚）**：当作者对某条意见反驳时，对反驳的证据/推导强度打 **1–5 分**；仅当 **≥4 分**（新增可核验实证证据、严谨数学推导或一手权威法源）才允许让步，1–3 分须坚持原意见并指出缺口；**严禁在无独立核验下连续两次让步**。
+
+## 4. 标准化输出契约（直通 `/paper-refine` 与 `paper_tools.py refine record`）
+每份审稿报告必须包含：
+1. **总体评估**（拒绝 / 大修 / 小修建议，及一句话核心判断）。
+2. **带编号问题清单**（每条一句话 + 指向具体节/段/表/公式/代码行）：
+   - **Fatal Flaws（`F1, F2…`）**：动摇核心结论或识别成立的致命缺陷（存在 Fatal 则 S7 不可直接接受）；
+   - **Major Issues（`M1, M2…`）**：显著削弱可信度、机制或定位的重要问题；
+   - **Minor Issues（`m1, m2…`）**：表述、图表注释、细节口径等次要问题。
+3. **五维度 1–10 评分**（复评必须保持完全相同的 5 个维度键名）：
+   - `ident`（识别可信度）、`contrib`（贡献与定位）、`inst`（制度与法源）、`consist`（证据与数字一致性）、`write`（写作清晰度与克制程度）。
+4. **框架锁定检测结论** + **7 类 AI 失效模式逐项核查表**。
+5. **复评模式专规**（用于 `/paper-refine` v1..v3）：必须对照基线编号清单逐条标记 `已解决 / 部分解决 / 仍存在`（后两者计入 `carried`），再单独编号列出**新增问题**（计入 `new`），禁止另起炉灶重数总数。
+6. **需降级/删除的主张清单**与**可执行修改建议**（区分“改写可解决”与“必须新增实证分析”）。
+
+## 5. 硬性禁止
+禁止直接修改稿件或代码；禁止脱离具体文本/表/代码凭空挑刺；禁止因作者礼貌反驳而无证据让步；禁止忽略致命识别缺陷而只纠缠行文措辞。

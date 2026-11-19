@@ -212,6 +212,7 @@ foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\
 }
 # 5b. 生成两张地图（文件夹地图、双链地图），并刷新 CLAUDE.md / AGENTS.md 中带标记的精简版
 $lintPy = Join-Path $VaultPath ".claude\scripts\wiki_lint.py"
+if (-not (Test-Path $lintPy)) { $lintPy = Join-Path $VaultPath ".agents\scripts\wiki_lint.py" }
 if ((Test-Path $lintPy) -and $hasPython -and $PSCmdlet.ShouldProcess($VaultPath, "生成 Meta/folder-map.md 与 Meta/link-map.md")) {
     $mapOut = (& python -X utf8 $lintPy map --vault $VaultPath | Out-String).Trim()
     Write-Host $mapOut

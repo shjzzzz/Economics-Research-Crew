@@ -3,19 +3,49 @@ type: analysis-plan
 project_id: ""
 version: 1
 status: draft
-date: YYYY-MM-DD
+created: YYYY-MM-DD
+updated: YYYY-MM-DD
 ---
 
-# Estimand
-# Outcome
-# Treatment / exposure
-# Unit and sample
-# Main specification
-# Identifying assumptions
-# Inference and clustering
-# Exclusions and missingness
-# Robustness checks
-# Falsification / placebo tests
-# Heterogeneity
-# Planned outputs
-# Deviations log
+# 预设分析计划（Pre-Analysis Plan）
+
+> 本计划在 S4 关卡冻结；S5 任何偏离必须在 `analysis-log.md` 逐项记录原因。本文件同时作为 S8 论文大纲的权威输入。
+
+## 1. 目标 Estimand 与样本定义
+- **Estimand**：（ATT / ATE / LATE / 局部弹性，注明适用人群）
+- **结果变量 $Y$**：（定义、单位、处理前均值与标准差口径）
+- **处理 / 冲击变量 $D$**：（定义、分配机制、发文日 vs 生效日）
+- **观测单位与样本期**：
+- **样本筛选与缺失值规则**：（明确每条排除标准，禁止静默删除或未记录缩尾）
+
+## 2. 基准模型设定与推断
+- **基准方程**：
+- **固定效应与控制变量**（说明为何不存在坏控制 Bad Controls）：
+- **标准误与聚类层级**（说明处理分配层级与聚类数是否充足）：
+- **现代估计量设定**（如交错 DID 的 Callaway-Sant'Anna / Sun-Abraham，IV 的有效 F 与 AR 置信区间，RDD/聚束的带宽与核函数）：
+
+## 3. 核心识别假设（标注可检验 / 部分可检验 / 不可检验）
+| 假设 | 可检验性 | 制度/经济辩护依据 |
+|---|---|---|
+| | | |
+
+## 4. 识别威胁—检验—证伪矩阵（直接映射至 S8 论文稳健性章节）
+| 识别威胁（选择/预期/同期政策/溢出/测量误差/异质性权重等） | 对应诊断 / 稳健性 / 安慰剂检验 | 证伪标准（何种结果推翻主结论） |
+|---|---|---|
+| | | |
+
+## 5. 机制与异质性检验（紧扣 S3 竞争性假说）
+- **区分主机制与竞争机制的检验**：
+- **预设异质性分组**（事前声明，防止事后数据挖掘）：
+
+## 6. 经济量级基准与因果措辞上限
+- **经济量级解读口径**（相对因变量均值/标准差、隐含弹性或财政规模）：
+- **允许的因果措辞上限**（来自 `/causal-inference-audit`：因果 / 条件因果 / 仅相关）：
+
+## 7. 计划输出表图与结果登记前缀
+- 计划表图（Table 1..N、Figure 1..N）：
+- `Meta/results-ledger.json` 建议前缀（如 `<project>.t2`）：
+
+## 8. 偏离记录（冻结后追加）
+| 日期 | 偏离项 | 原因 | 对识别/样本的影响 |
+|---|---|---|---|

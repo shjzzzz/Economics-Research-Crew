@@ -1,16 +1,16 @@
 # 使用说明
 
-本说明面向已把本扩展安装到研究库（下称 Vault，例如 `D:\Economicresearchwiki`）的使用者。安装步骤见 [README](../README.md)。
+本说明面向已把 Economics Research Crew 安装到研究库（下称 Vault，例如 `D:\Economicresearchwiki`）的使用者。安装与升级命令见 [README](../README.md)。
 
 ## 1. 它是什么
-一组放进 Claude Code 项目的配置：
-- **6 个 Subagent**（`.claude/agents/`）：各有职责与证据标准的专业角色。
-- **11 个 Skill**（`.claude/skills/`）：固定流程，用 `/名称` 触发。
-- **项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`）：每次会话自动加载。
-- **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、研究日志、待审队列、来源登记、研究标准，以及文献/数据/分析模板。
-- **脚本与 hooks**（`.claude/scripts/`、`.claude/hooks/`）：知识库体检脚本；可选的原始数据保护与 frontmatter 校验。
+一组面向税收经济学、公共经济学、计量经济学与因果推断的 AI 研究协作框架：
+- **7 个专业 Subagent**（`.claude/agents/` / `.agents/agents/`）：各有职责、工具权限与 `data_access_level` 隔离。
+- **15 个核心 Skill**（`.claude/skills/` / `.agents/skills/`）：覆盖 S1–S12 完整研究与写作链路以及可复利知识库维护，用 `/名称` 触发。
+- **单源项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`，同步生成多平台 `AGENTS.md`）：定义路由、四层知识架构与论证脊柱。
+- **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板。
+- **确定性脚本与 6 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）；可选的原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
 
-它不包含计量软件，也不会自动跑回归；它约束 Claude 如何组织、检查和记录研究工作。
+它不包含计量软件，也不会擅自运行回归；它确保每项研究遵循“识别先行、数字与引文机械可追溯、研究者把关”的纪律。
 
 ## 2. 开始一次会话
 ```powershell
@@ -22,152 +22,111 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 7 个 Agent，`/skills` 确认 15 个 Skill。
+再用 `/agents` 确认 **7 个 Agent**，`/skills` 确认 **15 个 Skill**。
 
-## 3. Skill 速查
-| 命令 | 何时用 | 产出 |
+## 3. 15 个核心 Skill 速查
+| 命令 | 阶段 / 何时用 | 核心产出 |
 |---|---|---|
-| `/research-question <主题>` | 题目还是一个主题，没有可检验的问题 | ≤3 个候选问题、可行性评估、推荐一个 |
-| `/literature-review <范围>` | 需要有来源的文献梳理 | 检索记录、文献矩阵、研究缺口、未核实清单 |
-| `/theory-modeling <机制>` | 需要把机制写成模型 | 设定、假设、逐步推导、比较静态、可检验推论 |
-| `/tax-policy-analysis <政策>` | 税制、征管、遵从、归宿问题 | 法源与有效性、机制、效率与分配、待官方确认项 |
-| `/causal-inference-audit <设计>` | 设计 DID/IV/RDD 前后审查识别 | estimand、假设、威胁、检验、可用的因果措辞 |
-| `/econometric-analysis <任务>` | 数据审计、实现与复现回归 | 分析计划、代码、样本核算、日志 |
-| `/academic-review <稿件/设计>` | 投稿或汇报前挑刺 | Fatal / Major / Minor 分级意见 |
-| `/ingest-source <文件>` | 把 `03-Literature/_sources/` 里的一个来源摄入 wiki | 先输出分析并等你确认；确认后写文献笔记、更新 index/日志/登记 |
-| `/query-wiki <问题>` | 基于已积累的 wiki 回答 | 带引用的回答，区分依据与推断，可回存为笔记 |
-| `/wiki-lint` | 知识库体检 | 断链/孤立页/溯源/index 覆盖 + 矛盾与过时检查报告 |
-| `/research-pipeline <主题或项目>` | 完整推进一个研究、继续上次的研究 | 先给阶段计划并等你同意；之后逐阶段推进，每阶段停在关卡，含 Reviewer 质量闭环 |
+| `/research-question <主题>` | S1：主题收敛为可检验研究问题与 estimand（苏格拉底防越位） | ≤3 候选（仅获明确指令后）、理想 vs 准实验对比、可行性评估、`PROJECT.md` |
+| `/literature-review <范围>` | S2/S9：争论簇文献梳理与三层定位锚点引文登记 | 检索记录、2–4 簇文献矩阵、精确缺口、未核实清单、`citation-map.json` |
+| `/theory-modeling <机制>` | S3：形式化建模与竞争性机制推导 | 假设表、逐步推导、比较静态、竞争机制排他推论、简化式映射 |
+| `/tax-policy-analysis <政策>` | S3：中国税法适用、冲突处理、征管归宿与政策冲击抽取 | 法源与效力表（含证据等级）、归宿渠道、政策冲击识别要素表 |
+| `/causal-inference-audit <设计>` | S4：DID/IV/RDD/聚束/SCM 识别审查（不跑回归） | 六项必答核查、现代诊断清单、威胁—检验—证伪矩阵、冻结 `analysis-plan.md` 与因果措辞上限 |
+| `/econometric-analysis <任务>` | S5：数据审计、计量实现、论文复现与代码审计 | 模块化脚本、样本瀑布、`analysis-log.md`、机读 CSV 并入簿 `results-ledger.json` |
+| `/academic-review <稿件/设计>` | S6/S11：独立对抗审稿（只审不改） | 编号清单 `F1/M1/m1` + 5 维评分 + 框架锁定检测 + 7 类 AI 失效核查 |
+| `/paper-outline <项目>` | S8：把冻结研究产物转为可校验论文架构 | `paper/outline.md`（主张清单、6 步引言蓝图、文献布局、图表叙事计划） |
+| `/paper-draft <项目>` | S10：严格受限输入的分节成稿 | `paper/draft.md`（只用 `[@key]`、`{{res:id}}`、`<!-- claim -->`）与主张对照表 |
+| `/paper-refine <项目>` | S11：清单复核多轮精修（≤3 轮）与外部期刊 R&R 返修 | `paper/versions/`、`reviews.json`、`worklog-vN.md`、`rebuttal-matrix.md` |
+| `/paper-polish <稿件>` | S11b：内容定稿后的语言与文风精修（不用于过 AI 检测） | `paper/polished.md`、变更报告、`polish check` 不变性核对结果 |
+| `/research-pipeline <主题/项目>` | S1–S12 全流程编排、恢复进度、关卡与结项知识回流 | 阶段计划、`STATE.json`、质量闭环与 `08-Research-Notes/` 综合页回流 |
+| `/ingest-source <文件>` | 两步摄入 `03-Literature/_sources/` 来源到 wiki | 先分析停下等确认；确认后写文献卡（含 `cite_key`）、关联概念页、刷新双地图 |
+| `/query-wiki <问题>` | 沿 `index` + `link-map` 枢纽页检索库内证据 | 区分事实与推断的带引用回答，可回存 `query` / `synthesis` 笔记 |
+| `/wiki-lint` | 知识库确定性体检、论文指标联动与语义审计 | 断链/孤立页/重名/矛盾/过时/知识回流报告，批准后再修 |
 
-例：
-```text
-/causal-inference-audit 研究金税四期上线对企业税收遵从的影响，处理组为首批试点地区企业，双向固定效应 DID
-```
-
-## 4. 路由：Claude 如何决定用什么
-1. 概念性短问题 → 直接回答。
-2. 单项研究任务 → 先调用对应 Skill（Skill 描述里有中文触发词，例如“文献综述”“识别策略”“复现论文”）。
+## 4. 路由与角色映射
+收到请求时按序路由：
+1. 概念性/事实性短问题 → 直接回答。
+2. 单项研究任务 → 先激活对应项目 Skill（含中文意图触发词与 `routing_hint.py` 提示）。
 3. 完整研究、多阶段、“继续上次的研究” → `/research-pipeline`。
-4. Agent 由 Skill 或 pipeline 在内部派出，一次一个；调用 Skill 即视为你同意它派出其指定的 Agent。Skill 之外，只有你点名时才派。
-5. 在本库内，本项目 Skill 优先于范围重叠的全局插件技能；你点名其他技能时以你为准。
+4. Agent 由 Skill 或 pipeline 在内部按需派出（一次一个）；调用 Skill 即视为授权派出其指定 Agent。
+5. 本库内项目 Skill 优先于范围重叠的全局插件技能；研究者显式点名其他技能时以研究者为准。
 
-想确保走某个流程，直接输入 `/技能名` 最可靠。
-
-**角色映射（你的方案中的 8 个角色加 Director）**
-
-| 角色 | 由谁承担 |
-|---|---|
-| Research Director | `/research-pipeline`（阶段、关卡、质量闭环） |
-| 01 文献研究 | `/literature-review`、`literature-agent`、`/ingest-source` |
-| 02 理论建模 | `/theory-modeling`、`theory-agent` |
-| 03 数据工程 | `/econometric-analysis`、`econometrics-agent` |
-| 04 计量分析 | `/econometric-analysis`、`econometrics-agent`；识别审查由 `/causal-inference-audit`、`causal-inference-agent` 负责 |
-| 05 税收研究 | `/tax-policy-analysis`、`tax-policy-agent` |
-| 06 代码复现 | `/econometric-analysis` 的“复现与代码审计模式” |
-| 07 学术写作 | **不在本项目范围内**：由主会话完成，遵守证据与汇报规则；可按需使用你已安装的写作类技能 |
-| 08 学术审稿 | `/academic-review`、`academic-reviewer`（独立上下文） |
-
-质量闭环：研究 Agent 提方案 → `econometrics-agent` 执行 → `academic-reviewer` 质疑 → Director 与你决定是否接受；有致命问题不得接受。
-
-## 4b. 调用 Agent
-Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实专业化、可并行或需要独立审查时委派。也可以直接点名：
-```text
-请用 academic-reviewer 审查 01-Research-Projects/XXX/draft.md，只列致命问题和重要问题。
-```
-| Agent | 职责 | 工具权限 |
+### 8 角色 + Director 映射
+| 角色 | 承担者 | 工具与权限特点 |
 |---|---|---|
-| literature-agent | 检索、抽取、比较文献 | 读、搜、联网 |
-| theory-agent | 模型推导与机制 | 读、写、编辑 |
-| tax-policy-agent | 税法、征管、归宿 | 读、搜、联网 |
-| econometrics-agent | 数据审计、估计、复现 | 读、写、编辑、Bash |
-| causal-inference-agent | 识别与稳健性设计 | 读、搜、联网、写 |
-| academic-reviewer | 对抗式审稿 | 只读、联网 |
+| Research Director | `/research-pipeline` | 阶段状态机、关卡把控、质量闭环、知识回流 |
+| 01 文献研究 | `/literature-review`、`literature-agent`、`/ingest-source` | 读、搜、联网（`redacted`） |
+| 02 理论建模 | `/theory-modeling`、`theory-agent` | 读、写、编辑（`verified_only`） |
+| 03 数据工程 & 04 计量 & 06 复现 | `/econometric-analysis`、`econometrics-agent`；识别由 `/causal-inference-audit`、`causal-inference-agent` 负责 | 仅 `econometrics-agent` 具备 Bash 执行权限（`raw`） |
+| 05 税收研究 | `/tax-policy-analysis`、`tax-policy-agent` | 读、搜、联网（`redacted`），内置中国税法冲突处理协议 |
+| 07 学术写作 | `/paper-outline`、`/paper-draft`、`/paper-refine`、`/paper-polish`、`paper-writer-agent` | 读、写、编辑（`verified_only`），严格受限于大纲/引文表/结果登记簿 |
+| 08 学术审稿 | `/academic-review`、`academic-reviewer`（独立上下文） | 只读、联网（`verified_only`），绝不改稿 |
 
-只有 econometrics-agent 能执行 Bash；reviewer 不能写文件，避免“边审边改”。
+质量闭环：研究 Agent 提方案 → `econometrics-agent` 执行并入簿 → `academic-reviewer` 独立质疑（只收产物不收推理）→ Director 与研究者决策；存在 Fatal Flaw 不得接受。
 
-## 5. 推荐工作流
-1. `/research-question` 定题 → 把确认后的问题写入 `01-Research-Projects/<项目>/`（用 `Templates/research-project.md`）。
-2. `/literature-review` → 文献笔记放 `03-Literature/`（`Templates/literature-note.md`）。
-3. `/theory-modeling`、`/tax-policy-analysis` → 机制与制度背景放 `04-Theories/`、`08-Research-Notes/`。
-4. 数据入 `06-Data/raw`（只读），在 `06-Data/metadata` 建数据卡（`Templates/dataset-card.md`）。
-5. `/causal-inference-audit` 先审设计，再用 `Templates/analysis-plan.md` 写分析计划。
-6. `/econometric-analysis` 执行；日志用 `Templates/analysis-log.md`，代码放 `07-Code/`。
-7. `/academic-review` 独立审查；按意见修改后再定稿。
-8. 每次重要工作在 `Meta/research-log.md` 记一行；新来源登记到 `Meta/source-registry.md`。
+## 5. 四层知识架构与论证脊柱（推荐工作流）
+目录按**四层知识流 + Meta 控制面**分工（详见 `Meta/vault-map.md`）：
+- **Tier 0 原始只读层**：`03-Literature/_sources/`、`06-Data/raw/`、库内既有旧税法笔记（不移动、不改写，不进双链图）。
+- **Tier 1 跨项目复利层**：`03-Literature/`（含 `cite_key` 与 `locator`）、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`（`synthesis`/`query`）、`MOC/`。
+- **Tier 2 项目执行与手稿层**：`01-Research-Projects/<项目>/`（`PROJECT.md` 为唯一进索引/双链图的项目入口；`STATE.json`、`analysis-plan.md`、`analysis-log.md` 与 `paper/` 子目录为项目工作产物，不污染全库双链图与多项目重名检查）、`06-Data/{processed,metadata}`、`07-Code/{stata,python,R}/<项目>/`。
+- **Tier 3 独立交付与归档层**：`09-Writing/`（仅放非完整研究项目的政策简报、书评、讲义与投稿导出包）、`10-Archive/`。
 
-不要跳过第 5 步：能跑出回归不等于识别成立。
+全周期论证脊柱（S1–S12）：
+1. **S1 定题**：`/research-question` 锁定问题、estimand、理想 vs 准实验 → `PROJECT.md`。
+2. **S2 文献**：`/literature-review` 建 2–4 个争论簇矩阵与精确缺口 → `03-Literature/`。
+3. **S3 机制与制度**：`/theory-modeling` 推竞争性假说与简化式映射；`/tax-policy-analysis` 核验法源并抽取政策冲击要素。
+4. **S4 识别与冻结计划**：`/causal-inference-audit` 产出威胁—检验—证伪矩阵与因果措辞上限 → 冻结 `analysis-plan.md`（切勿跳过）。
+5. **S5 实证执行与入簿**：`/econometric-analysis` 按计划跑脚本、记样本瀑布与经济量级 → `analysis-log.md` 并 `paper_tools.py results import` 入簿。
+6. **S6–S7 独立审查与裁决**：`/academic-review` 输出 `F1/M1/m1` + 5 维分 + 7 类失效核查 → 研究者决定接受/退回/停止。
+7. **S8–S12 论文写作与知识回流**：`/paper-outline`（C1）→ `paper_tools.py cite from-note/add`（C2）→ `/paper-draft`（C3）→ `/paper-refine`（C4）→ 可选 `/paper-polish` → S12 终检、`paper/ai-disclosure.md`（C5）并将综合结论回流至 `08-Research-Notes/` 刷新双地图。
 
-## 6. 知识库维护（可积累的 wiki）
-思路借鉴 llm_wiki：不是每次从原始文献重新检索，而是让知识库随摄入和提问不断积累。三层：**原始来源**（`03-Literature/_sources/`，不可变）→ **wiki 页面**（文献笔记、理论、方法、综合，由 Claude 与你共同维护）→ **规则**（`CLAUDE.md`）。
+## 6. 知识库维护（可积累的 Wiki）
+- **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界；研究者关键决定记入 `Meta/decisions.md`。
+- **两步摄入（`/ingest-source`）**：原始文件放 `03-Literature/_sources/`，先算 SHA256 去重并输出分析（含拟定 `cite_key` 与拟关联概念页），**等你确认后**才写卡、更新 `Meta/index.md`/`source-registry.md`/`research-log.md` 并刷新双地图；可一键用 `paper_tools.py cite from-note` 桥接入论文引文表。
+- **图谱检索（`/query-wiki`）**：先读 `Meta/index.md` 与 `Meta/link-map.md` 枢纽页，沿 `[[双链]]` 展开，回答区分“事实”与“推断”。
+- **体检与双地图（`/wiki-lint`）**：`python .claude/scripts/wiki_lint.py lint --vault .` 与 `map --vault .` 生成 `Meta/folder-map.md`、`Meta/link-map.md` 并刷新 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 区块；自动排除旧税法笔记、`paper/versions/` 与项目过程稿的孤立/重名噪音。
 
-- **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界。Claude 每次摄入和回答前都会读它；没填它会提醒你，不会替你编。
-- **摄入**：把 PDF/剪藏放进 `03-Literature/_sources/`，运行 `/ingest-source 路径`。它先算 SHA256 去重，再输出分析（抽取、与已有页面的矛盾、拟改动清单、未核实项），**等你确认**后才写页面、更新 `Meta/index.md`、追加日志、登记来源。
-- **提问**：`/query-wiki 问题`，先读 index 再读页面，回答区分“库内依据”和“推断”，并询问是否回存为 `08-Research-Notes/` 笔记。
-- **体检**：`/wiki-lint`，先跑确定性脚本再做语义检查；默认只报告不修改。也可直接运行 `python .claude/scripts/wiki_lint.py lint --vault .`。扫描范围只含新增研究目录，**不扫描原有 Economicresearchwiki 税法笔记**。
-- **两张地图**：`python .claude/scripts/wiki_lint.py map --vault .` 生成 `Meta/folder-map.md`（实际文件夹、只读与旧资料标记）和 `Meta/link-map.md`（双链图：枢纽页、邻接表、无入链页、断链、重名），并刷新 `CLAUDE.md` / `AGENTS.md` 里 `ERC:MAP` 标记之间的精简版；`--check` 只报告漂移，`--no-embed` 只写 Meta 两个文件。摄入来源和体检后会自动提示重新生成。旧税法笔记只在目录级汇总，不进图。同一图的内容在重复运行时保持不变。
-- **日志**：`Meta/research-log.md` 条目以 `## [日期] 类型 | 标题` 开头，可用 `grep "^## \[" Meta/research-log.md | tail` 查看近期记录。
-- **矛盾**：来源之间的冲突并列记录并进入 `Meta/review-queue.md`，由你裁决。
-- 页面 frontmatter 约定：`type`、`sources`、`updated`、`verification`（verified | unverified）。
+## 7. Hooks（可选，`-WithHooks` 启用）
+合并进 `.claude/settings.json`（合并前备份、幂等、非法 JSON 拒绝改动；需要 PATH 中有 `python`）：
 
-## 7. Hooks（可选，技术层面的保护）
-安装时加 `-WithHooks`，会把两个 hook 合并进 `.claude/settings.json`（合并前备份；已有设置保留；重复运行不会重复添加；若 settings.json 不是合法 JSON 则拒绝并保持原样）。需要 PATH 中有 `python`。
-
-| Hook | 时机 | 作用 |
+| Hook | 事件 | 作用 |
 |---|---|---|
-| `protect_raw.py` | PreToolUse | 阻止修改 `06-Data/raw` 与 `03-Literature/_sources` 里**已存在**的文件（Write/Edit/NotebookEdit 精确拦截）；新建文件允许，便于导入新资料 |
-| `validate_frontmatter.py` | PostToolUse | 写入 .md 后检查 frontmatter 是否闭合、有无 Tab，有问题时把提示反馈给 Claude 去修 |
+| `protect_raw.py` | PreToolUse（Write/Edit/Bash/PowerShell） | 阻止覆盖/修改 `06-Data/raw` 与 `03-Literature/_sources` 中已存在文件（允许 Write 新建导入） |
+| `orchestrator_guard.py` | PreToolUse（Agent/Task/Bash/PowerShell/Write/Edit） | 阻止跳阶段派 Agent、超重试/超并发、直接编辑机读账本；对 `gate` 与 `cite confirm` 强制弹权限确认 |
+| `validate_frontmatter.py` | PostToolUse（Write/Edit） | 检查写入 `.md` 的 YAML frontmatter 是否闭合、有无 Tab（反馈修正，不撤回） |
+| `validate_paper.py` | PostToolUse（Write/Edit） | 写入 `01-Research-Projects/*/paper/*.md` 后立即告警未知 `[@key]` 与未知 `{{res:id}}` |
+| `routing_hint.py` | UserPromptSubmit（agy 为 PreInvocation） | 按 `routing-triggers.json` 注入匹配 Skill 的确定性路由提示（不阻断） |
+| `orchestrator_record.py` | SubagentStart / SubagentStop | 将 Agent 派出起止追加记录至 `Meta/run-ledger.jsonl`（不存消息正文） |
 
-**局限**：对 Bash 只是关键字启发式检查（`rm`/`mv`/`Remove-Item`/重定向/复制到目标等且命令里出现受保护路径），无法覆盖所有 shell 写法；hook 输入异常时放行（fail open）。它们是在提示约束之外多加的一层，不是沙箱，Git 与备份仍然需要。
+**局限**：对 Bash/PowerShell 仅做关键字启发式拦截，无法覆盖所有 shell 写法；异常输入 fail-open。Hooks 是安全增强层而非沙箱，Git 与备份仍不可替代。
 
-## 8. 它会遵守的规则
-- `06-Data/raw` 与 `03-Literature/_sources` 只读；衍生数据只写 `06-Data/processed`。
-- 不删除、不移动、不重命名库内原有笔记，除非你明确同意。
-- 不编造文献、DOI、法条、数据或结果；查不到就标“未核实”。
-- 区分相关与因果，先说 estimand 与假设。
-- 税法结论要给文号、日期、生效与废止状态。
-- 涉及个人或受限数据，不外发。
+## 8. 编排层：状态、关卡、重试与恢复
+- 常用命令（库根目录）：
+  - `python .claude/scripts/orchestrator.py status`（项目进度）
+  - `python .claude/scripts/orchestrator.py next`（当前阶段缺口与重试额度）
+  - `python .claude/scripts/orchestrator.py verify`（检查退出条件与机械检查项）
+  - `python .claude/scripts/orchestrator.py log -n 20`（最近派出与关卡记录）
+- **关卡由研究者决定**：`gate --decision pass|revise|return|stop --note "…"` 会触发权限确认；Agent 失败每阶段最多重试 2 次（`revise` 清零）；残留运行记录用 `recover` 清理，临时关闭拦截用 `enforce off`。
 
-这些主要是写在指令里的约束：模型可能出错。装了 hooks 后，原始数据与原始来源另有技术拦截（见第 7 节，有局限）；权限提示与 Git 仍是实际保险。重要结论请自行核对原始来源。
+## 9. 论文写作工具链（`paper_tools.py`）
+1. **大纲（S8）**：`/paper-outline` 生成含主张清单与 6 步引言蓝图的 `paper/outline.md`。
+2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`。
+3. **引文管理（S9）**：
+   - 从知识库文献卡直接桥接：`paper_tools.py cite from-note 03-Literature/<卡片>.md`；
+   - 手动新增：`paper_tools.py cite add --key k --title "…" --year Y --locator "p.12, Table 2" --claim-scope "…" [--doi D | --type chinese | --type legal --doc-no … --effective …]`；
+   - 人工确认：`paper_tools.py cite confirm --key k --note "…"`（触发权限提示）；导出 BibTeX：`cite bib -o paper/citations.bib`。
+4. **成稿与主张审计（S10）**：`cite check`、`results check`、`claim check`（核对 `locator` 锚点、大纲主张覆盖度与因果动词越界）、`questions`、`report`。
+5. **精修与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记全不变）。
 
-## 9. 自定义
-- **改角色**：编辑 `.claude/agents/*.md`（`description` 决定何时被自动调用，`tools` 决定权限）。
-- **加 Skill**：新建 `.claude/skills/<name>/SKILL.md`，frontmatter 需有 `name`（与目录同名）和 `description`。
-- **改规则**：编辑 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md`。
-- **改路径映射**：编辑 `Meta/vault-map.md`。
-- 重装不会覆盖已改过的文件（已存在即跳过）；想拿回默认版本，先把旧文件改名再安装。
+## 10. 多平台支持（Claude Code / Antigravity `agy` / Codex CLI）
+- `-Platform auto` 自动检测本机 CLI，也可用 `claude` / `agy` / `codex` / `all` 指定；`payload/.claude/` 是唯一源。
+- agy 与 Codex 共用根目录 `AGENTS.md`（自包含 `ERC:BEGIN…ERC:END` 区块，压控在 ≤24,000 字节上限内）、`.agents/skills/`、`.agents/agents/`、`.agents/scripts/`。安装器在纯 agy/Codex 环境下也会自动调用 `.agents/scripts/wiki_lint.py map` 生成双地图。
+- 修改库内 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md` 后，运行 `.\Sync-AgentsMd.ps1 -VaultPath <库>` 同步 `AGENTS.md` 区块（`-Check` 只查不写）。
+- agy 在 `-WithHooks` 下安装 `protect_raw.py`（放行时返回 `ask`，不自动批准）与 `routing_hint.py`；Codex 无 hook，原始材料只读靠规则约束。
 
-改完后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。
-
-## 9a. 编排层：状态、关卡、重试与记录
-- 完整研究用 `/research-pipeline`。它会用 `orchestrator.py` 记录当前阶段、已登记的产物和你每次的关卡决定，所以中断后可以从 `STATE.json` 继续，不会重做已通过的阶段。
-- 常用命令（在库根目录）：`python .claude/scripts/orchestrator.py status`（进度）、`next`（下一步与还缺什么）、`log -n 20`（最近的派出与决定）。
-- **关卡由你决定。** Claude 汇报产物和关卡问题后会等你表态；它运行 `gate` 时 Claude Code 会弹出权限提示，请在确认你确实作出了该决定后再同意。
-- Agent 失败：最多重试 2 次，之后停下向你报告；你决定“修改（revise）”后计数才清零。
-- 如果被 hook 拦住而你确认是残留记录：`orchestrator.py recover`；要临时关闭拦截：`orchestrator.py enforce off`（仍会记录）。
-- 派出 Agent 的交接单模板：`Templates/handoff.md`（只给产物路径，不给推理，保持独立审查）。
-
-## 9c. 论文写作：大纲、引文、成稿、精修
-1. `/paper-outline` 产出 `paper/outline.md`（主张清单：每条主张的证据 id 与允许的措辞强度）。
-2. 登记结果：`python .claude/scripts/paper_tools.py results import <csv> --prefix t2` 或 `results register`；登记引文：`cite add --key k --title "…" --year Y [--doi D]`，状态为 verified / mismatch / unverified / manual；`cite confirm` 由研究者人工确认（会触发权限提示）。
-3. `/paper-draft` 只用引文表与结果登记簿写作；`cite check`、`results check`、`questions` 检查草稿；`claim check` 核对引文定位锚点、结果段落的 `<!-- claim: Cn -->` 标注与措辞强度，终检（S12）会强制执行。
-4. `/paper-refine`：评审→修改→`refine record` 给出接受/回退，最多 3 轮；需要新分析的意见进入 `Meta/review-queue.md`。
-   `/paper-polish`：内容定稿后做语言精修；`paper_tools.py polish scan` 按 `Meta/ai-tells.json`（可自行增删）列出套话与夸大，`polish check --before 原稿 --after 润色稿` 机械核对引文键、`{{res}}` 占位符、主张标注、问答标记和所有数字未变。不用于规避 AI 检测，AI 参与仍须披露。
-5. `paper_tools.py report` 查看已核验引文率、数字链接率、未答问题数。
-
-## 9b. 在 Antigravity（agy）或 Codex CLI 中使用
-- 安装：`-Platform auto` 会自动为本机已有的 CLI 生成文件；也可用 `-Platform agy` / `codex` / `all` 指定。
-- 规则在研究库根目录 `AGENTS.md` 的 `ERC:BEGIN … ERC:END` 区块里，内容与 `CLAUDE.md` 一致；Skills 在 `.agents/skills/`，Agent 说明在 `.agents/agents/`，脚本在 `.agents/scripts/`。
-- 用法相同：直接用自然语言提问，或点名 Skill（如“用 literature-review 梳理……”）。agy 装了 `-WithHooks` 时，路由提示会在每轮第一次调用模型前注入。
-- agy 的原始材料保护 hook 在不拦截时返回 `ask`（沿用 agy 正常审批流程），不会自动批准任何操作。
-- Codex：未在本机运行测试；没有 hook，`06-Data/raw` 与 `03-Literature/_sources` 的只读规则只靠 `AGENTS.md` 文本约束。若 Codex 不支持子 Agent，Skill 会在主会话里按 `.agents/agents/<名称>.md` 的职责完成。
-- 在库里改了 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md` 后，运行 `.\Sync-AgentsMd.ps1 -VaultPath <库>` 把改动同步进 `AGENTS.md` 区块（`-Check` 只检查不写；区块之外的内容不动，原文件另存 `AGENTS.md.bak`）。
-- 修改 Skill 或规则时改 `payload/.claude/` 下的源文件，再用 `-Update` 重新生成；不要直接改 `.agents/` 或 `AGENTS.md` 区块。
-
-## 10. 常见问题
-- **`/agents` 看不到 Agent**：确认在 Vault 根目录启动 `claude`，且 `.claude/agents/` 下有文件；改动后重启会话。
-- **安装脚本提示“跳过(已存在)”**：正常，说明保护了你已有的文件。想获取新版内容，用 `-Update`：已存在且有差异的文件会生成 `<文件>.new`（如 `SKILL.md.new`，不会被当作 Skill/Agent 加载），原文件不动，你人工比对合并。
-- **怎么确认安装器没坏**：运行 `tests/run.ps1`（5.1 与 pwsh 7 各一次），覆盖安装、幂等、保留中文 CLAUDE.md、`-WhatIf`、`-Update`、`-WithHooks`、两个 hook 与 lint。
-- **中文乱码**：用 UTF-8 打开；`.ps1` 已带 BOM，Windows PowerShell 5.1 与 pwsh 7 均可运行。
-- **`-WithExtras`**：另装 `payload-extras/` 里的第三方 Skill（公开仓库只含 MIT 许可的两个；作者本机另有更多，不公开）和其中的代理（只新增、不覆盖），使用规则见 `payload-extras/README.md`；若存在 `Meta/extras/INDEX.md` 则以它为准。它们会占用启动上下文，且未经审计；与核心 Skill 重叠时先走核心 Skill，输出不得改动 `raw`/`_sources`，联网取数不得外发受限数据，文献与数字仍须先进引文表/结果登记簿。CNKI 组需手动 `claude mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest`，登录与验证码由本人完成，只取题录、不批量下载。
-- **`-WithUpstream`**：需同时给 `-RepoUrl`；上游构建参数未经本项目验证，运行前请先读其 `launchme.sh`。
-- **卸载**：本项目不提供自动卸载。按 `README` 列出的文件手动删除；安装前的 `CLAUDE.md` 等备份在 `_erc-backups/<时间戳>/`。
+## 11. 自定义、扩展与常见问题
+- **自定义**：修改 `.claude/agents/*.md`、`.claude/skills/<name>/SKILL.md`、`Meta/style-guide.md`、`Meta/ai-tells.json` 后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。升级用 `-Update` 生成 `.new` 副本，绝不覆盖你的本地改动。
+- **`-WithExtras`**：可选安装 `payload-extras/` 中的第三方 Skill（公开仓库只含 MIT 许可的 `neishengxing-main`、`thu-digitizer-main`；只新增、不装 MCP、未经审计），使用规则见 `payload-extras/README.md`（若存在 `Meta/extras/INDEX.md` 则以它为准）；与核心 15 个 Skill 重叠时核心 Skill 优先。
+- **`-WithUpstream`**：需同时指定 `-RepoUrl`，在隔离目录构建，不自动导入会冲突的上游 dispatcher。
+- **验证回归**：运行 `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1`（全在临时目录运行，不触碰真实知识库）。
+- **卸载**：不提供自动卸载，按 README 文件清单手动删除；安装前备份保留在 `_erc-backups/<时间戳>/`。

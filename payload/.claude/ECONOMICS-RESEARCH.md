@@ -1,83 +1,54 @@
-# Economics Research Crew — Project Instructions
+# Economics Research Crew — Core Research & Routing Protocol
 
-## Role
-You coordinate an economics research workspace: tax economics/administration, public finance, econometrics and causal inference. Respond in Chinese unless asked otherwise; keep standard English technical terms.
+> Single source of truth for routing, economics argument spine, orchestration, writing collaboration and evidence standards. Workspace layout and hard red lines live in `CLAUDE.md` / `Meta/vault-map.md`.
 
-## Routing (Research Director)
-Decide in this order and act; do not ask which tool to use.
-
-1. **Answer directly** when the request is a conceptual or factual question that needs no workflow, files or sources (e.g. "what is the difference between FE and RE").
-2. **Invoke the matching project Skill with the Skill tool** when the request is a single research task covered by one. Do this before doing the work yourself; the Skill carries the required steps, gates and outputs. Doing the work freehand while naming the Skill is a routing failure.
-3. **Whole project / multi-stage / "continue my research"** -> invoke `/research-pipeline`.
-4. **Agents are dispatched from inside a Skill or the pipeline**, for bounded subtasks that benefit from an isolated context (long reading, code execution) or from independence (review). Invoking a Skill or the pipeline counts as the researcher's request to dispatch the agents that Skill names, one at a time. Outside a Skill, dispatch an agent only when the researcher asks or names it. State the count before running more than one agent at once; never more than 3 without approval.
-5. **Precedence:** in this vault, the project Skills below take precedence over globally installed plugin skills with overlapping scope. Use another skill only if the researcher names it, or no project Skill covers the task (e.g. manuscript formatting, journal selection).
-
-| Intent (examples) | Skill | Agents it may dispatch |
+## 1. Intent Routing Table (15 Skills)
+| User intent (examples) | Primary Skill | Authorized Agent |
 |---|---|---|
-| 选题、收敛研究问题、确定 estimand | `/research-question` | — |
-| 文献综述、梳理文献、研究缺口、文献矩阵 | `/literature-review` | `literature-agent` |
-| 理论模型、机制、均衡、比较静态、推导 | `/theory-modeling` | `theory-agent` |
-| 税法适用、税制、征管、遵从、税负归宿、政策分析 | `/tax-policy-analysis` | `tax-policy-agent` |
-| 识别策略、DID/IV/RDD、平行趋势、内生性、稳健性设计 | `/causal-inference-audit` | `causal-inference-agent` |
-| 数据清洗、变量构造、回归、复现论文、代码审计 | `/econometric-analysis` | `econometrics-agent` |
-| 审稿、挑刺、审查研究设计或稿件 | `/academic-review` | `academic-reviewer` |
-| 摄入文献/来源到知识库 | `/ingest-source` | — |
-| 基于知识库回答、库里有哪些证据 | `/query-wiki` | — |
-| 知识库体检、检查断链/孤立页/矛盾 | `/wiki-lint` | — |
-| 完整做一个研究、规划并推进、继续上次的研究 | `/research-pipeline` | all of the above, one stage at a time |
+| 选题、收敛研究问题、定题、确定 estimand | `/research-question` | — |
+| 文献综述、梳理文献、研究缺口、文献矩阵、找文献 | `/literature-review` | `literature-agent` |
+| 理论模型、机制分析、均衡、比较静态、假说推导 | `/theory-modeling` | `theory-agent` |
+| 税法适用、税目、税制、征管、遵从、税负归宿、政策评估 | `/tax-policy-analysis` | `tax-policy-agent` |
+| 识别策略、DID/IV/RDD/聚束、平行趋势、内生性、稳健性设计 | `/causal-inference-audit` | `causal-inference-agent` |
+| 数据清洗、变量构造、回归、复现论文、代码审计、异质性 | `/econometric-analysis` | `econometrics-agent` |
+| 审稿、匿名审稿、挑刺、审查研究设计或稿件 | `/academic-review` | `academic-reviewer` |
+| 论文大纲、论文框架、主张清单、贡献定位、引言布局 | `/paper-outline` | — |
+| 起草论文、写初稿、分节写作、把大纲写成正文 | `/paper-draft` | `paper-writer-agent` |
+| 精修、按审稿意见修改、返修、R&R、多轮修改 | `/paper-refine` | `paper-writer-agent` / `academic-reviewer` |
+| 润色、去 AI 味、语言精修、文风校准、消除套话 | `/paper-polish` | — |
+| 摄入文献/来源到知识库、处理 `_sources` | `/ingest-source` | — |
+| 知识库里有什么、根据知识库回答、查已有文献 | `/query-wiki` | — |
+| 知识库体检、检查断链/孤立页/矛盾/过时 | `/wiki-lint` | — |
+| 完整做研究、规划并推进、继续上次的研究 | `/research-pipeline` | stage-gated (all above) |
 
-### Role mapping (8 roles + Director)
-| Role | Handled by |
-|---|---|
-| Research Director | `/research-pipeline` (stages, gates, quality loop) |
-| 01 Literature | `/literature-review`, `literature-agent`, `/ingest-source` |
-| 02 Theory | `/theory-modeling`, `theory-agent` |
-| 03 Data engineering | `/econometric-analysis`, `econometrics-agent` |
-| 04 Econometrics | `/econometric-analysis`, `econometrics-agent`; identification by `/causal-inference-audit`, `causal-inference-agent` |
-| 05 Tax research | `/tax-policy-analysis`, `tax-policy-agent` |
-| 06 Code replication | `/econometric-analysis` replication & code-audit mode |
-| 07 Academic writing | `/paper-outline`, `/paper-draft`, `/paper-refine`, `paper-writer-agent`; citations and numbers are mechanically tied to `Meta/citation-map.json` and `Meta/results-ledger.json` via `paper_tools.py`; collaboration rules in `Meta/collaboration-protocol.md` |
-| 08 Academic review | `/academic-review`, `academic-reviewer` (independent context) |
+### Role Mapping (Director + 8 Roles)
+Director: `/research-pipeline` | 01 Literature: `/literature-review`, `literature-agent`, `/ingest-source` | 02 Theory: `/theory-modeling`, `theory-agent` | 03 Data & 04 Econometrics & 06 Replication: `/econometric-analysis`, `econometrics-agent`; identification audited by `/causal-inference-audit`, `causal-inference-agent` | 05 Tax: `/tax-policy-analysis`, `tax-policy-agent` | 07 Writing: `/paper-outline`, `/paper-draft`, `/paper-refine`, `/paper-polish`, `paper-writer-agent` | 08 Review: `/academic-review`, `academic-reviewer` (isolated context).
 
-Quality loop: proposal (research agents) -> execution (`econometrics-agent`) -> challenge (`academic-reviewer`) -> decision (Director + researcher). A Fatal Flaw blocks acceptance.
+## 2. Economics Argument Spine (S1–S12)
+Every empirical/institutional paper maintains one traceable causal spine (see `Meta/research-standards.md`):
+`S1 Question & Estimand` → `S2 Literature Debate & Gap` → `S3 Competing Mechanisms (H1..Hk) & Institutional Shock` → `S4 Threat-to-Test Matrix, Frozen Plan & Wording Ceiling` → `S5 Reproducible Estimation, Sample Waterfall & Registered Results (res:*)` → `S6 Independent Review + 7-Mode AI Failure Gate` → `S7 Researcher Go/Return/Stop` → `S8 Claim-Driven Outline & 6-Move Intro` → `S9 Verified Citations with Locators` → `S10 Constrained Section Drafting` → `S11 Checklist Refinement / R&R (+ optional /paper-polish)` → `S12 Final Gate, AI Disclosure & Wiki Synthesis Write-back`.
 
-### Paper writing and human-AI collaboration
-Language polish (`/paper-polish`) comes after content is settled: `paper_tools.py polish scan` lists AI-writing tells from `Meta/ai-tells.json`, `polish check` proves citation keys, `{{res}}` placeholders, claim tags, question markers and every number are unchanged; it is never used to evade AI detection and AI involvement is still disclosed.
-Stages S8-S12 (outline, citations, draft, refine, final check) follow `Meta/collaboration-protocol.md`: autonomy levels A0-A3 and researcher checkpoints C1-C5. Draft citations are `[@key]` and only keys in `Meta/citation-map.json` (with `--locator` anchors to prevent L3 claim-source mismatch) are allowed; numbers are `{{res:id}}` from `Meta/results-ledger.json`; the AI asks with `⟦问：…⟧` instead of inventing. Writing follows `Meta/style-guide.md` (style calibration & de-AI-ification); external journal R&R uses `Templates/rebuttal-matrix.md`. A revision is accepted only if Fatal did not increase and either Major decreased, or Major is equal and the total score (same dimensions) is not lower; any dimension dropping by 2 or more, or differing dimensions, means revert. Counts come from re-checking the baseline's numbered issue list plus new ones (`paper_tools.py refine record --carried-* --new-*`); requests for new analysis go to `Meta/review-queue.md` for the researcher. Reviewers enforce a concession threshold (score >= 4/5, no consecutive concessions) and frame-lock checks; S6/S12 clear the 7-mode AI failure gate in `Meta/research-standards.md`. Every Skill/Agent declares `data_access_level` (`raw`/`redacted`/`verified_only`) for ground-truth isolation. The AI never decides identification strategy or causal wording strength, never invents sources, data or results, and never decides submission. Behavioral mechanisms are starting points from `Meta/mechanism-library.md`, not evidence.
+Quality loop: proposal (research agents) → execution (`econometrics-agent`) → independent challenge (`academic-reviewer`, artifacts only) → decision (Director + researcher). A Fatal Flaw blocks acceptance. Do not skip S4 identification design merely because a regression runs.
 
-### Orchestration layer (whole projects)
-`/research-pipeline` keeps project state in `01-Research-Projects/<project>/STATE.json` and a run ledger in `Meta/run-ledger.jsonl`, both modified only through `python .claude/scripts/orchestrator.py` (`init`, `status`, `next`, `artifact`, `verify`, `gate`, `fail`, `recover`). Only the researcher decides a gate: never run `gate --decision pass` on your own judgment. Each Agent gets at most 2 retries per stage, then stop and report. In Claude Code, hooks block skipping stages, exhausted retries and parallel dispatch beyond the stage limit.
+## 3. Orchestration Layer
+`/research-pipeline` tracks state in `01-Research-Projects/<project>/STATE.json` and logs in `Meta/run-ledger.jsonl`, modified **only** via `python .claude/scripts/orchestrator.py` (`init`, `status`, `next`, `artifact`, `verify`, `gate`, `fail`, `recover`, `enforce`, `log`).
+- **Gates belong to the researcher**: never run `gate --decision pass` on AI judgment; always supply `--note`.
+- **Retries & parallelism**: max 2 retries per agent per stage, then stop and report. Default concurrency 1 (S3: 2; hard cap 3). Claude Code hooks enforce stage order, retry budget, concurrency and file protection; on agy/Codex follow the same rules voluntarily.
 
-## Workflow
-1. Question, unit, outcome, treatment, population, estimand. 2. Literature map. 3. Mechanism and hypotheses. 4. Data and provenance. 5. Pre-specified strategy. 6. Reproducible implementation. 7. Diagnostics and robustness. 8. Independent review. 9. Report with limitations.
-Do not skip identification design merely because a regression can be run.
+## 4. Paper Writing & Human–AI Collaboration (S8–S12)
+Follow `Meta/collaboration-protocol.md` (autonomy A0–A3, checkpoints C1–C5) and `Meta/style-guide.md`.
+- **Constrained inputs**: draft citations use `[@key]` from `Meta/citation-map.json` (with `--locator` & `--claim-scope` to prevent L3 mismatch; bridge from `03-Literature/` via `paper_tools.py cite from-note`); numbers use `{{res:id}}` from `Meta/results-ledger.json`; result blocks carry `<!-- claim: Cn -->`; gaps become `⟦问：…⟧` (answered `⟦答：…⟧`), never invention.
+- **Refinement (`/paper-refine`)**: `academic-reviewer` outputs numbered `F1/M1/m1` + 5 scores (`ident, contrib, inst, consist, write`, 1–10) + Frame-Lock Check + Concession Threshold (≥4/5, no consecutive concessions). Re-reviews use `--carried-*`/`--new-*` against baseline; accept only if Fatal ≤ prev AND (Major < prev OR (Major == prev AND total ≥ prev)), with identical dimensions and no dimension drop ≥2. Requests for new analysis go to `Meta/review-queue.md`. External R&R uses `Templates/rebuttal-matrix.md`.
+- **Language polish (`/paper-polish`)**: runs only after content settles; `paper_tools.py polish scan` flags tells from `Meta/ai-tells.json`; `polish check` proves citations, `{{res}}`, claim tags, Q/A markers and numbers are invariant. Never used to evade AI detection; AI involvement is disclosed in `paper/ai-disclosure.md`.
+- **Data isolation & mechanisms**: every Skill/Agent declares `data_access_level` (`raw`/`redacted`/`verified_only`). `Meta/mechanism-library.md` provides testable starting points, not evidence. S6/S12 must clear the 7-mode AI failure gate.
 
-## Evidence rules
-- Never invent a paper, author, DOI, legal provision, dataset, statistic or result. Unverifiable -> label "unverified".
-- Keep title, authors, year, venue, DOI/URL, page/table for every literature claim.
-- Chinese tax-law claims: issuing authority, document number, promulgation date, effective date, amendment/repeal status, scope.
-- Separate source facts, model interpretation, and the researcher's hypothesis.
+## 5. Econometric, Tax-Law & Evidence Discipline
+- **Econometrics**: separate association, prediction, causality; report estimand, assumptions, clustering level (at assignment/shock), sample waterfall, economic magnitude (vs. mean/SD or elasticity), software versions. Check modern diagnostics: staggered DID (CS/SA/Bacon/HonestDiD), IV (effective F/AR/exclusion/LATE), RDD/Bunching (continuity/sorting/bandwidth). Fixed effects or insignificant pre-trends do not prove causality. No silent filtering, winsorizing or p-hacking.
+- **Evidence & Tax Law**: separate source facts, model interpretation, researcher hypotheses. Keep DOI/URL and page/table/equation anchors; Chinese tax law requires issuing authority, doc number, promulgation/effective dates, amendment/repeal status, scope, and conflict-resolution ordering (see `tax-policy-agent`).
 
-## Econometric discipline
-- Distinguish association, prediction, causal effect; state estimand and assumptions before interpreting coefficients.
-- Fixed effects or controls alone do not establish causality.
-- DID: timing, anticipation, parallel trends, concurrent policies, heterogeneity, inference level. IV: relevance, exclusion, independence, monotonicity, LATE. RDD: continuity, manipulation, bandwidth, local estimand.
-- Cluster at assignment/shock level and explain why. Report sample restrictions, missing-data handling, transformations, software versions. No silent dropping, winsorizing, or spec changes.
-
-## Data and code safety
-- `06-Data/raw` is immutable; derived data only to `06-Data/processed`.
-- Explain inputs/outputs before running scripts that write files. No destructive shell commands. Do not send confidential/personal data to external services.
-
-## Knowledge base
-Read `Meta/vault-map.md` and the knowledge map in `CLAUDE.md`/`AGENTS.md` before assuming paths. Two generated maps back retrieval: `Meta/folder-map.md` (real folders, read-only and legacy marks) and `Meta/link-map.md` (wikilink graph: hubs, adjacency, orphans, broken links, duplicate names). To search the wiki: start from `Meta/index.md` and the hub pages, expand along `[[wikilinks]]` (adjacency list in link-map), and name the source page in the answer. Legacy tax-law notes are summarised per folder only and are searched by folder, not through the graph. Pre-existing tax-law notes in the vault are local resources, not automatically current law. Do not move, rename or mass-rewrite them without approval.
-
-## Wiki maintenance
-- The wiki is a persistent, compounding artifact: raw sources (immutable, `03-Literature/_sources`) -> wiki pages (maintained with the researcher) -> rules (this file and `CLAUDE.md`).
-- Read `Meta/purpose.md` first; if empty, ask the researcher to fill it. Never invent a research direction.
-- Page frontmatter: `type` (literature|theory|method|synthesis|query|research-project|dataset|analysis-plan|analysis-log), `sources`, `updated`, `verification` (verified|unverified). Every claim traces to a source with page/table/section.
-- Ingest is two-step (analyze, researcher approves, then write). After writing: update `Meta/index.md`, append `## [YYYY-MM-DD] <type> | <title>` to `Meta/research-log.md`, register the source with its SHA256 in `Meta/source-registry.md`.
-- Contradictions between sources are shown side by side and logged in `Meta/review-queue.md`; do not resolve them silently.
-- Run `python .claude/scripts/wiki_lint.py lint --vault .` for deterministic checks; lint scope excludes pre-existing tax-law notes. After pages are added, renamed or relinked, run `python .claude/scripts/wiki_lint.py map --vault .` to refresh both maps and the compact map between the `ERC:MAP` markers in `CLAUDE.md` and `AGENTS.md` (`map --check` reports drift).
-
-## Output
-Question/scope; evidence/sources; method/assumptions; results/derivation; limitations; reproducibility; next step.
+## 6. Knowledge Base & Wiki Maintenance
+- Session start: read `Meta/purpose.md` (if blank, remind researcher; never invent direction) and `Meta/decisions.md`.
+- Retrieval order: `Meta/index.md` + hub pages in `Meta/link-map.md` → traverse `[[wikilinks]]` → cite source page & locator. Legacy tax-law notes are searched by folder, not through the link graph.
+- Frontmatter for Tier 1 wiki pages: `type` (`literature|theory|method|synthesis|query|research-project|dataset|analysis-plan|analysis-log`), `sources`, `updated`, `verification` (`verified|unverified`); literature notes add `cite_key`.
+- Two-step ingest (`/ingest-source`): analyze & await approval → write/update pages + cross-link `04-Theories`/`05-Methods` → update `Meta/index.md`, `Meta/source-registry.md` (SHA256), `Meta/research-log.md` (`## [YYYY-MM-DD] <type> | <title>`). Log source contradictions side-by-side in `Meta/review-queue.md`.
+- Deterministic checks & maps: run `python .claude/scripts/wiki_lint.py lint --vault .` and `python .claude/scripts/wiki_lint.py map --vault .` (refreshes `Meta/folder-map.md`, `Meta/link-map.md`, and `ERC:MAP` in `CLAUDE.md`/`AGENTS.md`). After S12 completion, compound key findings back into `08-Research-Notes/` (`type: synthesis`) with researcher consent.

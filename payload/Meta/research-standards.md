@@ -1,26 +1,35 @@
-# Research Standards
+---
+type: research-standards
+updated: YYYY-MM-DD
+---
 
-## Evidence hierarchy (practical preference, not truth ranking)
-Primary legal/statistical sources -> peer-reviewed -> working papers -> policy reports -> commentary.
+# Research Standards（经济学研究与证据标准）
 
-## Literature record
-Full citation, DOI/URL, status, question, mechanism, data/sample, variables, identification, findings, limitations, relevance, page/table refs.
+## 1. 证据层级（实务优先级，非真理排名）
+一手法律与官方统计源 → 同行评审顶刊（国内外权威期刊）→ 工作论文（NBER/CEPR/IZA/SSRN）→ 政策报告 → 评论与二次解读。
 
-## Empirical record
-Project ID, data source/version, sample, variables, specification, software/package versions, script path and Git commit, output, diagnostics.
+## 2. 论证脊柱（Single Argument Spine）
+任何实证或制度经济学论文必须保持全链路一致：
+`研究问题与 Estimand (S1)` → `文献争论与精确缺口 (S2)` → `竞争性机制与排他性假说 H1..Hk (S3)` → `识别威胁—检验—证伪矩阵与措辞上限 (S4)` → `冻结脚本、样本瀑布、经济量级与结果登记簿 res:* (S5)` → `独立审查与 7 类失效闸门 (S6–S7)` → `主张清单 C1..Cn 与受限成稿/精修/润色 (S8–S12)`。
+任何环节不得出现“设计只识别局部相关，正文却宣称普遍因果”或“机制章节讲了与实证无关的事后故事”。
 
-## Causal language
-Use "associated with" unless a defensible design is established; state estimand and assumptions before "effect/impact/caused".
+## 3. 文献、实证与税法记录最低字段
+- **文献记录**：完整引文、`cite_key`、DOI/URL、发表状态、研究问题、机制、数据/样本、识别策略、核心结果（含量级）、局限、三层定位锚点（`locator`：页码/表号/公式/条款）与主张适用边界（`claim_scope`）。
+- **实证记录**：项目 ID、数据来源与版本哈希、样本瀑布（原始 N → 逐步筛选 → 估计 N）、变量口径、模型设定、软件与包版本、脚本路径与 Git commit、输出表与诊断日志、结果登记簿 ID（`res:*`）。
+- **经济量级标准**：不得只报系数符号与显著性星号；核心估计必须同步报告经济含义——因变量均值/标准差占比、弹性或财政/福利量级，并注明单位与适用人群（ATT/LATE）。
+- **税法记录**：发文机关、文号、发布日期、生效日期、废止/修订状态、适用税期与范围、官方 URL；区分法律形式、实质关系、法定纳税义务人、扣缴义务人与经济归宿。
 
-## Tax-law record
-Issuing authority, document number, promulgation date, effective date, amendment/repeal status, tax period, scope, official URL.
+## 4. 因果措辞阶梯
+- 未建立可辩护识别设计前，统一使用“相关 / 关联”（associated with）。
+- 使用“影响 / 导致 / 提高 / 降低”（effect / impact / caused）前，必须先明确 estimand、核心识别假设、适用人群与未排除威胁。
+- 机制检验若无法排除竞争性解释，最高措辞为“与……机制一致”（consistent with），不得写“证明了……机制”。
 
-## 7-Mode AI Research Failure Gate (S6 & S12)
-Before passing S6 (Independent Review) or S12 (Final Check), explicitly check and clear:
-1. **Implementation bugs** (silent sample drop, merge explosion, wrong clustering/FE).
-2. **Hallucinated results** (any number not in `Meta/results-ledger.json`).
-3. **Shortcut reliance** (post-hoc spec search, unreported winsorizing/subsampling).
-4. **Bug-as-insight reframing** (treating coding/data anomalies as economic mechanisms).
-5. **Methodology fabrication** (claiming DID/IV/RDD assumptions hold without diagnostics).
-6. **Frame-lock** (polishing inside a flawed identification/model instead of questioning the frame).
-7. **Citation hallucinations & L3 mismatch** (unverified keys or `[@key]` lacking locator/claim alignment).
+## 5. 7 类 AI 研究失效模式闸门（S6 独立审查 & S12 终检强制清零）
+通过 S6 或 S12 关卡前，必须逐条核查并确认无以下失效：
+1. **实现缺陷（Implementation bugs）**：静默删样本、合并行膨胀、错误聚类/固定效应、变量口径与论文不一致。
+2. **结果幻觉（Hallucinated results）**：正文出现未登记在 `Meta/results-ledger.json` 的核心数字或心算四舍五入错误。
+3. **捷径依赖（Shortcut reliance）**：事后挑设定追显著性、未记录的缩尾/去极值/子样本筛选。
+4. **把 Bug 当洞见（Bug-as-insight reframing）**：将数据异常、编码错误或样本断层包装为“反直觉经济机制”。
+5. **方法论编造（Methodology fabrication）**：未跑诊断或仅凭平行趋势检验不显著（低检验力）就宣称识别假设“已证明成立”。
+6. **框架锁定（Frame-lock）**：只在既有错误识别框架内打磨细节，拒绝检验框架本身是否成立或存在更优替代框架。
+7. **引文幻觉与 L3 错配（Citation hallucinations & L3 mismatch）**：编造文献、未核验 `[@key]`、缺少 `locator` 锚点，或用摘要过度引申替代全文证据。

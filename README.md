@@ -3,8 +3,9 @@
 面向税收经济学、公共经济学、计量经济学与因果推断的研究环境扩展，支持 Claude Code、Antigravity CLI（`agy`）与 Codex CLI。
 
 ## 设计
-- 7 个研究 Subagents、15 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
-- 两张自动生成的地图（文件夹地图 `Meta/folder-map.md`、双链地图 `Meta/link-map.md`）及其精简版写在 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成；旧税法笔记只做目录级汇总。
+- **7 个研究 Subagents、15 个核心 Skills**（统一高信号中文+英文术语五段式规范，覆盖 S1–S12 研究与论文写作全周期以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 可复利知识库流程）、研究规范与模板。
+- **经济学论文论证脊柱（Argument Spine）**：将 `S1 问题与 Estimand → S2 争论簇文献矩阵 → S3 竞争性机制与政策冲击要素 → S4 威胁—检验—证伪矩阵与因果措辞上限 → S5 模块化脚本、样本瀑布与结果入簿 → S6–S7 独立对抗审查（F1/M1/m1 + 5 维分 + 7 类失效闸门）→ S8 6 步引言蓝图与主张清单 → S9 三层锚点引文表（支持 cite from-note 从文献卡桥接）→ S10–S12 受限成稿、清单精修、可选润色、AI 披露与知识回流` 贯通为闭环。
+- **四层知识架构与双地图**：区分 Tier 0 原始只读层、Tier 1 跨项目复利 Wiki、Tier 2 项目执行与手稿（仅 `PROJECT.md` 进索引与双链图，`paper/` 与版本快照不污染全库图谱）、Tier 3 独立文稿与归档（`09-Writing/` 仅放非项目独立文稿）及 Meta 三分控制面；两张自动生成地图（`Meta/folder-map.md`、`Meta/link-map.md`）及其精简版写在 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成；旧税法笔记只做目录级汇总。
 - 路由规则与角色映射见 [docs/USAGE.md](docs/USAGE.md) 第 4 节。
 - 语言精修借鉴（思路，已按本项目约束重写，未复制文本）：`AIScientists-Dev/academic-humanizer`（MIT）、`hanlulong/econ-writing-skill`（MIT）、`humanizer-zh-academic`（MIT，仅采用中文套话的模式分类，**不采用**其“降低 AIGC 检测率”目标）；`franklee16/academic-research-skills` 为汇编库，根目录无许可证，仅作参考。本项目不用于规避 AI 检测，AI 参与仍须按期刊要求披露。
 - 借鉴 `llm_wiki` 的“可积累 wiki”思路（purpose / index / log / 两步摄入 / lint）、`My-Brain-Is-Full-Crew` 的 hooks 强制执行与安装器回归测试，以及 `Imbad0202/academic-research-skills` 的设计理念（苏格拉底防越位、魔鬼代言人让步门槛与框架锁定检测、L3 引文锚点与主张对齐审计、`data_access_level` 数据隔离、7 类 AI 失效模式闸门、文风校准与 R&R 返修追溯矩阵；仅借设计模式并在本项目原生重写，不含其代码）。

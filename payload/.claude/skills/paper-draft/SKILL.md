@@ -1,39 +1,52 @@
 ---
 name: paper-draft
-description: "Draft an economics paper section by section from an approved outline, using only registered citations and registered results; unsupported claims become researcher questions, not text. Use for 起草论文、写初稿、成稿、分节写作、撰写全文、把大纲写成论文."
+description: "Draft an economics paper section by section from an approved outline using strictly constrained inputs (registered citations and registered results only), following top-journal section protocols; unsupported claims become researcher questions. Use for 起草论文、写初稿、成稿、分节写作、撰写全文、把大纲写成论文."
 argument-hint: "[project folder, sections to draft]"
 data_access_level: verified_only
 task_type: open-ended
 ---
 
-# Paper Draft（受限输入的分节写作）
+# Paper Draft（S10：受限输入的经济学分节成稿）
 
-只依据**已批准的大纲**写作。写作的输入被严格限定，这是防止编造的主要手段：
-
-| 允许的输入 | 用途 |
+## 1. 目标与边界
+仅依据 **C1 已批准的大纲**分节起草正文。通过**严格限定输入源**从机械层面杜绝幻觉：
+| 唯一允许的输入 | 约束规则 |
 |---|---|
-| `paper/outline.md`（C1 已通过） | 结构、主张清单、各节要点 |
-| `Meta/citation-map.json`（`paper_tools.py cite list`） | **唯一允许引用的文献**，用 `[@key]` |
-| `Meta/results-ledger.json` | **唯一允许出现的数字**，用 `{{res:id}}`，保留小数位写 `{{res:id:3}}` |
-| `Meta/style-guide.md`、`Templates/venues/*.md` | 文风、格式 |
+| `paper/outline.md`（C1 已通过） | 结构、主张清单（含措辞强度上限）、各节要点 |
+| `Meta/citation-map.json`（`paper_tools.py cite list`） | **唯一允许引用的文献**，写作 `[@key]` |
+| `Meta/results-ledger.json` | **唯一允许出现的实证数字**，写作 `{{res:id}}` 或 `{{res:id:3}}` |
+| `Meta/style-guide.md`、`Templates/venues/*.md` | 文风锚定、术语表、期刊骨架 |
 
-## 步骤
-0. `orchestrator.py status`：确认大纲关卡已通过；`paper_tools.py cite list` 看有哪些可引用的键，状态不是 verified/confirmed 的在正文里照常引用，但会在终检被挡，提醒研究者核验。先读 `Meta/style-guide.md` 完成**文风校准**（目标期刊语域、既有文本锚定与术语锁定）。
-1. 逐节写，一次一节（长节可派出 `paper-writer-agent`，一次一个，交接单按 `Templates/handoff.md`，只给上表所列文件的路径）。写入 `paper/draft.md`。
-2. 每个结果段落开头加注释 `<!-- claim: C3 -->`，说明它支撑哪条主张。措辞强度不得超过大纲里该主张允许的强度。
-3. **数字**：只能写成 `{{res:id}}`。表里没有的数字不要写；不要心算、不要四舍五入后手写。
-4. **引用**：只能引 `[@key]`，key 必须在引文表里（优先附带 `locator` 锚点以防 L3 错配）。想引的文献不在表里时，写 `⟦问：需要引用…，请先登记⟧`，不要自己编 key 或作者。
-5. **证据不足**：不要用“显然、众所周知”绕过；写 `⟦问：…⟧` 交研究者（补分析 / 降级为推测 / 删除）。**不新增分析、不补数据。**
-6. 起草后依次运行并处理：
-   - `paper_tools.py cite check paper/draft.md`（未知 key 为错误，未核验为警告）
-   - `paper_tools.py results check paper/draft.md`（未知 id 为错误，未链接的统计量为警告，必须逐个处理）
-   - `paper_tools.py claim check paper/draft.md`（检查 L3 引文定位锚点 `anchorless`、结果段落 `<!-- claim: Cn -->` 标注及因果动词越界）
-   - `paper_tools.py questions paper/draft.md`（列出未回答的问题）
-   - 对照 `Meta/style-guide.md` 的**去 AI 味负面清单**做写作质检（删机械套话与空洞修饰，核对因果措辞分级）。
-7. 生成 **主张—证据对照表**（C3 检查点用）：主张编号 → 正文位置 → 结果 id → 实际使用的措辞强度 → 是否超出大纲。
+## 2. 前置读取
+- 运行 `python .claude/scripts/orchestrator.py status` 确认 S8/S9 关卡已通过；运行 `python .claude/scripts/paper_tools.py cite list` 查看可用键（非 `verified`/`confirmed` 状态可暂引但终检会被挡，须提醒研究者核验）。
+- 读取 `Meta/style-guide.md` 完成**文风校准**（目标期刊语域、作者代表作样本锚定、固定中英术语表与因果措辞分级）。
 
-## 停点
-`orchestrator.py artifact paper/draft.md` → `verify` → 向研究者汇报对照表、未核验引文、未回答的 `⟦问⟧`。**C3：等研究者表态后才推进。** 研究者在稿内用 `⟦答：…⟧` 回答，回答后再修改相应段落。
+## 3. 核心流程、分节写作规程与委派
+- **委派授权**：长节起草可派出隔离上下文的 `paper-writer-agent`（一次一个，按 `Templates/handoff.md` 交接，只给上表 4 类文件路径）。
+1. **逐节写作**（一次一节，写入 `01-Research-Projects/<项目>/paper/draft.md`）：
+   - **摘要**：先亮核心定量发现与经济量级，再交代数据、识别策略与机制；不评价他人文献。
+   - **引言**：严格按大纲 6 步蓝图推进，前 2–3 页内亮出主结果 `{{res:…}}` 与经济量级；文献写成“前人做过什么—局限在哪—本文补什么”的对话，拒绝逐篇罗列。
+   - **制度背景**：紧扣政策外生性、时间节点（发文日 vs 生效日）与处理/对照边界；所有法条用已登记的 `[@key]`。
+   - **理论与假说**：写清核心机制与竞争机制的排他推论，不堆砌与实证脱节的符号。
+   - **数据与实证策略**：写清样本瀑布、变量口径、estimand、基准方程、识别假设与聚类层级。
+   - **实证结果**：每个结果段落开头加 `<!-- claim: Cn -->`，且**同时报告统计精度与经济量级**（系数、标准误/显著性、占均值/标准差比例或弹性），措辞严禁超过大纲该主张允许的上限。
+   - **稳健性与机制**：按威胁—检验映射逐一回应 S4 识别威胁；机制分析明确是否排除竞争解释，否则最高写“与……机制一致”。
+   - **结论**：简短换言重述发现、诚实界定外部有效性边界，不引入新结果、不写空洞展望。
+2. **硬性占位纪律**：
+   - 数字只写 `{{res:id}}`（保留小数写 `{{res:id:3}}`），严禁心算或手写登记簿外的数字。
+   - 引用只写 `[@key]`（且 `citation-map.json` 应带 `locator` 防 L3 错配）；缺失文献写 `⟦问：需要引用…，请先登记⟧`。
+   - 证据不足写 `⟦问：…⟧`，绝不用“显然/众所周知”绕过，绝不擅自补分析。
+3. **成稿机械审计与质检**（每节或全稿完成后依次运行）：
+   - `python .claude/scripts/paper_tools.py cite check paper/draft.md`
+   - `python .claude/scripts/paper_tools.py results check paper/draft.md`
+   - `python .claude/scripts/paper_tools.py claim check paper/draft.md`（核对 `locator` 锚点、`<!-- claim: Cn -->` 覆盖度、大纲主张匹配与因果动词越界）
+   - `python .claude/scripts/paper_tools.py questions paper/draft.md`
+   - 对照 `Meta/style-guide.md` 去 AI 味负面清单清理机械套话。
+4. **生成主张—证据对照表**（C3 检查点用）：主张编号 → 正文节/段 → 结果 id → 实际措辞强度 → 是否符合大纲上限 → 覆盖状态。
 
-## 禁止
-把相关性写成因果；引用不在表里的文献；写出不在登记簿里的数字；用“据研究表明”之类无来源的断言；替研究者决定识别策略或结论强度。
+## 4. 产出与停点（C3 检查点）
+- 运行 `python .claude/scripts/orchestrator.py artifact paper/draft.md` 与 `verify`。
+- 向研究者汇报主张—证据对照表、主张覆盖度、未核验引文与未回答 `⟦问⟧`。**C3 检查点：等研究者表态并在稿内写 `⟦答：…⟧` 后再修改或推进。**
+
+## 5. 硬性禁止
+禁止把相关写成因果；禁止引用不在 `citation-map.json` 的文献；禁止手写不在 `results-ledger.json` 的核心数字；禁止无来源断言（“大量研究表明”）；禁止替研究者做 A3 决策。
