@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#4A7BB5" letter-spacing="1.5">PART 01 · 基础概念 (02 / 08)</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">基础 ② | Slash Commands：手动触发的 Prompt 快捷方式</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <!-- Top Flow: How Slash Command Works -->
+  <text x="64" y="158" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#1A3A6B">执行流程：把常用工作流存成 Markdown，用 /命令 一键调用</text>
+
+  <rect x="64" y="176" width="248" height="86" rx="4" fill="#1A3A6B"/>
+  <text x="188" y="210" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="18" font-weight="bold" fill="#E8A317">用户输入 /optimize</text>
+  <text x="188" y="240" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#DCE6F2">可附带参数，如 --verbose</text>
+
+  <line x1="312" y1="219" x2="346" y2="219" stroke="#4A7BB5" stroke-width="2.5"/>
+  <polygon points="342,213 352,219 342,225" fill="#4A7BB5"/>
+
+  <rect x="352" y="176" width="272" height="86" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="488" y="210" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">检索 .claude/commands/</text>
+  <text x="488" y="238" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" fill="#5A6577">匹配 optimize.md 文件</text>
+
+  <line x1="624" y1="219" x2="658" y2="219" stroke="#4A7BB5" stroke-width="2.5"/>
+  <polygon points="654,213 664,219 654,225" fill="#4A7BB5"/>
+
+  <rect x="664" y="176" width="268" height="86" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="798" y="210" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">展开 Prompt + 注入上下文</text>
+  <text x="798" y="238" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">展开 @文件 与 $(git ...) 输出</text>
+
+  <line x1="932" y1="219" x2="966" y2="219" stroke="#4A7BB5" stroke-width="2.5"/>
+  <polygon points="962,213 972,219 962,225" fill="#4A7BB5"/>
+
+  <rect x="972" y="176" width="244" height="86" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <text x="1094" y="210" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#C07B00">Claude 执行并输出</text>
+  <text x="1094" y="238" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">仅在当前会话上下文生效</text>
+
+  <!-- Left Bottom: Organization & Scope -->
+  <rect x="64" y="288" width="560" height="366" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="64" y="288" width="560" height="44" fill="#1A3A6B"/>
+  <!-- icon: tabler-outline/terminal-2 -->
+  <g transform="translate(82, 297)" fill="none" stroke="#E8A317" stroke-width="2">
+    <path d="M8 9l3 3l-3 3" />
+    <path d="M13 15l3 0" />
+    <path d="M3 6a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -12" />
+  </g>
+  <text x="116" y="317" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">组织方式与两类命令</text>
+
+  <text x="86" y="366" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">• 项目级命令：.claude/commands/</text>
+  <text x="102" y="394" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">随 Git 仓库提交，团队共享标准工作流（如 /pr、/commit）</text>
+
+  <text x="86" y="434" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">• 个人级命令：~/.claude/commands/</text>
+  <text x="102" y="462" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">个人跨项目私有快捷方式，不进入团队仓库</text>
+
+  <text x="86" y="502" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">• 子目录命名空间与内置命令</text>
+  <text x="102" y="530" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">支持子目录分类（如 docs/）；Claude Code 另内置 60+ 命令</text>
+  <text x="102" y="556" font-family="Consolas, Arial, sans-serif" font-size="14" fill="#4A7BB5">如 /help · /clear · /compact · /mcp · /agents · /skills</text>
+
+  <text x="86" y="600" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#C07B00">要点：Slash Command 必须由人显式输入 /名称 才会触发</text>
+
+  <!-- Right Bottom: Capabilities -->
+  <rect x="656" y="288" width="560" height="366" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="656" y="288" width="560" height="44" fill="#4A7BB5"/>
+  <text x="676" y="317" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">Markdown 命令文件支持的 5 项能力</text>
+
+  <rect x="678" y="352" width="516" height="46" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="696" y="381" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">1. 文件引用</text>
+  <text x="840" y="381" font-family="Consolas, Arial, sans-serif" font-size="15" fill="#5A6577">@path/to/file.js</text>
+
+  <rect x="678" y="408" width="516" height="46" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="696" y="437" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">2. Bash 动态注入</text>
+  <text x="840" y="437" font-family="Consolas, Arial, sans-serif" font-size="15" fill="#5A6577">$(git log --oneline -5)</text>
+
+  <rect x="678" y="464" width="516" height="46" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="696" y="493" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">3. 脚本执行</text>
+  <text x="840" y="493" font-family="Consolas, Arial, sans-serif" font-size="15" fill="#5A6577">bash scripts/deploy.sh</text>
+
+  <rect x="678" y="520" width="516" height="46" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="696" y="549" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">4. 命令行参数</text>
+  <text x="840" y="549" font-family="Consolas, Arial, sans-serif" font-size="15" fill="#5A6577">/pr --verbose</text>
+
+  <rect x="678" y="576" width="516" height="46" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="696" y="605" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">5. 调用 MCP Prompt</text>
+  <text x="840" y="605" font-family="Consolas, Arial, sans-serif" font-size="15" fill="#5A6577">/mcp__github__list_prs</text>
+
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Part 1 · Claude Code 基础概念（claude-howto）</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">05 / 18</text>
+</svg>

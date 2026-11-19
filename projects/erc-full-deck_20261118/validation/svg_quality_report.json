@@ -1,0 +1,520 @@
+{
+  "schema": "ppt-master.svg-quality-report.v1",
+  "stage": "final",
+  "target": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118",
+  "source_fingerprint": {
+    "algorithm": "sha256",
+    "digest": "a51ffbf02c5b28232485ee43919700b8d07e4b6668ce599fe5a7072b5799be84",
+    "file_count": 18,
+    "files": [
+      {
+        "file": "authoring-svg-flat/slide_01.svg",
+        "sha256": "2524a8dbafe2921c062b1d336e9bda5eb3231255d6e701a4220e637f0f11db05"
+      },
+      {
+        "file": "authoring-svg-flat/slide_02.svg",
+        "sha256": "662c0055b327f208b61e97b1acfa6aab71d6da7f2565c73ff91dfd2b0ec2fb2a"
+      },
+      {
+        "file": "authoring-svg-flat/slide_03.svg",
+        "sha256": "86708ac1ebd9ab5bec379f2c46e915731e11f63583750caf18f74b8f73db4fdc"
+      },
+      {
+        "file": "authoring-svg-flat/slide_04.svg",
+        "sha256": "b556fa17bd3cdd7c0c8c2777f32875255c1296ced88d2d9518622ce6fbec1af5"
+      },
+      {
+        "file": "authoring-svg-flat/slide_05.svg",
+        "sha256": "0196a73dfa18af90a474876ae78632968e3afca7c4fbf88ccf55cf4d3e19be62"
+      },
+      {
+        "file": "authoring-svg-flat/slide_06.svg",
+        "sha256": "bb5e9c1710fdc4c18a9e2d0d342533c54cf025799530726dbe27d368ca57ae74"
+      },
+      {
+        "file": "authoring-svg-flat/slide_07.svg",
+        "sha256": "2c61f8af570b6eedc7d496e27b7fc34e1b6d8ed11e7955d90756d58d46727887"
+      },
+      {
+        "file": "authoring-svg-flat/slide_08.svg",
+        "sha256": "1b34343e2b3adc8e123efccb8b2e0fc9005904802bea00c05b3db3250e605624"
+      },
+      {
+        "file": "authoring-svg-flat/slide_09.svg",
+        "sha256": "30151ebdab3eb6c3d4676cc710a3f300af5868194725e575b737f3a3c9c1db11"
+      },
+      {
+        "file": "authoring-svg-flat/slide_10.svg",
+        "sha256": "f555d6ec171c6a887dabb4ffb0f380ae3ff19a00d089a7dd4c88ceaa9b118b0a"
+      },
+      {
+        "file": "authoring-svg-flat/slide_11.svg",
+        "sha256": "b6c4ff13b8b4228daff73d7c8c9131b50fd6105f1e801127b85fd96a9c3ee47b"
+      },
+      {
+        "file": "authoring-svg-flat/slide_12.svg",
+        "sha256": "a86ea75177d1a458ce5ba3511605b1dc42ee0a1617461a5864107c37e75e5e8b"
+      },
+      {
+        "file": "authoring-svg-flat/slide_13.svg",
+        "sha256": "c88cf02584979b31f50588675c5162f9391e599520d407946b0edf5a2976a87c"
+      },
+      {
+        "file": "authoring-svg-flat/slide_14.svg",
+        "sha256": "77a3c91eb7c6b132e27339a9265b6a47c1b7f1eaea46d31e632fefc85ce4cbe8"
+      },
+      {
+        "file": "authoring-svg-flat/slide_15.svg",
+        "sha256": "d26bd31b40c9744c62b3f7e03edeec0e8bed9d6d56f478a3894e03f6ad06e404"
+      },
+      {
+        "file": "authoring-svg-flat/slide_16.svg",
+        "sha256": "aa61d8ce682d7210f59eff75be5baacd4d21b034662f37959f9da702a496e030"
+      },
+      {
+        "file": "authoring-svg-flat/slide_17.svg",
+        "sha256": "59530c87cfbd3b171af5a1961d9b2f26346b657d483f8e4dca8cb846929e8c70"
+      },
+      {
+        "file": "authoring-svg-flat/slide_18.svg",
+        "sha256": "143151f5ca55be24060e550b5b5e40b2b00cc6d71c8f097de36eeafb7d88d251"
+      }
+    ]
+  },
+  "summary": {
+    "total": 18,
+    "passed": 18,
+    "warnings": 0,
+    "errors": 0
+  },
+  "issue_types": {},
+  "categories": {
+    "blocking": {
+      "count": 0,
+      "issues": []
+    },
+    "introduced": {
+      "count": 0,
+      "issues": []
+    },
+    "inherited": {
+      "count": 0,
+      "issues": []
+    },
+    "source-import": {
+      "count": 0,
+      "summary": {
+        "warning_count": 0,
+        "by_code": {}
+      }
+    }
+  },
+  "drift": {
+    "colors": {},
+    "fonts": {},
+    "sizes": {}
+  },
+  "carrier_receipt": {
+    "scope": "informational-not-a-quota",
+    "pages": 0,
+    "totals": {
+      "text_elements": 0,
+      "image_placements": 0,
+      "icons": 0,
+      "svg_geometry_elements": 0,
+      "preset_shapes": 0,
+      "page_frame_elements": 0,
+      "marker_uses": 0,
+      "inline_emphasis_runs": 0,
+      "gradient_uses": 0,
+      "filter_uses": 0,
+      "text_effects": 0
+    },
+    "pages_with": {
+      "images": 0,
+      "icons": 0,
+      "presets": 0,
+      "charts": 0,
+      "tables": 0,
+      "formulas": 0,
+      "inline_emphasis_runs": 0,
+      "gradient_uses": 0,
+      "filter_uses": 0,
+      "text_effects": 0
+    },
+    "relationship_pages": null,
+    "geometry_elements": {},
+    "preset_names": {},
+    "native_objects": {},
+    "image_page_max_frame_share_range": []
+  },
+  "project_issues": {
+    "template": [],
+    "animation": [],
+    "illustration": [],
+    "communication_trace": [],
+    "pptx_structure": []
+  },
+  "files": [
+    {
+      "file": "slide_01.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_01.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 1,
+        "source_slide": 1,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.1,
+          "measured_unchanged": 21,
+          "positive_unchanged": 3
+        }
+      },
+      "passed": true,
+      "source_sha256": "2524a8dbafe2921c062b1d336e9bda5eb3231255d6e701a4220e637f0f11db05"
+    },
+    {
+      "file": "slide_02.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_02.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 2,
+        "source_slide": 2,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.013077041158427699,
+          "measured_unchanged": 28,
+          "positive_unchanged": 4
+        }
+      },
+      "passed": true,
+      "source_sha256": "662c0055b327f208b61e97b1acfa6aab71d6da7f2565c73ff91dfd2b0ec2fb2a"
+    },
+    {
+      "file": "slide_03.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_03.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 3,
+        "source_slide": 3,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.04688073286334516,
+          "measured_unchanged": 61,
+          "positive_unchanged": 4
+        }
+      },
+      "passed": true,
+      "source_sha256": "86708ac1ebd9ab5bec379f2c46e915731e11f63583750caf18f74b8f73db4fdc"
+    },
+    {
+      "file": "slide_04.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_04.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 4,
+        "source_slide": 4,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.022602760054369547,
+          "measured_unchanged": 30,
+          "positive_unchanged": 3
+        }
+      },
+      "passed": true,
+      "source_sha256": "b556fa17bd3cdd7c0c8c2777f32875255c1296ced88d2d9518622ce6fbec1af5"
+    },
+    {
+      "file": "slide_05.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_05.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 5,
+        "source_slide": 5,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.0,
+          "measured_unchanged": 33,
+          "positive_unchanged": 0
+        }
+      },
+      "passed": true,
+      "source_sha256": "0196a73dfa18af90a474876ae78632968e3afca7c4fbf88ccf55cf4d3e19be62"
+    },
+    {
+      "file": "slide_06.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_06.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 6,
+        "source_slide": 6,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.027392436015466613,
+          "measured_unchanged": 33,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "bb5e9c1710fdc4c18a9e2d0d342533c54cf025799530726dbe27d368ca57ae74"
+    },
+    {
+      "file": "slide_07.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_07.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 7,
+        "source_slide": 7,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.08666286212351118,
+          "measured_unchanged": 35,
+          "positive_unchanged": 2
+        }
+      },
+      "passed": true,
+      "source_sha256": "2c61f8af570b6eedc7d496e27b7fc34e1b6d8ed11e7955d90756d58d46727887"
+    },
+    {
+      "file": "slide_08.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_08.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 8,
+        "source_slide": 8,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.04496986555401007,
+          "measured_unchanged": 32,
+          "positive_unchanged": 6
+        }
+      },
+      "passed": true,
+      "source_sha256": "1b34343e2b3adc8e123efccb8b2e0fc9005904802bea00c05b3db3250e605624"
+    },
+    {
+      "file": "slide_09.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_09.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 9,
+        "source_slide": 9,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.03171001154685037,
+          "measured_unchanged": 35,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "30151ebdab3eb6c3d4676cc710a3f300af5868194725e575b737f3a3c9c1db11"
+    },
+    {
+      "file": "slide_10.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_10.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 10,
+        "source_slide": 10,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.01411825766871184,
+          "measured_unchanged": 31,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "f555d6ec171c6a887dabb4ffb0f380ae3ff19a00d089a7dd4c88ceaa9b118b0a"
+    },
+    {
+      "file": "slide_11.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_11.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 11,
+        "source_slide": 11,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.0748789983320769,
+          "measured_unchanged": 23,
+          "positive_unchanged": 2
+        }
+      },
+      "passed": true,
+      "source_sha256": "b6c4ff13b8b4228daff73d7c8c9131b50fd6105f1e801127b85fd96a9c3ee47b"
+    },
+    {
+      "file": "slide_12.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_12.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 12,
+        "source_slide": 12,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.0433590332176075,
+          "measured_unchanged": 24,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "a86ea75177d1a458ce5ba3511605b1dc42ee0a1617461a5864107c37e75e5e8b"
+    },
+    {
+      "file": "slide_13.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_13.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 13,
+        "source_slide": 13,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 4,
+        "roundtrip_text_calibration": {
+          "factor": 0.034709113165238996,
+          "measured_unchanged": 37,
+          "positive_unchanged": 4
+        }
+      },
+      "passed": true,
+      "source_sha256": "c88cf02584979b31f50588675c5162f9391e599520d407946b0edf5a2976a87c"
+    },
+    {
+      "file": "slide_14.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_14.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 14,
+        "source_slide": 14,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 3,
+        "roundtrip_text_calibration": {
+          "factor": 0.0,
+          "measured_unchanged": 35,
+          "positive_unchanged": 0
+        }
+      },
+      "passed": true,
+      "source_sha256": "77a3c91eb7c6b132e27339a9265b6a47c1b7f1eaea46d31e632fefc85ce4cbe8"
+    },
+    {
+      "file": "slide_15.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_15.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 15,
+        "source_slide": 15,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 5,
+        "roundtrip_text_calibration": {
+          "factor": 0.013348342726068442,
+          "measured_unchanged": 54,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "d26bd31b40c9744c62b3f7e03edeec0e8bed9d6d56f478a3894e03f6ad06e404"
+    },
+    {
+      "file": "slide_16.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_16.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 16,
+        "source_slide": 16,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.016109379687460883,
+          "measured_unchanged": 36,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "aa61d8ce682d7210f59eff75be5baacd4d21b034662f37959f9da702a496e030"
+    },
+    {
+      "file": "slide_17.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_17.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 17,
+        "source_slide": 17,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 2,
+        "roundtrip_text_calibration": {
+          "factor": 0.02099918908956913,
+          "measured_unchanged": 25,
+          "positive_unchanged": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "59530c87cfbd3b171af5a1961d9b2f26346b657d483f8e4dca8cb846929e8c70"
+    },
+    {
+      "file": "slide_18.svg",
+      "path": "D:\\Economics Research Crew\\projects\\erc-full-deck_20261118\\authoring-svg-flat\\slide_18.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [],
+      "info": {
+        "output_page": 18,
+        "source_slide": 18,
+        "viewbox": "0 0 1280 720",
+        "edited_text_elements": 0,
+        "roundtrip_text_calibration": {
+          "factor": 0.04189092666425059,
+          "measured_unchanged": 39,
+          "positive_unchanged": 3
+        }
+      },
+      "passed": true,
+      "source_sha256": "143151f5ca55be24060e550b5b5e40b2b00cc6d71c8f097de36eeafb7d88d251"
+    }
+  ]
+}

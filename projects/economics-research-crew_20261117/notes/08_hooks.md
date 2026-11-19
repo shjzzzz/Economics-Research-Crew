@@ -1,0 +1,1 @@
+第五个关键概念是 Hooks，也就是技术层面的安全网。在安装时加上 `-WithHooks` 后，6 个 Python 脚本会在工具调用前后介入：事前有 `protect_raw.py` 防止修改原始数据和原始文献；Claude Code 下还有 `orchestrator_guard.py` 硬性拦截越级派出和直接改状态文件；事后有 `validate_frontmatter.py` 和 `validate_paper.py` 自动查格式和引文标记。当然作者也很坦诚：Hook 是护栏而不是系统级沙箱，Git 和备份依然必要。

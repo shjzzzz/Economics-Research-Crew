@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#4A7BB5" letter-spacing="1.5">PART 01 · 基础概念 (01 / 08)</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">基础 ① | CLAUDE.md：跨会话的 7 层记忆体系</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <!-- Left: 7-Tier Hierarchy Stack -->
+  <text x="64" y="158" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#1A3A6B">Claude Code 7 层记忆加载顺序（拼接而非覆盖）</text>
+
+  <rect x="64" y="176" width="660" height="58" rx="4" fill="#1A3A6B"/>
+  <text x="84" y="203" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#E8A317">Tier 1 · Managed Policy（最高优先级）</text>
+  <text x="84" y="224" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#DCE6F2">企业管理员下发  |  全组织共享  |  合规与安全策略</text>
+
+  <rect x="64" y="244" width="660" height="58" rx="4" fill="#274E8A"/>
+  <text x="84" y="271" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">Tier 2 · Project Memory (./CLAUDE.md)</text>
+  <text x="84" y="292" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#DCE6F2">项目根目录  |  Git 团队共享  |  团队规范、架构与构建命令</text>
+
+  <rect x="64" y="312" width="660" height="58" rx="4" fill="#4A7BB5"/>
+  <text x="84" y="339" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">Tier 3 · Project Rules (.claude/rules/*.md)</text>
+  <text x="84" y="360" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#FFFFFF">项目内模块化规则  |  Git 团队共享  |  按主题拆分的项目约定</text>
+
+  <rect x="64" y="380" width="660" height="58" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="84" y="407" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">Tier 4 · User Memory (~/.claude/CLAUDE.md)</text>
+  <text x="84" y="428" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">用户主目录  |  个人跨项目生效  |  个人编码习惯与语言偏好</text>
+
+  <rect x="64" y="448" width="660" height="58" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <text x="84" y="475" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">Tier 5 · User Rules (~/.claude/rules/*.md)</text>
+  <text x="84" y="496" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">用户级模块化规则  |  个人私有  |  可复用的个人规则切片</text>
+
+  <rect x="64" y="516" width="660" height="58" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <text x="84" y="543" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1D2430">Tier 6 · Local Memory (./CLAUDE.local.md)</text>
+  <text x="84" y="564" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">本地机器私有（不入 Git） |  本机路径、端口或临时覆盖配置</text>
+
+  <rect x="64" y="584" width="660" height="58" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <text x="84" y="611" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#C07B00">Tier 7 · Auto Memory（自动记忆）</text>
+  <text x="84" y="632" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">按仓库自动捕获  |  无需手写  |  记录用户纠正与常用工具偏好</text>
+
+  <!-- Right: Core Mechanism & Best Practices -->
+  <rect x="752" y="176" width="464" height="220" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <!-- icon: tabler-outline/database -->
+  <g transform="translate(774, 196) scale(1.16667)" fill="none" stroke="#1A3A6B" stroke-width="2">
+    <path d="M4 6a8 3 0 1 0 16 0a8 3 0 1 0 -16 0" />
+    <path d="M4 6v6a8 3 0 0 0 16 0v-6" />
+    <path d="M4 12v6a8 3 0 0 0 16 0v-6" />
+  </g>
+  <text x="814" y="218" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="20" font-weight="bold" fill="#1A3A6B">核心加载机制</text>
+  <text x="774" y="254" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">• 拼接而非覆盖 (Concatenated)：</text>
+  <text x="790" y="280" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">所有命中的 CLAUDE.md 按顺序拼接进上下文，</text>
+  <text x="790" y="304" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">越具体/本地的文件越晚读入。</text>
+  <text x="774" y="338" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">• Auto Memory 自动学习：</text>
+  <text x="790" y="364" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">后台自动沉淀编码风格、纠偏规则与沟通偏好。</text>
+
+  <rect x="752" y="416" width="464" height="226" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="752" y="416" width="464" height="44" fill="#4A7BB5"/>
+  <text x="774" y="445" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">它解决了什么问题？</text>
+  <text x="774" y="492" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">1. 告别每次开新会话重复粘贴背景</text>
+  <text x="774" y="526" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">2. 团队通过 Git 共享统一规范</text>
+  <text x="774" y="560" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">3. 个人偏好与团队规范分层解耦</text>
+  <text x="774" y="602" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#1A3A6B">→ 对应 Part 2：科研 Rules 的核心载体</text>
+
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Part 1 · Claude Code 基础概念（claude-howto）</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">04 / 18</text>
+</svg>

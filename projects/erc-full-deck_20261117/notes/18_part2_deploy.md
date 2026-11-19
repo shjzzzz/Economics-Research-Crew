@@ -1,0 +1,1 @@
+最后一页讲多平台适配与上手路径。整个项目以 `payload/.claude/` 作为唯一维护源，通过安装器自动适配 Claude Code、agy 和 Codex CLI，同时清晰标明各平台的 Hook 能力边界。大家如果想接入自己的研究库，只需要三步：用 `-WhatIf` 预演安装、运行 `Test-EconomicsResearchCrew.ps1` 校验、启动 CLI 做一次只读体检。谢谢大家！

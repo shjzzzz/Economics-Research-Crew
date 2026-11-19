@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317" letter-spacing="1.5">全场导览 · 双部映射关系</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">为什么先讲基础概念？从“原语”到“科研系统”</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <!-- Column Headers -->
+  <rect x="64" y="144" width="530" height="44" rx="4" fill="#4A7BB5"/>
+  <text x="84" y="173" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#FFFFFF">Part 1：Claude Code 基础原语（claude-howto）</text>
+
+  <rect x="686" y="144" width="530" height="44" rx="4" fill="#1A3A6B"/>
+  <text x="706" y="173" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#FFFFFF">Part 2：Economics Research Crew 落地</text>
+
+  <!-- Mapping Row 1 -->
+  <rect x="64" y="204" width="530" height="68" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="84" y="232" font-family="Consolas, Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">CLAUDE.md (Memory)</text>
+  <text x="84" y="256" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">7 层拼接记忆，跨会话自动加载项目规范</text>
+  <line x1="594" y1="238" x2="680" y2="238" stroke="#E8A317" stroke-width="2.5"/>
+  <polygon points="676,232 686,238 676,244" fill="#E8A317"/>
+  <rect x="686" y="204" width="530" height="68" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="706" y="232" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">科研 Rules (CLAUDE.md / AGENTS.md)</text>
+  <text x="706" y="256" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">固化证据铁律、因果识别纪律与数据只读底线</text>
+
+  <!-- Mapping Row 2 -->
+  <rect x="64" y="284" width="530" height="68" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="84" y="312" font-family="Consolas, Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">Slash Commands &amp; Skills</text>
+  <text x="84" y="336" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">手动 /命令 快捷方式 + 模型自匹配能力文件夹</text>
+  <line x1="594" y1="318" x2="680" y2="318" stroke="#E8A317" stroke-width="2.5"/>
+  <polygon points="676,312 686,318 676,324" fill="#E8A317"/>
+  <rect x="686" y="284" width="530" height="68" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="706" y="312" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">14 个标准化科研 / Wiki / 写作 Skills</text>
+  <text x="706" y="336" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">把选题、文献、识别审计、成稿封装成防跳步 SOP</text>
+
+  <!-- Mapping Row 3 -->
+  <rect x="64" y="364" width="530" height="68" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="84" y="392" font-family="Consolas, Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">Subagents</text>
+  <text x="84" y="416" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">独立上下文窗口 + 定制提示词 + 工具权限隔离</text>
+  <line x1="594" y1="398" x2="680" y2="398" stroke="#E8A317" stroke-width="2.5"/>
+  <polygon points="676,392 686,398 676,404" fill="#E8A317"/>
+  <rect x="686" y="364" width="530" height="68" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="706" y="392" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">7 个专业代理 + 独立对抗审稿</text>
+  <text x="706" y="416" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">仅 econometrics-agent 有 Bash；reviewer 只读不改</text>
+
+  <!-- Mapping Row 4 -->
+  <rect x="64" y="444" width="530" height="68" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="84" y="472" font-family="Consolas, Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">Hooks</text>
+  <text x="84" y="496" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">33 种生命周期事件驱动的确定性脚本拦截</text>
+  <line x1="594" y1="478" x2="680" y2="478" stroke="#E8A317" stroke-width="2.5"/>
+  <polygon points="676,472 686,478 676,484" fill="#E8A317"/>
+  <rect x="686" y="444" width="530" height="68" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="706" y="472" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">6 个安全与编排 Hooks (-WithHooks)</text>
+  <text x="706" y="496" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">保护 raw/_sources 只读、拦越级派出、校验草稿</text>
+
+  <!-- Mapping Row 5 -->
+  <rect x="64" y="524" width="530" height="68" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="84" y="552" font-family="Consolas, Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">MCP · Git Worktree · Plugins</text>
+  <text x="84" y="576" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">实时外部工具连接 · 并行分支隔离 · 扩展包分发</text>
+  <line x1="594" y1="558" x2="680" y2="558" stroke="#E8A317" stroke-width="2.5"/>
+  <polygon points="676,552 686,558 676,564" fill="#E8A317"/>
+  <rect x="686" y="524" width="530" height="68" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="706" y="552" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">克制外部依赖 + 多平台安装器</text>
+  <text x="706" y="576" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">默认不装 MCP 防数据外泄；单一源分发三平台</text>
+
+  <!-- Bottom Takeaway -->
+  <rect x="64" y="612" width="1152" height="50" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <text x="640" y="643" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1D2430">看懂 Part 1 的 8 个底座能力，就能看透 Part 2 科研体系的每一处工程取舍。</text>
+
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Claude Code 基础概念 × Economics Research Crew</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">02 / 18</text>
+</svg>

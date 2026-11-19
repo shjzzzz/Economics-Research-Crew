@@ -1,0 +1,274 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="720" viewBox="0 0 1280 720" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif"><rect x="0" y="0" width="1280" height="720" fill="#1A3A6B" />
+<g id="shape-2" data-pptx-object="shape" data-pptx-frame="64 48 64 6" data-pptx-prst="rect" data-pptx-source-ref="slide:2" data-pptx-semantic-object="shape">
+<path d="M 64 48 L 128 48 L 128 54 L 64 54 Z" fill="#E8A317" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-3" data-pptx-object="shape" data-pptx-frame="63.4 69.33 273.7 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:3" data-pptx-semantic-object="shape">
+<path d="M 63.4 69.33 L 337.1 69.33 L 337.1 92.43 L 63.4 92.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="63.4" y="84" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#E8A317" font-weight="bold" letter-spacing="1.49" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">PART 02 · 多平台适配与快速上手</tspan></text>
+</g>
+<g id="shape-4" data-pptx-object="shape" data-pptx-frame="62.56 95.33 805.96 55.44" data-pptx-prst="rect" data-pptx-source-ref="slide:4" data-pptx-semantic-object="shape">
+<path d="M 62.56 95.33 L 868.52 95.33 L 868.52 150.77 L 62.56 150.77 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="62.56" y="130" text-anchor="start" xml:space="preserve" font-size="36" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">总结与上手 | 单一源多平台分发 &amp; 3 步无损接入</tspan></text>
+</g>
+<g id="shape-5" data-pptx-object="shape" data-pptx-frame="64 156 1152 40" data-pptx-prst="rect" data-pptx-source-ref="slide:5" data-pptx-semantic-object="shape">
+<path d="M 64 156 L 1216 156 L 1216 196 L 64 196 Z" fill="#274E8A" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-6" data-pptx-object="shape" data-pptx-frame="83.4 167.33 297.45 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:6" data-pptx-semantic-object="shape">
+<path d="M 83.4 167.33 L 380.85 167.33 L 380.85 190.43 L 83.4 190.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.4" y="182" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#E8A317" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">平台（唯一维护源：payload/.claude/）</tspan></text>
+</g>
+<g id="shape-7" data-pptx-object="shape" data-pptx-frame="409.4 167.33 169.6 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:7" data-pptx-semantic-object="shape">
+<path d="M 409.4 167.33 L 579 167.33 L 579 190.43 L 409.4 190.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="409.4" y="182" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">规则 / Skills / Agents</tspan></text>
+</g>
+<g id="shape-8" data-pptx-object="shape" data-pptx-frame="759.4 167.33 162.7 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:8" data-pptx-semantic-object="shape">
+<path d="M 759.4 167.33 L 922.1 167.33 L 922.1 190.43 L 759.4 190.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="759.4" y="182" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">Hooks (-WithHooks)</tspan></text>
+</g>
+<g id="shape-9" data-pptx-object="shape" data-pptx-frame="1059.4 167.33 64.52 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:9" data-pptx-semantic-object="shape">
+<path d="M 1059.4 167.33 L 1123.92 167.33 L 1123.92 190.43 L 1059.4 190.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1059.4" y="182" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">验证状态</tspan></text>
+</g>
+<g id="shape-10" data-pptx-object="shape" data-pptx-frame="64 196 1152 52" data-pptx-prst="rect" data-pptx-source-ref="slide:10" data-pptx-semantic-object="shape">
+<path d="M 64 196 L 1216 196 L 1216 248 L 64 248 Z" fill="#FFFFFF" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-11" data-pptx-object="shape" data-pptx-frame="83.36 212 186.03 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:11" data-pptx-semantic-object="shape">
+<path d="M 83.36 212 L 269.39 212 L 269.39 236.64 L 83.36 236.64 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.36" y="228" text-anchor="start" xml:space="preserve" font-size="16" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">Claude Code（完整版）</tspan></text>
+</g>
+<g id="shape-12" data-pptx-object="shape" data-pptx-frame="409.44 214.67 290.52 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:12" data-pptx-semantic-object="shape">
+<path d="M 409.44 214.67 L 699.96 214.67 L 699.96 236.23 L 409.44 236.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="409.44" y="228" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">CLAUDE.md + .claude/{skills,agents}</tspan></text>
+</g>
+<g id="shape-13" data-pptx-object="shape" data-pptx-frame="759.44 214.67 187.14 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:13" data-pptx-semantic-object="shape">
+<path d="M 759.44 214.67 L 946.58 214.67 L 946.58 236.23 L 759.44 236.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="759.44" y="228" text-anchor="start" xml:space="preserve" font-size="14" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">全量 Hook（含编排强拦截）</tspan></text>
+</g>
+<g id="shape-14" data-pptx-object="shape" data-pptx-frame="1059.44 214.67 75.32 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:14" data-pptx-semantic-object="shape">
+<path d="M 1059.44 214.67 L 1134.76 214.67 L 1134.76 236.23 L 1059.44 236.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1059.44" y="228" text-anchor="start" xml:space="preserve" font-size="14" fill="#137333" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">已完整测试</tspan></text>
+</g>
+<g id="shape-15" data-pptx-object="shape" data-pptx-frame="64 248 1152 52" data-pptx-prst="rect" data-pptx-source-ref="slide:15" data-pptx-semantic-object="shape">
+<path d="M 64 248 L 1216 248 L 1216 300 L 64 300 Z" fill="#F4F6F8" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-16" data-pptx-object="shape" data-pptx-frame="83.36 264 187.15 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:16" data-pptx-semantic-object="shape">
+<path d="M 83.36 264 L 270.51 264 L 270.51 288.64 L 83.36 288.64 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.36" y="280" text-anchor="start" xml:space="preserve" font-size="16" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">Antigravity CLI (agy)</tspan></text>
+</g>
+<g id="shape-17" data-pptx-object="shape" data-pptx-frame="409.44 266.67 227.73 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:17" data-pptx-semantic-object="shape">
+<path d="M 409.44 266.67 L 637.17 266.67 L 637.17 288.23 L 409.44 288.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="409.44" y="280" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">AGENTS.md(≤24KB) + .agents/</tspan></text>
+</g>
+<g id="shape-18" data-pptx-object="shape" data-pptx-frame="759.44 266.67 239.3 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:18" data-pptx-semantic-object="shape">
+<path d="M 759.44 266.67 L 998.74 266.67 L 998.74 288.23 L 759.44 288.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="759.44" y="280" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">raw 保护(ask) + 路由；无编排拦截</tspan></text>
+</g>
+<g id="shape-19" data-pptx-object="shape" data-pptx-frame="1059.44 266.67 108.71 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:19" data-pptx-semantic-object="shape">
+<path d="M 1059.44 266.67 L 1168.15 266.67 L 1168.15 288.23 L 1059.44 288.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1059.44" y="280" text-anchor="start" xml:space="preserve" font-size="14" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">agy 1.5.9 冒烟</tspan></text>
+</g>
+<g id="shape-20" data-pptx-object="shape" data-pptx-frame="64 300 1152 52" data-pptx-prst="rect" data-pptx-source-ref="slide:20" data-pptx-semantic-object="shape">
+<path d="M 64 300 L 1216 300 L 1216 352 L 64 352 Z" fill="#FFFFFF" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-21" data-pptx-object="shape" data-pptx-frame="83.36 316 82.77 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:21" data-pptx-semantic-object="shape">
+<path d="M 83.36 316 L 166.13 316 L 166.13 340.64 L 83.36 340.64 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.36" y="332" text-anchor="start" xml:space="preserve" font-size="16" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">Codex CLI</tspan></text>
+</g>
+<g id="shape-22" data-pptx-object="shape" data-pptx-frame="409.44 318.67 168.32 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:22" data-pptx-semantic-object="shape">
+<path d="M 409.44 318.67 L 577.76 318.67 L 577.76 340.23 L 409.44 340.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="409.44" y="332" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">AGENTS.md + .agents/</tspan></text>
+</g>
+<g id="shape-23" data-pptx-object="shape" data-pptx-frame="759.44 318.67 172.3 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:23" data-pptx-semantic-object="shape">
+<path d="M 759.44 318.67 L 931.74 318.67 L 931.74 340.23 L 759.44 340.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="759.44" y="332" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">无 Hook，靠规则文本约束</tspan></text>
+</g>
+<g id="shape-24" data-pptx-object="shape" data-pptx-frame="1059.44 318.67 98.32 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:24" data-pptx-semantic-object="shape">
+<path d="M 1059.44 318.67 L 1157.76 318.67 L 1157.76 340.23 L 1059.44 340.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1059.44" y="332" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">仅生成·未实测</tspan></text>
+</g>
+<g id="shape-25" data-pptx-object="shape" data-pptx-frame="64 376 366 206" data-pptx-prst="roundRect" data-pptx-av-adj="val 1942" data-pptx-source-ref="slide:25" data-pptx-semantic-object="shape">
+<path d="M 64 380 A 4 4 0 0 1 68 376 L 426 376 A 4 4 0 0 1 430 380 L 430 578 A 4 4 0 0 1 426 582 L 68 582 A 4 4 0 0 1 64 578 Z" fill="#FFFFFF" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-26" data-pptx-object="shape" data-pptx-frame="83.36 393.33 184.64 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:26" data-pptx-semantic-object="shape">
+<path d="M 83.36 393.33 L 268 393.33 L 268 417.97 L 83.36 417.97 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.36" y="408" text-anchor="start" xml:space="preserve" font-family="Consolas, &quot;Microsoft YaHei&quot;, sans-serif" font-size="16" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">STEP 01 · 预演与安装</tspan></text>
+</g>
+<g id="shape-27" data-pptx-object="shape" data-pptx-frame="83.48 426 269.68 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:27" data-pptx-semantic-object="shape">
+<path d="M 83.48 426 L 353.16 426 L 353.16 446.12 L 83.48 446.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.48" y="438" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">.\Install-EconomicsResearchCrew.ps1</tspan></text>
+</g>
+<g id="shape-28" data-pptx-object="shape" data-pptx-frame="83.48 450 194.32 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:28" data-pptx-semantic-object="shape">
+<path d="M 83.48 450 L 277.8 450 L 277.8 470.12 L 83.48 470.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.48" y="462" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">-VaultPath "D:\YourVault"</tspan></text>
+</g>
+<g id="shape-29" data-pptx-object="shape" data-pptx-frame="83.48 474 140.23 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:29" data-pptx-semantic-object="shape">
+<path d="M 83.48 474 L 223.71 474 L 223.71 494.12 L 83.48 494.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.48" y="486" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">-WithHooks -WhatIf</tspan></text>
+</g>
+<g id="shape-30" data-pptx-object="shape" data-pptx-frame="83.44 514.67 304.6 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:30" data-pptx-semantic-object="shape">
+<path d="M 83.44 514.67 L 388.04 514.67 L 388.04 536.23 L 83.44 536.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.44" y="528" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">不覆盖已有配置，改前备份至 _erc-backups/</tspan></text>
+</g>
+<g id="shape-31" data-pptx-object="shape" data-pptx-frame="83.44 542.67 269.65 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:31" data-pptx-semantic-object="shape">
+<path d="M 83.44 542.67 L 353.09 542.67 L 353.09 564.23 L 83.44 564.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="83.44" y="556" text-anchor="start" xml:space="preserve" font-size="14" fill="#4A7BB5" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">-Platform auto|claude|agy|codex|all</tspan></text>
+</g>
+<g id="shape-32" data-pptx-object="shape" data-pptx-frame="457 376 366 206" data-pptx-prst="roundRect" data-pptx-av-adj="val 1942" data-pptx-source-ref="slide:32" data-pptx-semantic-object="shape">
+<path d="M 457 380 A 4 4 0 0 1 461 376 L 819 376 A 4 4 0 0 1 823 380 L 823 578 A 4 4 0 0 1 819 582 L 461 582 A 4 4 0 0 1 457 578 Z" fill="#FFFFFF" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-33" data-pptx-object="shape" data-pptx-frame="476.36 393.33 218.56 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:33" data-pptx-semantic-object="shape">
+<path d="M 476.36 393.33 L 694.92 393.33 L 694.92 417.97 L 476.36 417.97 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="476.36" y="408" text-anchor="start" xml:space="preserve" font-family="Consolas, &quot;Microsoft YaHei&quot;, sans-serif" font-size="16" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">STEP 02 · 结构与回归校验</tspan></text>
+</g>
+<g id="shape-34" data-pptx-object="shape" data-pptx-frame="476.48 426 246.86 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:34" data-pptx-semantic-object="shape">
+<path d="M 476.48 426 L 723.34 426 L 723.34 446.12 L 476.48 446.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="476.48" y="438" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">.\Test-EconomicsResearchCrew.ps1</tspan></text>
+</g>
+<g id="shape-35" data-pptx-object="shape" data-pptx-frame="476.48 450 194.32 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:35" data-pptx-semantic-object="shape">
+<path d="M 476.48 450 L 670.8 450 L 670.8 470.12 L 476.48 470.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="476.48" y="462" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">-VaultPath "D:\YourVault"</tspan></text>
+</g>
+<g id="shape-36" data-pptx-object="shape" data-pptx-frame="476.48 482 269.34 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:36" data-pptx-semantic-object="shape">
+<path d="M 476.48 482 L 745.82 482 L 745.82 502.12 L 476.48 502.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="476.48" y="494" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="13.07" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">pwsh -NoProfile -File tests\run.ps1</tspan></text>
+</g>
+<g id="shape-37" data-pptx-object="shape" data-pptx-frame="476.44 514.67 269.72 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:37" data-pptx-semantic-object="shape">
+<path d="M 476.44 514.67 L 746.16 514.67 L 746.16 536.23 L 476.44 536.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="476.44" y="528" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">校验 frontmatter、脚本与 hooks.json</tspan></text>
+</g>
+<g id="shape-38" data-pptx-object="shape" data-pptx-frame="476.44 542.67 268.24 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:38" data-pptx-semantic-object="shape">
+<path d="M 476.44 542.67 L 744.68 542.67 L 744.68 564.23 L 476.44 564.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="476.44" y="556" text-anchor="start" xml:space="preserve" font-size="14" fill="#4A7BB5" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">回归测试全在临时目录执行，不碰真实库</tspan></text>
+</g>
+<g id="shape-39" data-pptx-object="shape" data-pptx-frame="850 376 366 206" data-pptx-prst="roundRect" data-pptx-av-adj="val 1942" data-pptx-source-ref="slide:39" data-pptx-semantic-object="shape">
+<path d="M 850 380 A 4 4 0 0 1 854 376 L 1212 376 A 4 4 0 0 1 1216 380 L 1216 578 A 4 4 0 0 1 1212 582 L 854 582 A 4 4 0 0 1 850 578 Z" fill="#FFFFFF" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-40" data-pptx-object="shape" data-pptx-frame="869.36 393.33 201.6 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:40" data-pptx-semantic-object="shape">
+<path d="M 869.36 393.33 L 1070.96 393.33 L 1070.96 417.97 L 869.36 417.97 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="869.36" y="408" text-anchor="start" xml:space="preserve" font-family="Consolas, &quot;Microsoft YaHei&quot;, sans-serif" font-size="16" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">STEP 03 · 首次只读体检</tspan></text>
+</g>
+<g id="shape-41" data-pptx-object="shape" data-pptx-frame="869.44 426.67 277.14 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:41" data-pptx-semantic-object="shape">
+<path d="M 869.44 426.67 L 1146.58 426.67 L 1146.58 448.23 L 869.44 448.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="869.44" y="440" text-anchor="start" xml:space="preserve" font-size="14" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">进入研究库启动 claude 或 agy，先执行：</tspan></text>
+</g>
+<g id="shape-42" data-pptx-object="shape" data-pptx-frame="869.48 458 272.38 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:42" data-pptx-semantic-object="shape">
+<path d="M 869.48 458 L 1141.86 458 L 1141.86 478.12 L 869.48 478.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="869.48" y="470" text-anchor="start" xml:space="preserve" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">“读取规则与 Meta/vault-map.md，只检查</tspan></text>
+</g>
+<g id="shape-43" data-pptx-object="shape" data-pptx-frame="869.48 482 233.94 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:43" data-pptx-semantic-object="shape">
+<path d="M 869.48 482 L 1103.42 482 L 1103.42 502.12 L 869.48 502.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="869.48" y="494" text-anchor="start" xml:space="preserve" font-size="13.07" fill="#1A3A6B" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">配置与目录，报告 Agent 与 Skills。”</tspan></text>
+</g>
+<g id="shape-44" data-pptx-object="shape" data-pptx-frame="869.44 514.67 228.03 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:44" data-pptx-semantic-object="shape">
+<path d="M 869.44 514.67 L 1097.47 514.67 L 1097.47 536.23 L 869.44 536.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="869.44" y="528" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">填好 Meta/purpose.md 后即可用</tspan></text>
+</g>
+<g id="shape-45" data-pptx-object="shape" data-pptx-frame="869.44 542.67 265.42 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:45" data-pptx-semantic-object="shape">
+<path d="M 869.44 542.67 L 1134.86 542.67 L 1134.86 564.23 L 869.44 564.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="869.44" y="556" text-anchor="start" xml:space="preserve" font-size="14" fill="#4A7BB5" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">/causal-inference-audit 做首次冒烟</tspan></text>
+</g>
+<g id="shape-46" data-pptx-object="shape" data-pptx-frame="64 602 1152 58" data-pptx-prst="roundRect" data-pptx-av-adj="val 6897" data-pptx-source-ref="slide:46" data-pptx-semantic-object="shape">
+<path d="M 64 606 A 4 4 0 0 1 68 602 L 1212 602 A 4 4 0 0 1 1216 606 L 1216 656 A 4 4 0 0 1 1212 660 L 68 660 A 4 4 0 0 1 64 656 Z" fill="#274E8A" stroke-width="2" stroke="#E8A317" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-47" data-pptx-object="shape" data-pptx-frame="326.18 619.33 627.65 30.8" data-pptx-prst="rect" data-pptx-source-ref="slide:47" data-pptx-semantic-object="shape">
+<path d="M 326.18 619.33 L 953.82 619.33 L 953.82 650.13 L 326.18 650.13 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="640" y="638" text-anchor="middle" xml:space="preserve" font-size="20" fill="#E8A317" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">用 Claude Code 原语筑起工程护栏，把学术判断权稳稳留给研究者</tspan></text>
+</g>
+<g id="shape-48" data-pptx-object="shape" data-pptx-frame="64 680 1152 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:48" data-pptx-semantic-object="shape">
+<path d="M 64 680 L 1216 680" data-pptx-part="geometry" fill="none" stroke-width="1" stroke="#365D99" />
+</g>
+<g id="shape-49" data-pptx-object="shape" data-pptx-frame="63.44 688.67 349.49 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:49" data-pptx-semantic-object="shape">
+<path d="M 63.44 688.67 L 412.93 688.67 L 412.93 710.23 L 63.44 710.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="63.44" y="702" text-anchor="start" xml:space="preserve" font-size="14" fill="#B8C9E0" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Claude Code 基础概念 × Economics Research Crew</tspan></text>
+</g>
+<g id="shape-50" data-pptx-object="shape" data-pptx-frame="1163.24 688.67 53.32 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:50" data-pptx-semantic-object="shape">
+<path d="M 1163.24 688.67 L 1216.56 688.67 L 1216.56 710.23 L 1163.24 710.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1216.56" y="702" text-anchor="end" xml:space="preserve" font-size="14" fill="#E8A317" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">18 / 18</tspan></text>
+</g></svg>

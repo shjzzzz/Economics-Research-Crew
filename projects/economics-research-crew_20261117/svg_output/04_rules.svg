@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <!-- Header -->
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317" letter-spacing="1.5">PART 02 · 关键概念拆解 (01 / 08)</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">01 | Rules：每次会话自动加载的“科研宪法”</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <!-- Top Carrier Banner -->
+  <rect x="64" y="142" width="1152" height="74" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <text x="88" y="174" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1A3A6B">规则载体（自适应多平台）：</text>
+  <text x="330" y="174" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" fill="#1D2430">Claude Code 读取 CLAUDE.md + .claude/ECONOMICS-RESEARCH.md</text>
+  <text x="330" y="202" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" fill="#5A6577">Antigravity (agy) / Codex 读取根目录 AGENTS.md 中的 ERC:BEGIN … ERC:END 区块（自包含，≤ 24 KB）</text>
+
+  <!-- Pillar 1: 证据铁律 -->
+  <rect x="64" y="236" width="366" height="422" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="64" y="236" width="366" height="8" fill="#1A3A6B"/>
+  <use data-icon="tabler-outline/search" x="88" y="266" width="32" height="32" fill="#1A3A6B"/>
+  <text x="132" y="290" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="24" font-weight="bold" fill="#1A3A6B">证据铁律</text>
+  <line x1="88" y1="314" x2="406" y2="314" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="88" y="348" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 零容忍编造</text>
+  <text x="104" y="376" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">严禁捏造论文、作者、DOI、法条、</text>
+  <text x="104" y="400" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">数据或统计结果；查不到一律标“待核实”</text>
+  <text x="88" y="442" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 文献要素完整</text>
+  <text x="104" y="470" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">每条主张保留标题、作者、年份、</text>
+  <text x="104" y="494" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">期刊、DOI/URL 与页码/表号</text>
+  <text x="88" y="536" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 中国税法核验规范</text>
+  <text x="104" y="564" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">须注明发文机关、文号、发布与生效</text>
+  <text x="104" y="588" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">日期、修订/废止状态及适用范围</text>
+
+  <!-- Pillar 2: 计量纪律 -->
+  <rect x="457" y="236" width="366" height="422" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="457" y="236" width="366" height="8" fill="#E8A317"/>
+  <use data-icon="tabler-outline/scale" x="481" y="266" width="32" height="32" fill="#E8A317"/>
+  <text x="525" y="290" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="24" font-weight="bold" fill="#1A3A6B">计量纪律</text>
+  <line x1="481" y1="314" x2="799" y2="314" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="481" y="348" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 先识别、后回归</text>
+  <text x="497" y="376" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">区分相关、预测与因果；未说明</text>
+  <text x="497" y="400" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">Estimand 与假设前不解释系数</text>
+  <text x="481" y="442" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 方法论核查清单</text>
+  <text x="497" y="470" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">DID 查平行趋势/预期/异质性；IV 查</text>
+  <text x="497" y="494" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">相关性/排他性/LATE；RDD 查连续性</text>
+  <text x="481" y="536" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 拒绝静默处理</text>
+  <text x="497" y="564" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">明确聚类层级、样本筛选与缺失值</text>
+  <text x="497" y="588" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">处理；禁止静默删样本、缩尾或改设定</text>
+
+  <!-- Pillar 3: 数据与库安全 -->
+  <rect x="850" y="236" width="366" height="422" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="850" y="236" width="366" height="8" fill="#4A7BB5"/>
+  <use data-icon="tabler-outline/lock" x="874" y="266" width="32" height="32" fill="#4A7BB5"/>
+  <text x="918" y="290" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="24" font-weight="bold" fill="#1A3A6B">数据与库安全</text>
+  <line x1="874" y1="314" x2="1192" y2="314" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="874" y="348" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 原始目录绝对只读</text>
+  <text x="890" y="376" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">06-Data/raw 与 03-Literature/_sources</text>
+  <text x="890" y="400" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">不可修改；衍生数据仅写入 processed</text>
+  <text x="874" y="442" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 保护既有研究笔记</text>
+  <text x="890" y="470" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">未经研究者明确同意，不删除、移动、</text>
+  <text x="890" y="494" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">重命名或批量改写库内已有笔记</text>
+  <text x="874" y="536" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">• 隐私与外发边界</text>
+  <text x="890" y="564" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">涉及个人或受限微观数据时，禁止向</text>
+  <text x="890" y="588" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#5A6577">外部联网服务发送研究原始数据</text>
+
+  <!-- Footer -->
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Economics Research Crew · 关键概念解析</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">04 / 12</text>
+</svg>

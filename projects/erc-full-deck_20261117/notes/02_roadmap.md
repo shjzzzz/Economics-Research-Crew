@@ -1,0 +1,1 @@
+为什么讲科研项目前要先花时间讲 Claude Code 的基础概念？因为 Economics Research Crew 并不是凭空造轮子，而是把 Claude Code 的原生原语进行了精准组合与取舍：用 CLAUDE.md 定科研底线，用 Skills 固化研究 SOP，用 Subagents 做权限隔离与独立审稿，用 Hooks 保护原始数据，同时克制地选择不默认安装 MCP 以防受限数据外泄。看懂左边的底座，右边的设计意图就一目了然。

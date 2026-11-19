@@ -1,0 +1,36 @@
+{
+  "stage": "stage1",
+  "lang": "zh",
+  "primary_language": "zh-CN",
+  "recommend": {
+    "canvas": "ppt169"
+  },
+  "audience": {
+    "value": "对 AI 辅助经济学研究工作流感兴趣的学者、研究生、研究团队成员或技术同行"
+  },
+  "communication_intent": {
+    "value": "系统讲解 Economics Research Crew 的设计动机、核心架构与各关键模块概念，让听众理解它如何用规则、技能、子代理、编排器、Hook 与知识库约束 AI 开展严谨的经济学研究"
+  },
+  "audience_outcome": {
+    "value": "听众能清晰区分项目中的核心概念（Rules / Skills / Subagents / Orchestrator / Hooks / 可积累 Wiki / 人机协作写稿 / 多平台适配），并知道如何在自己的研究库中落地使用"
+  },
+  "core_message": {
+    "value": "Economics Research Crew 不是计量软件，而是一套面向经济学与因果推断研究的 AI 协作规范与工程约束体系：让研究流程可追溯、可审查、可积累"
+  },
+  "delivery_context": {
+    "value": "主要为有主讲人的现场技术/学术分享（约 15–20 分钟）；次要为会后可独立阅读的项目导览材料"
+  },
+  "artifact_afterlife": {
+    "value": "作为项目介绍材料、团队内部培训参考与新成员上手指南"
+  },
+  "content_divergence": {
+    "value": ""
+  },
+  "template_options": {
+    "schema_version": 1,
+    "phase": "template",
+    "lang": "zh",
+    "explicit_workspace_roots": [],
+    "default_mode": "free_design"
+  }
+}

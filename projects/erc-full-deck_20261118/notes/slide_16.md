@@ -1,0 +1,1 @@
+再看 Part 1 讲过的 Hooks 在科研里的实战用法：安装时加上 `-WithHooks` 后，6 个 Python 脚本会在事前、编排和事后三个环节介入——比如 `protect_raw.py` 锁死原始数据和文献目录，`orchestrator_guard.py` 拦住越级派出，`validate_frontmatter.py` 和 `validate_paper.py` 事后自动查格式与标记。当然，Hook 只是护栏不是沙箱，Git 备份依然必须配合使用。

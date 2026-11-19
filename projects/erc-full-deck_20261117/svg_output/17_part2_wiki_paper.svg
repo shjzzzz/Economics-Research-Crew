@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317" letter-spacing="1.5">PART 02 · 科研落地 ⑤</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">科研落地 ⑤ | 可积累 Wiki 与论文机械可追溯</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <!-- Left Half: Compounding Wiki -->
+  <rect x="64" y="144" width="560" height="512" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="64" y="144" width="560" height="46" fill="#1A3A6B"/>
+  <use data-icon="tabler-outline/database" x="82" y="154" width="24" height="24" fill="#E8A317"/>
+  <text x="116" y="174" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#FFFFFF">可积累 Wiki（借鉴 llm_wiki）</text>
+
+  <rect x="86" y="208" width="516" height="118" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="106" y="236" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">三层沉淀架构</text>
+  <text x="106" y="264" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">1. 原始来源 (03-Literature/_sources/)：不可变 + SHA256 去重</text>
+  <text x="106" y="288" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">2. Wiki 页面 (03-Literature / 04-Theories / 08-Notes)：页码溯源</text>
+  <text x="106" y="312" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">3. 方向与规则 (Meta/purpose.md + CLAUDE.md)</text>
+
+  <rect x="86" y="340" width="516" height="106" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <text x="106" y="368" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">两步摄入 (/ingest-source)</text>
+  <text x="106" y="396" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">先只读分析（抽取要点 + 发现矛盾 + 拟改清单），</text>
+  <text x="106" y="422" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#4A7BB5">等研究者确认后才写入页面、更新 index 与 research-log</text>
+
+  <rect x="86" y="460" width="516" height="90" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <text x="106" y="488" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#C07B00">冲突入队 (Meta/review-queue.md)</text>
+  <text x="106" y="516" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">来源结论冲突时不静默覆盖，并列记录并排队等待研究者裁决</text>
+
+  <rect x="86" y="564" width="516" height="72" rx="4" fill="#FFFFFF" stroke="#4A7BB5" stroke-width="1.5"/>
+  <text x="106" y="592" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">确定性体检 (wiki_lint.py / /wiki-lint)</text>
+  <text x="106" y="618" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">查断链、孤立页与溯源；自动跳过原有税法笔记</text>
+
+  <!-- Right Half: Paper Tools & Traceability -->
+  <rect x="656" y="144" width="560" height="512" rx="4" fill="#FFFFFF" stroke="#1A3A6B" stroke-width="1.5"/>
+  <rect x="656" y="144" width="560" height="46" fill="#4A7BB5"/>
+  <use data-icon="tabler-outline/file-text" x="674" y="154" width="24" height="24" fill="#FFFFFF"/>
+  <text x="708" y="174" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#FFFFFF">人机协作写稿（S8–S12 · paper_tools.py）</text>
+
+  <rect x="678" y="208" width="516" height="106" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="698" y="238" font-family="Consolas, Arial, sans-serif" font-size="18" font-weight="bold" fill="#1A3A6B">[@key]  引文机械绑定</text>
+  <text x="698" y="268" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">仅限 Meta/citation-map.json 已登记文献；Crossref 核验仅发</text>
+  <text x="698" y="292" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">标题/DOI（可 --offline）；中文文献与法规须人工 cite confirm</text>
+
+  <rect x="678" y="328" width="516" height="106" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="698" y="358" font-family="Consolas, Arial, sans-serif" font-size="18" font-weight="bold" fill="#1A3A6B">{{res:id}}  实证数字机械绑定</text>
+  <text x="698" y="388" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">正文回归系数、样本量等数字一律写成占位符，</text>
+  <text x="698" y="412" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">从 Meta/results-ledger.json 映射，杜绝 AI 篡改或幻觉</text>
+
+  <rect x="678" y="448" width="516" height="106" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <text x="698" y="478" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#C07B00">⟦问：…⟧ / ⟦答：…⟧  显式提问替代脑补</text>
+  <text x="698" y="508" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#1D2430">遇到证据缺口时在稿内显式发问；终检前未答问题数必须清零</text>
+  <text x="698" y="532" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">精修最多 3 轮，未增 Fatal 且减少 Major 才接受（可导出 docx/tex）</text>
+
+  <rect x="678" y="568" width="516" height="68" rx="4" fill="#1A3A6B"/>
+  <text x="698" y="598" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317">人机分工底线 (collaboration-protocol.md)：</text>
+  <text x="698" y="622" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#FFFFFF">AI 永不决定识别策略、不拔高因果措辞强度、不决定投稿期刊。</text>
+
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Part 2 · Economics Research Crew 科研实战</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">17 / 18</text>
+</svg>

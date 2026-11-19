@@ -1,0 +1,258 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="720" viewBox="0 0 1280 720" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif"><rect x="0" y="0" width="1280" height="720" fill="#FFFFFF" />
+<g id="shape-2" data-pptx-object="shape" data-pptx-frame="63.4 39.33 309.23 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:2" data-pptx-semantic-object="shape">
+<path d="M 63.4 39.33 L 372.63 39.33 L 372.63 62.43 L 63.4 62.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="63.4" y="54" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#4A7BB5" font-weight="bold" letter-spacing="1.49" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">PART 01 · 基础概念 (07 &amp; 08 / 08)</tspan></text>
+</g>
+<g id="shape-3" data-pptx-object="shape" data-pptx-frame="62.56 65.33 841.88 55.44" data-pptx-prst="rect" data-pptx-source-ref="slide:3" data-pptx-semantic-object="shape">
+<path d="M 62.56 65.33 L 904.44 65.33 L 904.44 120.77 L 62.56 120.77 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="62.56" y="100" text-anchor="start" xml:space="preserve" font-size="36" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">基础 ⑦⑧ | Git Worktree（并行隔离）与 Plugins</tspan></text>
+</g>
+<g id="shape-4" data-pptx-object="shape" data-pptx-frame="64 122 1152 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:4" data-pptx-semantic-object="shape">
+<path d="M 64 122 L 1216 122" data-pptx-part="geometry" fill="none" stroke-width="1.50005" stroke="#DCE2EA" />
+</g>
+<g id="shape-5" data-pptx-object="shape" data-pptx-frame="64 146 560 510" data-pptx-prst="roundRect" data-pptx-av-adj="val 784" data-pptx-source-ref="slide:5" data-pptx-semantic-object="shape">
+<path d="M 64 150 A 4 4 0 0 1 68 146 L 620 146 A 4 4 0 0 1 624 150 L 624 652 A 4 4 0 0 1 620 656 L 68 656 A 4 4 0 0 1 64 652 Z" fill="#F4F6F8" stroke-width="1.50005" stroke="#DCE2EA" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-6" data-pptx-object="shape" data-pptx-frame="64 146 560 48" data-pptx-prst="rect" data-pptx-source-ref="slide:6" data-pptx-semantic-object="shape">
+<path d="M 64 146 L 624 146 L 624 194 L 64 194 Z" fill="#1A3A6B" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-13" data-pptx-object="group" data-pptx-frame="89.42 161.33 16.25 17.33" data-pptx-source-ref="slide:13">
+<g id="shape-7" data-pptx-object="shape" data-pptx-frame="89.42 174.33 4.33 4.33" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:7" data-pptx-semantic-object="shape">
+<path d="M 89.42 176.5 C 89.42 177.7 90.39 178.67 91.58 178.67 C 92.78 178.67 93.75 177.7 93.75 176.5 C 93.75 175.3 92.78 174.33 91.58 174.33 C 90.39 174.33 89.42 175.3 89.42 176.5" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#E8A317" />
+</g>
+<g id="shape-8" data-pptx-object="shape" data-pptx-frame="89.42 161.33 4.33 4.33" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:8" data-pptx-semantic-object="shape">
+<path d="M 89.42 163.5 C 89.42 164.7 90.39 165.67 91.58 165.67 C 92.78 165.67 93.75 164.7 93.75 163.5 C 93.75 162.3 92.78 161.33 91.58 161.33 C 90.39 161.33 89.42 162.3 89.42 163.5" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#E8A317" />
+</g>
+<g id="shape-9" data-pptx-object="shape" data-pptx-frame="100.25 161.33 4.33 4.33" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:9" data-pptx-semantic-object="shape">
+<path d="M 100.25 163.5 C 100.25 164.7 101.22 165.67 102.42 165.67 C 103.61 165.67 104.58 164.7 104.58 163.5 C 104.58 162.3 103.61 161.33 102.42 161.33 C 101.22 161.33 100.25 162.3 100.25 163.5" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#E8A317" />
+</g>
+<g id="shape-10" data-pptx-object="shape" data-pptx-frame="91.58 165.67 1 8.67" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:10" data-pptx-semantic-object="shape">
+<path d="M 91.58 165.67 L 91.58 174.33" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#E8A317" />
+</g>
+<g id="shape-11" data-pptx-object="shape" data-pptx-frame="93.75 168.92 8.67 7.58" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:11" data-pptx-semantic-object="shape">
+<path d="M 93.75 176.5 L 100.25 176.5 C 101.45 176.5 102.42 175.53 102.42 174.33 L 102.42 168.92" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#E8A317" />
+</g>
+<g id="shape-12" data-pptx-object="shape" data-pptx-frame="99.17 168.92 6.5 3.25" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:12" data-pptx-semantic-object="shape">
+<path d="M 99.17 172.17 L 102.42 168.92 L 105.67 172.17" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#E8A317" />
+</g>
+</g>
+<g id="shape-14" data-pptx-object="shape" data-pptx-frame="121.2 158.33 332 30.8" data-pptx-prst="rect" data-pptx-source-ref="slide:14" data-pptx-semantic-object="shape">
+<path d="M 121.2 158.33 L 453.2 158.33 L 453.2 189.13 L 121.2 189.13 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="121.2" y="177" text-anchor="start" xml:space="preserve" font-size="20" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">⑦ Git Worktree：多分支并行隔离</tspan></text>
+</g>
+<g id="shape-15" data-pptx-object="shape" data-pptx-frame="87.32 210 127.99 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:15" data-pptx-semantic-object="shape">
+<path d="M 87.32 210 L 215.31 210 L 215.31 236.28 L 87.32 236.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.32" y="226" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">解决什么痛点？</tspan></text>
+</g>
+<g id="shape-16" data-pptx-object="shape" data-pptx-frame="87.4 239.33 342.04 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:16" data-pptx-semantic-object="shape">
+<path d="M 87.4 239.33 L 429.44 239.33 L 429.44 262.43 L 87.4 262.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="254" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">多个 AI 会话同时改同一个仓库目录会互相覆盖；</tspan></text>
+</g>
+<g id="shape-17" data-pptx-object="shape" data-pptx-frame="87.4 263.33 412.52 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:17" data-pptx-semantic-object="shape">
+<path d="M 87.4 263.33 L 499.92 263.33 L 499.92 286.43 L 87.4 286.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="278" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Worktree 让每个会话拥有独立分支工作区，无需 stash。</tspan></text>
+</g>
+<g id="shape-18" data-pptx-object="shape" data-pptx-frame="88 302 512 86" data-pptx-prst="roundRect" data-pptx-av-adj="val 4651" data-pptx-source-ref="slide:18" data-pptx-semantic-object="shape">
+<path d="M 88 306 A 4 4 0 0 1 92 302 L 596 302 A 4 4 0 0 1 600 306 L 600 384 A 4 4 0 0 1 596 388 L 92 388 A 4 4 0 0 1 88 384 Z" fill="#FFFFFF" stroke-width="1.50005" stroke="#4A7BB5" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-19" data-pptx-object="shape" data-pptx-frame="105.4 315.33 339.16 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:19" data-pptx-semantic-object="shape">
+<path d="M 105.4 315.33 L 444.56 315.33 L 444.56 338.43 L 105.4 338.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="105.4" y="330" text-anchor="start" xml:space="preserve" font-family="Consolas, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14.93" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">claude --worktree &lt;name&gt; (或 claude -w)</tspan></text>
+</g>
+<g id="shape-20" data-pptx-object="shape" data-pptx-frame="105.44 344.67 330.57 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:20" data-pptx-semantic-object="shape">
+<path d="M 105.44 344.67 L 436.01 344.67 L 436.01 366.23 L 105.44 366.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="105.44" y="358" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">创建路径：&lt;repo&gt;/.claude/worktrees/&lt;name&gt;</tspan></text>
+</g>
+<g id="shape-21" data-pptx-object="shape" data-pptx-frame="105.48 366 262.82 20.12" data-pptx-prst="rect" data-pptx-source-ref="slide:21" data-pptx-semantic-object="shape">
+<path d="M 105.48 366 L 368.3 366 L 368.3 386.12 L 105.48 386.12 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="105.48" y="378" text-anchor="start" xml:space="preserve" font-size="13.07" fill="#4A7BB5" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">若会话结束无改动，worktree 会自动清理</tspan></text>
+</g>
+<g id="shape-22" data-pptx-object="shape" data-pptx-frame="87.32 408 467.06 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:22" data-pptx-semantic-object="shape">
+<path d="M 87.32 408 L 554.38 408 L 554.38 434.28 L 87.32 434.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.32" y="424" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">关键机制（claude-howto 09-advanced-features）：</tspan></text>
+</g>
+<g id="shape-23" data-pptx-object="shape" data-pptx-frame="87.4 441.33 374.52 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:23" data-pptx-semantic-object="shape">
+<path d="M 87.4 441.33 L 461.92 441.33 L 461.92 464.43 L 87.4 464.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="456" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">后台隔离 worktree.bgIsolation：默认给后台任务</tspan></text>
+</g>
+<g id="shape-24" data-pptx-object="shape" data-pptx-frame="101.44 466.67 354.31 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:24" data-pptx-semantic-object="shape">
+<path d="M 101.44 466.67 L 455.75 466.67 L 455.75 488.23 L 101.44 488.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="101.44" y="480" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">分配独立 worktree（设 "none" 则直接改当前目录）</tspan></text>
+</g>
+<g id="shape-25" data-pptx-object="shape" data-pptx-frame="87.4 497.33 386.42 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:25" data-pptx-semantic-object="shape">
+<path d="M 87.4 497.33 L 473.82 497.33 L 473.82 520.43 L 87.4 520.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="512" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">稀疏检出 worktree.sparsePaths：加速大仓库克隆</tspan></text>
+</g>
+<g id="shape-26" data-pptx-object="shape" data-pptx-frame="87.4 529.33 349.26 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:26" data-pptx-semantic-object="shape">
+<path d="M 87.4 529.33 L 436.66 529.33 L 436.66 552.43 L 87.4 552.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="544" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">会话内工具：EnterWorktree / ExitWorktree</tspan></text>
+</g>
+<g id="shape-27" data-pptx-object="shape" data-pptx-frame="87.4 561.33 406.84 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:27" data-pptx-semantic-object="shape">
+<path d="M 87.4 561.33 L 494.24 561.33 L 494.24 584.43 L 87.4 584.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="576" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">生命周期 Hook：WorktreeCreate / WorktreeRemove</tspan></text>
+</g>
+<g id="shape-28" data-pptx-object="shape" data-pptx-frame="87.44 604.67 326 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:28" data-pptx-semantic-object="shape">
+<path d="M 87.44 604.67 L 413.44 604.67 L 413.44 626.23 L 87.44 626.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.44" y="618" text-anchor="start" xml:space="preserve" font-size="14" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">→ 适用于：同时跑多组稳健性检验或并行代码分支</tspan></text>
+</g>
+<g id="shape-29" data-pptx-object="shape" data-pptx-frame="656 146 560 510" data-pptx-prst="roundRect" data-pptx-av-adj="val 784" data-pptx-source-ref="slide:29" data-pptx-semantic-object="shape">
+<path d="M 656 150 A 4 4 0 0 1 660 146 L 1212 146 A 4 4 0 0 1 1216 150 L 1216 652 A 4 4 0 0 1 1212 656 L 660 656 A 4 4 0 0 1 656 652 Z" fill="#FFFFFF" stroke-width="1.50005" stroke="#1A3A6B" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-30" data-pptx-object="shape" data-pptx-frame="656 146 560 48" data-pptx-prst="rect" data-pptx-source-ref="slide:30" data-pptx-semantic-object="shape">
+<path d="M 656 146 L 1216 146 L 1216 194 L 656 194 Z" fill="#4A7BB5" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-36" data-pptx-object="group" data-pptx-frame="680.33 160.25 17.33 19.5" data-pptx-source-ref="slide:36">
+<g id="shape-31" data-pptx-object="shape" data-pptx-frame="680.33 160.25 17.33 19.5" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:31" data-pptx-semantic-object="shape">
+<path d="M 689 160.25 L 697.67 165.12 L 697.67 174.87 L 689 179.75 L 680.33 174.87 L 680.33 165.12 L 689 160.25" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#FFFFFF" />
+</g>
+<g id="shape-32" data-pptx-object="shape" data-pptx-frame="689 165.12 8.67 4.87" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:32" data-pptx-semantic-object="shape">
+<path d="M 689 170 L 697.67 165.12" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#FFFFFF" />
+</g>
+<g id="shape-33" data-pptx-object="shape" data-pptx-frame="689 170 1 9.75" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:33" data-pptx-semantic-object="shape">
+<path d="M 689 170 L 689 179.75" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#FFFFFF" />
+</g>
+<g id="shape-34" data-pptx-object="shape" data-pptx-frame="680.33 165.12 8.67 4.87" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:34" data-pptx-semantic-object="shape">
+<path d="M 689 170 L 680.33 165.12" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#FFFFFF" />
+</g>
+<g id="shape-35" data-pptx-object="shape" data-pptx-frame="684.67 162.69 8.67 4.87" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:35" data-pptx-semantic-object="shape">
+<path d="M 693.33 162.69 L 684.67 167.56" data-pptx-part="geometry" fill="none" stroke-width="2.16661" stroke="#FFFFFF" />
+</g>
+</g>
+<g id="shape-37" data-pptx-object="shape" data-pptx-frame="713.2 158.33 350.25 30.8" data-pptx-prst="rect" data-pptx-source-ref="slide:37" data-pptx-semantic-object="shape">
+<path d="M 713.2 158.33 L 1063.45 158.33 L 1063.45 189.13 L 713.2 189.13 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="713.2" y="177" text-anchor="start" xml:space="preserve" font-size="20" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">⑧ Plugins：最高层级的生态打包机制</tspan></text>
+</g>
+<g id="shape-38" data-pptx-object="shape" data-pptx-frame="679.32 210 133.16 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:38" data-pptx-semantic-object="shape">
+<path d="M 679.32 210 L 812.48 210 L 812.48 236.28 L 679.32 236.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.32" y="226" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">什么是 Plugin？</tspan></text>
+</g>
+<g id="shape-39" data-pptx-object="shape" data-pptx-frame="679.4 239.33 396.93 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:39" data-pptx-semantic-object="shape">
+<path d="M 679.4 239.33 L 1076.33 239.33 L 1076.33 262.43 L 679.4 262.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.4" y="254" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">把前面学过的所有扩展能力打包成一个可共享的安装包，</tspan></text>
+</g>
+<g id="shape-40" data-pptx-object="shape" data-pptx-frame="679.4 263.33 301.96 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:40" data-pptx-semantic-object="shape">
+<path d="M 679.4 263.33 L 981.36 263.33 L 981.36 286.43 L 679.4 286.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.4" y="278" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">一条命令即可在任意项目加载完整工作流。</tspan></text>
+</g>
+<g id="shape-41" data-pptx-object="shape" data-pptx-frame="680 302 512 104" data-pptx-prst="roundRect" data-pptx-av-adj="val 3846" data-pptx-source-ref="slide:41" data-pptx-semantic-object="shape">
+<path d="M 680 306 A 4 4 0 0 1 684 302 L 1188 302 A 4 4 0 0 1 1192 306 L 1192 402 A 4 4 0 0 1 1188 406 L 684 406 A 4 4 0 0 1 680 402 Z" fill="#F4F6F8" stroke-width="1.50005" stroke="#DCE2EA" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-42" data-pptx-object="shape" data-pptx-frame="697.4 315.33 306.71 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:42" data-pptx-semantic-object="shape">
+<path d="M 697.4 315.33 L 1004.11 315.33 L 1004.11 338.43 L 697.4 338.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="697.4" y="330" text-anchor="start" xml:space="preserve" font-family="Consolas, &quot;Microsoft YaHei&quot;, sans-serif" font-size="14.93" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">清单文件：.claude-plugin/plugin.json</tspan></text>
+</g>
+<g id="shape-43" data-pptx-object="shape" data-pptx-frame="697.44 344.67 348.34 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:43" data-pptx-semantic-object="shape">
+<path d="M 697.44 344.67 L 1045.78 344.67 L 1045.78 366.23 L 697.44 366.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="697.44" y="358" text-anchor="start" xml:space="preserve" font-size="14" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">一次打包：Slash Commands + Skills + Subagents +</tspan></text>
+</g>
+<g id="shape-44" data-pptx-object="shape" data-pptx-frame="697.44 368.67 391.22 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:44" data-pptx-semantic-object="shape">
+<path d="M 697.44 368.67 L 1088.66 368.67 L 1088.66 390.23 L 697.44 390.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="697.44" y="382" text-anchor="start" xml:space="preserve" font-size="14" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">MCP Servers + Hooks（本地测试：claude --plugin-dir）</tspan></text>
+</g>
+<g id="shape-45" data-pptx-object="shape" data-pptx-frame="679.32 426 387.32 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:45" data-pptx-semantic-object="shape">
+<path d="M 679.32 426 L 1066.64 426 L 1066.64 452.28 L 679.32 452.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.32" y="442" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">4 类分发范围（claude-howto 07-plugins）：</tspan></text>
+</g>
+<g id="shape-46" data-pptx-object="shape" data-pptx-frame="679.4 459.33 377.39 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:46" data-pptx-semantic-object="shape">
+<path d="M 679.4 459.33 L 1056.79 459.33 L 1056.79 482.43 L 679.4 482.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.4" y="474" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Official（官方）：Anthropic 提供，如 PR Review</tspan></text>
+</g>
+<g id="shape-47" data-pptx-object="shape" data-pptx-frame="679.4 491.33 383.18 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:47" data-pptx-semantic-object="shape">
+<path d="M 679.4 491.33 L 1062.58 491.33 L 1062.58 514.43 L 679.4 514.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.4" y="506" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Community（社区）：开源 DevOps / Data Science</tspan></text>
+</g>
+<g id="shape-48" data-pptx-object="shape" data-pptx-frame="679.4 523.33 351.53 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:48" data-pptx-semantic-object="shape">
+<path d="M 679.4 523.33 L 1030.93 523.33 L 1030.93 546.43 L 679.4 546.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.4" y="538" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Organization（组织）：公司内部规范与工具包</tspan></text>
+</g>
+<g id="shape-49" data-pptx-object="shape" data-pptx-frame="679.4 555.33 317.49 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:49" data-pptx-semantic-object="shape">
+<path d="M 679.4 555.33 L 996.89 555.33 L 996.89 578.43 L 679.4 578.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="679.4" y="570" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Personal（个人）：开发者自用工作流合集</tspan></text>
+</g>
+<g id="shape-50" data-pptx-object="shape" data-pptx-frame="680 596 512 44" data-pptx-prst="roundRect" data-pptx-av-adj="val 9091" data-pptx-source-ref="slide:50" data-pptx-semantic-object="shape">
+<path d="M 680 600 A 4 4 0 0 1 684 596 L 1188 596 A 4 4 0 0 1 1192 600 L 1192 636 A 4 4 0 0 1 1188 640 L 684 640 A 4 4 0 0 1 680 636 Z" fill="#FFF8E7" stroke-width="1.50005" stroke="#E8A317" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-51" data-pptx-object="shape" data-pptx-frame="699.44 610.67 395.18 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:51" data-pptx-semantic-object="shape">
+<path d="M 699.44 610.67 L 1094.62 610.67 L 1094.62 632.23 L 699.44 632.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="699.44" y="624" text-anchor="start" xml:space="preserve" font-size="14" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">Part 1 小结：8 个原语齐备 → 下面进入 Part 2 科研实战！</tspan></text>
+</g>
+<g id="shape-52" data-pptx-object="shape" data-pptx-frame="64 680 1152 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:52" data-pptx-semantic-object="shape">
+<path d="M 64 680 L 1216 680" data-pptx-part="geometry" fill="none" stroke-width="1" stroke="#DCE2EA" />
+</g>
+<g id="shape-53" data-pptx-object="shape" data-pptx-frame="63.44 688.67 338.31 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:53" data-pptx-semantic-object="shape">
+<path d="M 63.44 688.67 L 401.75 688.67 L 401.75 710.23 L 63.44 710.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="63.44" y="702" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Part 1 · Claude Code 基础概念（claude-howto）</tspan></text>
+</g>
+<g id="shape-54" data-pptx-object="shape" data-pptx-frame="1163.24 688.67 53.32 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:54" data-pptx-semantic-object="shape">
+<path d="M 1163.24 688.67 L 1216.56 688.67 L 1216.56 710.23 L 1163.24 710.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1216.56" y="702" text-anchor="end" xml:space="preserve" font-size="14" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">10 / 18</tspan></text>
+</g></svg>

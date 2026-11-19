@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317" letter-spacing="1.5">PART 02 · 科研落地 ②</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">科研落地 ② | 7 个 Subagents：权限最小化与审稿</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <rect x="64" y="144" width="440" height="444" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="64" y="144" width="440" height="44" fill="#1A3A6B"/>
+  <!-- icon: tabler-outline/users -->
+  <g transform="translate(82, 153)" fill="none" stroke="#E8A317" stroke-width="2">
+    <path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+    <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+  </g>
+  <text x="116" y="173" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">研究与写作代理（5 个 · 上下文隔离）</text>
+
+  <rect x="84" y="206" width="400" height="62" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="100" y="232" font-family="Consolas, Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">literature-agent</text>
+  <text x="100" y="256" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">文献检索、抽取与比较  |  权限：读 / 搜 / 联网</text>
+
+  <rect x="84" y="280" width="400" height="62" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="100" y="306" font-family="Consolas, Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">theory-agent</text>
+  <text x="100" y="330" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">理论模型推导与机制  |  权限：读 / 写 / 编辑</text>
+
+  <rect x="84" y="354" width="400" height="62" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="100" y="380" font-family="Consolas, Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">tax-policy-agent</text>
+  <text x="100" y="404" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">税法、征管与归宿分析  |  权限：读 / 搜 / 联网</text>
+
+  <rect x="84" y="428" width="400" height="62" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="100" y="454" font-family="Consolas, Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">causal-inference-agent</text>
+  <text x="100" y="478" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">识别策略与稳健性设计  |  权限：读 / 搜 / 网 / 写</text>
+
+  <rect x="84" y="502" width="400" height="62" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="100" y="528" font-family="Consolas, Arial, sans-serif" font-size="16" font-weight="bold" fill="#1A3A6B">paper-writer-agent</text>
+  <text x="100" y="552" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">论文成稿与精修（S10–S11） |  严格绑定账本</text>
+
+  <line x1="504" y1="366" x2="538" y2="366" stroke="#4A7BB5" stroke-width="2.5"/>
+  <polygon points="534,360 544,366 534,372" fill="#4A7BB5"/>
+
+  <rect x="544" y="144" width="316" height="444" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="2"/>
+  <rect x="544" y="144" width="316" height="44" fill="#E8A317"/>
+  <!-- icon: tabler-outline/code -->
+  <g transform="translate(562, 153)" fill="none" stroke="#1D2430" stroke-width="2">
+    <path d="M7 8l-4 4l4 4" />
+    <path d="M17 8l4 4l-4 4" />
+    <path d="M14 4l-4 16" />
+  </g>
+  <text x="596" y="173" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1D2430">唯一可执行代理（1 个）</text>
+
+  <text x="566" y="232" font-family="Consolas, Arial, sans-serif" font-size="20" font-weight="bold" fill="#1A3A6B">econometrics-agent</text>
+  <rect x="566" y="250" width="164" height="28" rx="4" fill="#1A3A6B"/>
+  <text x="648" y="269" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF">唯一拥有 Bash 权限</text>
+
+  <text x="566" y="314" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1D2430">核心职责：</text>
+  <text x="566" y="344" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• 数据审计与样本核算</text>
+  <text x="566" y="372" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• 计量回归代码实现与日志</text>
+  <text x="566" y="400" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• 已有论文复现与代码审计</text>
+
+  <line x1="566" y1="428" x2="838" y2="428" stroke="#E8A317" stroke-width="1"/>
+  <text x="566" y="460" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1D2430">权限最小化设计：</text>
+  <text x="566" y="490" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">其他 6 个 Agent 均无 Shell</text>
+  <text x="566" y="516" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">执行权，降低误操作风险。</text>
+
+  <line x1="860" y1="366" x2="894" y2="366" stroke="#4A7BB5" stroke-width="2.5"/>
+  <polygon points="890,360 900,366 890,372" fill="#4A7BB5"/>
+
+  <rect x="900" y="144" width="316" height="444" rx="4" fill="#FFFFFF" stroke="#1A3A6B" stroke-width="2"/>
+  <rect x="900" y="144" width="316" height="44" fill="#1A3A6B"/>
+  <!-- icon: tabler-outline/scale -->
+  <g transform="translate(918, 153)" fill="none" stroke="#E8A317" stroke-width="2">
+    <path d="M7 20l10 0" />
+    <path d="M6 6l6 -1l6 1" />
+    <path d="M12 3l0 17" />
+    <path d="M9 12l-3 -6l-3 6a3 3 0 0 0 6 0" />
+    <path d="M21 12l-3 -6l-3 6a3 3 0 0 0 6 0" />
+  </g>
+  <text x="952" y="173" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF">对抗式独立审稿（1 个）</text>
+
+  <text x="922" y="232" font-family="Consolas, Arial, sans-serif" font-size="20" font-weight="bold" fill="#1A3A6B">academic-reviewer</text>
+  <rect x="922" y="250" width="180" height="28" rx="4" fill="#C0392B"/>
+  <text x="1012" y="269" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF">只读 + 联网 · 严禁写文件</text>
+
+  <text x="922" y="314" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1D2430">为什么这样设计？</text>
+  <text x="922" y="344" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• 独立上下文，不被前序推理带偏</text>
+  <text x="922" y="372" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• 交接只给产物路径 (handoff.md)</text>
+  <text x="922" y="400" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• 禁止写文件，杜绝“边审边改”</text>
+
+  <line x1="922" y1="428" x2="1194" y2="428" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="922" y="460" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#1D2430">分级输出标准：</text>
+  <text x="922" y="490" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#C0392B">• Fatal：致命漏洞（一票否决）</text>
+  <text x="922" y="516" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#E8A317">• Major：重要缺陷（必须回应）</text>
+  <text x="922" y="542" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">• Minor：次要建议</text>
+
+  <rect x="64" y="606" width="1152" height="54" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1.5"/>
+  <text x="84" y="639" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" font-weight="bold" fill="#1A3A6B">质量闭环：</text>
+  <text x="180" y="639" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="17" fill="#1D2430">研究代理提方案  →  econometrics-agent 执行  →  academic-reviewer 质疑  →  Director 与研究者决策（Fatal 阻断通过）</text>
+
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Part 2 · Economics Research Crew 科研实战</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">14 / 18</text>
+</svg>

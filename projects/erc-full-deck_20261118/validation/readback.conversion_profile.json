@@ -1,0 +1,28 @@
+{
+  "schema": "ppt-master.source_to_md.profile.v1",
+  "converter": "ppt_to_md.py",
+  "conversion_type": "pptx",
+  "source": {
+    "path": "D:/Economics Research Crew/projects/erc-full-deck_20261118/exports/erc-full-deck_20261118_20261118_173722.pptx",
+    "name": "erc-full-deck_20261118_20261118_173722.pptx",
+    "suffix": ".pptx",
+    "kind": "file",
+    "exists": true,
+    "size_bytes": 132177
+  },
+  "outputs": {
+    "markdown": "readback.md",
+    "asset_dir": "",
+    "image_manifest": "",
+    "image_count": 0
+  },
+  "markdown": {
+    "line_count": 1370,
+    "char_count": 20051,
+    "heading_count": 37,
+    "table_count": 0,
+    "image_ref_count": 0,
+    "link_count": 1
+  },
+  "warnings": []
+}

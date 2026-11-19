@@ -1,0 +1,1 @@
+第五个基础概念是 MCP（Model Context Protocol）。它相当于 AI 连接外部世界的 USB-C 标准接口，让 Claude Code 可以通过 MCP Server 实时读写本地文件系统、GitHub、数据库或 Slack。这里要和 CLAUDE.md 区分开：Memory 存的是静态规则，MCP 连的是实时数据。也正因为 MCP 会连外部服务，Part 2 的科研项目出于数据保密考虑，默认不自动安装任何 MCP。

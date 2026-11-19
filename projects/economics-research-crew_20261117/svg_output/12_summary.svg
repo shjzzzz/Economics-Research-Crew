@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#1A3A6B"/>
+  <!-- Top Accent -->
+  <rect x="64" y="56" width="64" height="6" fill="#E8A317"/>
+  <text x="64" y="96" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" font-weight="bold" fill="#E8A317" letter-spacing="1.5">PART 03 · 总结与快速上手</text>
+  <text x="64" y="148" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="40" font-weight="bold" fill="#FFFFFF">3 步无损接入你的研究库</text>
+
+  <!-- 3 Step Cards -->
+  <rect x="64" y="186" width="366" height="316" rx="4" fill="#FFFFFF"/>
+  <rect x="64" y="186" width="366" height="48" fill="#274E8A"/>
+  <text x="86" y="218" font-family="Consolas, Arial, sans-serif" font-size="20" font-weight="bold" fill="#E8A317">STEP 01</text>
+  <text x="184" y="218" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="20" font-weight="bold" fill="#FFFFFF">预演与安装</text>
+  <text x="86" y="268" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">先用 -WhatIf 预演，确认无误再安装</text>
+  <text x="86" y="294" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">（按需加 -Platform agy 与 -WithHooks）：</text>
+  <rect x="82" y="316" width="330" height="106" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="94" y="344" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#1A3A6B">.\Install-EconomicsResearchCrew.ps1</text>
+  <text x="94" y="368" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#1A3A6B">  -VaultPath "D:\YourVault"</text>
+  <text x="94" y="392" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#1A3A6B">  -WithHooks -WhatIf</text>
+  <text x="86" y="458" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#4A7BB5">✓ 绝不覆盖已有配置，改前自动备份</text>
+
+  <rect x="457" y="186" width="366" height="316" rx="4" fill="#FFFFFF"/>
+  <rect x="457" y="186" width="366" height="48" fill="#274E8A"/>
+  <text x="479" y="218" font-family="Consolas, Arial, sans-serif" font-size="20" font-weight="bold" fill="#E8A317">STEP 02</text>
+  <text x="577" y="218" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="20" font-weight="bold" fill="#FFFFFF">结构与回归校验</text>
+  <text x="479" y="268" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">检查 frontmatter、脚本与 hooks.json</text>
+  <text x="479" y="294" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">在目标研究库中是否完整合法：</text>
+  <rect x="475" y="316" width="330" height="106" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="487" y="344" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#1A3A6B">.\Test-EconomicsResearchCrew.ps1</text>
+  <text x="487" y="368" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#1A3A6B">  -VaultPath "D:\YourVault"</text>
+  <text x="487" y="400" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">pwsh -NoProfile -File tests\run.ps1</text>
+  <text x="479" y="458" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#4A7BB5">✓ 临时目录跑回归，不碰真实研究库</text>
+
+  <rect x="850" y="186" width="366" height="316" rx="4" fill="#FFFFFF"/>
+  <rect x="850" y="186" width="366" height="48" fill="#274E8A"/>
+  <text x="872" y="218" font-family="Consolas, Arial, sans-serif" font-size="20" font-weight="bold" fill="#E8A317">STEP 03</text>
+  <text x="970" y="218" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="20" font-weight="bold" fill="#FFFFFF">首次只读体检</text>
+  <text x="872" y="268" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="16" fill="#1D2430">进入研究库启动 claude / agy，</text>
+  <text x="872" y="294" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">先做只读自检并填写 Meta/purpose.md：</text>
+  <rect x="868" y="316" width="330" height="106" rx="4" fill="#F4F6F8" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="880" y="346" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="13" fill="#1D2430">“读取规则与 Meta/vault-map.md，</text>
+  <text x="880" y="370" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="13" fill="#1D2430">只检查配置与目录，不修改知识库，</text>
+  <text x="880" y="394" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="13" fill="#1D2430">报告已发现的 Agent 与 Skills。”</text>
+  <text x="872" y="458" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#4A7BB5">✓ 随后可用 /causal-inference-audit 冒烟</text>
+
+  <!-- Closing Takeaway Banner -->
+  <rect x="64" y="534" width="1152" height="110" rx="4" fill="#274E8A" stroke="#E8A317" stroke-width="2"/>
+  <text x="640" y="578" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="24" font-weight="bold" fill="#E8A317">核心理念：用工程化护栏守住学术底线，把判断权留给研究者</text>
+  <text x="640" y="618" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" fill="#DCE6F2">Rules 定底线  ·  Skills 定流程  ·  Agents 分权责  ·  Director 控关卡  ·  Hooks 护原件  ·  Wiki 积复利</text>
+
+  <!-- Footer -->
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#365D99" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#B8C9E0">Economics Research Crew · 关键概念解析</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#E8A317">12 / 12</text>
+</svg>

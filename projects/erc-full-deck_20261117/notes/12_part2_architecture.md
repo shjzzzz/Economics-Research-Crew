@@ -1,0 +1,1 @@
+从架构上看，Economics Research Crew 正好把 Part 1 的概念组装成四层：第一层 Rules 依托 CLAUDE.md 和 AGENTS.md 记忆机制；第二层把 14 个科研流程和 7 个专业角色落到 Skills 和 Subagents；第三层用 Research Director 和 6 个 Hooks 管住状态流转与技术拦截；第四层用三层 Wiki 和 paper_tools 实现知识复利与论文机械溯源。

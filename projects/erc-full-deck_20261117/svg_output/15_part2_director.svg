@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <text x="64" y="54" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317" letter-spacing="1.5">PART 02 · 科研落地 ③</text>
+  <text x="64" y="100" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="36" font-weight="bold" fill="#1A3A6B">科研落地 ③ | Research Director：S1–S12 状态机</text>
+  <line x1="64" y1="122" x2="1216" y2="122" stroke="#DCE2EA" stroke-width="1.5"/>
+
+  <text x="64" y="160" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1A3A6B">第一段：研究与实证闭环（S1–S7）</text>
+  <text x="410" y="160" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">每阶段结束均需通过研究者关卡 (Gate) 方可推进</text>
+
+  <rect x="64" y="176" width="152" height="106" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="64" y="176" width="152" height="28" fill="#1A3A6B"/>
+  <text x="140" y="195" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S1 问题</text>
+  <text x="140" y="226" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">定题与 Estimand</text>
+  <text x="140" y="252" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">/research-question</text>
+
+  <rect x="230" y="176" width="152" height="106" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="230" y="176" width="152" height="28" fill="#1A3A6B"/>
+  <text x="306" y="195" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S2 文献</text>
+  <text x="306" y="226" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">缺口与矩阵</text>
+  <text x="306" y="252" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">literature-agent</text>
+
+  <rect x="396" y="176" width="152" height="106" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="396" y="176" width="152" height="28" fill="#1A3A6B"/>
+  <text x="472" y="195" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S3 机制 (并行≤2)</text>
+  <text x="472" y="226" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">理论与税法法源</text>
+  <text x="472" y="252" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">theory / tax-policy</text>
+
+  <rect x="562" y="176" width="152" height="106" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="562" y="176" width="152" height="28" fill="#1A3A6B"/>
+  <text x="638" y="195" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S4 设计</text>
+  <text x="638" y="226" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">识别与计划冻结</text>
+  <text x="638" y="252" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">causal-inference</text>
+
+  <rect x="728" y="176" width="152" height="106" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <rect x="728" y="176" width="152" height="28" fill="#E8A317"/>
+  <text x="804" y="195" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">S5 执行</text>
+  <text x="804" y="226" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">代码与分析日志</text>
+  <text x="804" y="252" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">econometrics-agent</text>
+
+  <rect x="894" y="176" width="152" height="106" rx="4" fill="#F4F6F8" stroke="#C0392B" stroke-width="1.5"/>
+  <rect x="894" y="176" width="152" height="28" fill="#C0392B"/>
+  <text x="970" y="195" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S6 独立审查</text>
+  <text x="970" y="226" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1D2430">Fatal/Major/Minor</text>
+  <text x="970" y="252" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">academic-reviewer</text>
+
+  <rect x="1060" y="176" width="156" height="106" rx="4" fill="#1A3A6B"/>
+  <text x="1138" y="210" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317">S7 决定</text>
+  <text x="1138" y="238" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">接受 / 退回 / 停止</text>
+  <text x="1138" y="264" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="13" fill="#DCE6F2">Director + 研究者</text>
+
+  <text x="64" y="328" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="18" font-weight="bold" fill="#1A3A6B">第二段：论文写作与人机协作闭环（S8–S12）</text>
+  <text x="456" y="328" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">对应研究者检查点 C1–C5，机械校验引文与数字</text>
+
+  <rect x="64" y="344" width="216" height="104" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="64" y="344" width="216" height="28" fill="#274E8A"/>
+  <text x="172" y="363" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S8 论文大纲 (C1)</text>
+  <text x="172" y="394" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#1D2430">主张清单与证据强度</text>
+  <text x="172" y="422" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">/paper-outline</text>
+
+  <rect x="298" y="344" width="216" height="104" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="298" y="344" width="216" height="28" fill="#274E8A"/>
+  <text x="406" y="363" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S9 引文 (C2)</text>
+  <text x="406" y="394" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#1D2430">Crossref / 人工核验</text>
+  <text x="406" y="422" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">paper_tools cite</text>
+
+  <rect x="532" y="344" width="216" height="104" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="532" y="344" width="216" height="28" fill="#274E8A"/>
+  <text x="640" y="363" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S10 成稿 (C3)</text>
+  <text x="640" y="394" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#1D2430">[@key] 与 {{res:id}}</text>
+  <text x="640" y="422" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">/paper-draft</text>
+
+  <rect x="766" y="344" width="216" height="104" rx="4" fill="#F4F6F8" stroke="#4A7BB5" stroke-width="1.5"/>
+  <rect x="766" y="344" width="216" height="28" fill="#274E8A"/>
+  <text x="874" y="363" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">S11 精修 (C4)</text>
+  <text x="874" y="394" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#1D2430">最多 3 轮 · 改进才收</text>
+  <text x="874" y="422" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#5A6577">/paper-refine</text>
+
+  <rect x="1000" y="344" width="216" height="104" rx="4" fill="#1A3A6B"/>
+  <text x="1108" y="382" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="15" font-weight="bold" fill="#E8A317">S12 终检 (C5)</text>
+  <text x="1108" y="410" text-anchor="middle" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">引文率 / 链接率达标</text>
+  <text x="1108" y="434" text-anchor="middle" font-family="Consolas, Arial, sans-serif" font-size="13" fill="#DCE6F2">paper_tools report</text>
+
+  <rect x="64" y="476" width="366" height="184" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="64" y="476" width="6" height="184" fill="#1A3A6B"/>
+  <text x="88" y="512" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#1A3A6B">1. 持久化状态与断点续跑</text>
+  <text x="88" y="544" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">状态存放在 STATE.json，派出历史记入</text>
+  <text x="88" y="570" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">Meta/run-ledger.jsonl。中断后只需运行</text>
+  <text x="88" y="596" font-family="Consolas, Arial, sans-serif" font-size="14" font-weight="bold" fill="#4A7BB5">orchestrator.py next</text>
+  <text x="88" y="622" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">即可接续当前阶段，不重做已过关卡。</text>
+
+  <rect x="457" y="476" width="366" height="184" rx="4" fill="#FFFFFF" stroke="#DCE2EA" stroke-width="1.5"/>
+  <rect x="457" y="476" width="6" height="184" fill="#E8A317"/>
+  <text x="481" y="512" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#1A3A6B">2. 重试熔断与并发上限</text>
+  <text x="481" y="544" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">每个 Agent 在单阶段最多重试 2 次，</text>
+  <text x="481" y="570" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">耗尽即停下向研究者汇报（防止死循环）。</text>
+  <text x="481" y="596" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">并发默认 1（S3 最多 2，硬上限 3）。</text>
+  <text x="481" y="622" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#5A6577">产物与日志校验通过后才允许过关。</text>
+
+  <rect x="850" y="476" width="366" height="184" rx="4" fill="#FFF8E7" stroke="#E8A317" stroke-width="1.5"/>
+  <text x="874" y="512" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="19" font-weight="bold" fill="#C07B00">3. 关卡只由研究者决定</text>
+  <text x="874" y="544" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">AI 严禁自行运行 gate --decision pass。</text>
+  <text x="874" y="570" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">脚本强制要求 --note，并在 Claude Code</text>
+  <text x="874" y="596" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" fill="#1D2430">下通过 Hook 弹出权限确认提示，</text>
+  <text x="874" y="622" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="15" font-weight="bold" fill="#1A3A6B">确保每个关键节点由人拍板。</text>
+
+  <line x1="64" y1="680" x2="1216" y2="680" stroke="#DCE2EA" stroke-width="1"/>
+  <text x="64" y="702" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" fill="#5A6577">Part 2 · Economics Research Crew 科研实战</text>
+  <text x="1216" y="702" text-anchor="end" font-family="'Microsoft YaHei', Arial, sans-serif" font-size="14" font-weight="bold" fill="#1A3A6B">15 / 18</text>
+</svg>

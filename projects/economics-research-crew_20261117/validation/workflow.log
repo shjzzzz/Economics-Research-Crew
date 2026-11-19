@@ -1,0 +1,204 @@
+
+=== 2026-11-17T08:50:44.787Z NOTE id=cb97a715328b ===
+Project initialized: profile=default; path=D:\Economics Research Crew\projects\economics-research-crew_20261117
+
+=== 2026-11-17T08:50:53.374Z PYTHON run=5f06cb7f7e63 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Roaming\\uv\\python\\cpython-3.10.20-windows-x86_64-none\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\project_manager.py", "import-sources", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117", "D:\\Economics Research Crew\\README.md", "D:\\Economics Research Crew\\docs\\USAGE.md", "D:\\Economics Research Crew\\payload\\.claude\\ECONOMICS-RESEARCH.md", "D:\\Economics Research Crew\\payload\\.claude\\pipeline-stages.json"]
+stdout:
+  [OK] Imported sources into: D:\Economics Research Crew\projects\economics-research-crew_20261117
+=== 2026-11-17T08:50:53.642Z END run=5f06cb7f7e63 elapsed_ms=265 output_lines=12 retained=1 omitted=11 ===
+
+=== 2026-11-17T08:52:49.756Z PYTHON run=4c5189091377 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Roaming\\uv\\python\\cpython-3.10.20-windows-x86_64-none\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\icon_sync.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117", "tabler-outline/shield-check", "tabler-outline/terminal-2", "tabler-outline/users", "tabler-outline/git-branch", "tabler-outline/lock", "tabler-outline/database", "tabler-outline/file-text", "tabler-outline/devices", "tabler-outline/alert-triangle", "tabler-outline/search", "tabler-outline/code", "tabler-outline/scale"]
+stderr:
+  [OK] 12 icon(s) in D:\Economics Research Crew\projects\economics-research-crew_20261117\icons:
+       + tabler-outline/shield-check
+       + tabler-outline/terminal-2
+       + tabler-outline/users
+       + tabler-outline/git-branch
+       + tabler-outline/lock
+       + tabler-outline/database
+       + tabler-outline/file-text
+       + tabler-outline/devices
+stderr-tail:
+       + tabler-outline/alert-triangle
+       + tabler-outline/search
+       + tabler-outline/code
+       + tabler-outline/scale
+=== 2026-11-17T08:52:49.908Z END run=4c5189091377 elapsed_ms=155 output_lines=13 retained=13 omitted=0 ===
+
+=== 2026-11-17T08:53:35.601Z PYTHON run=0267a15a649e ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Roaming\\uv\\python\\cpython-3.10.20-windows-x86_64-none\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\project_manager.py", "validate", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117"]
+stdout:
+  [WARN]
+  [OK] Project structure is valid, with warnings.
+=== 2026-11-17T08:53:35.929Z END run=0267a15a649e elapsed_ms=327 output_lines=5 retained=2 omitted=3 ===
+
+=== 2026-11-17T09:00:36.433Z PYTHON run=15f6afdbf82d ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Roaming\\uv\\python\\cpython-3.10.20-windows-x86_64-none\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\project_manager.py", "validate", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117"]
+stdout:
+  [OK] Project structure is complete.
+=== 2026-11-17T09:00:36.727Z END run=15f6afdbf82d elapsed_ms=297 output_lines=3 retained=1 omitted=2 ===
+
+=== 2026-11-17T09:00:52.204Z PYTHON run=a766822aaed7 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Roaming\\uv\\python\\cpython-3.10.20-windows-x86_64-none\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\finalize_svg.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117"]
+=== 2026-11-17T09:00:52.275Z END run=a766822aaed7 elapsed_ms=77 output_lines=1 retained=0 omitted=1 ===
+
+=== 2026-11-17T09:01:08.465Z PYTHON run=cf5bfac4ac24 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Local\\uv\\cache\\builds-v0\\.tmpM6nInv\\Scripts\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\finalize_svg.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117"]
+stdout:
+  [OK] 01_cover.svg (4 icons)
+  [OK] Done!
+=== 2026-11-17T09:01:09.178Z END run=cf5bfac4ac24 elapsed_ms=717 output_lines=21 retained=2 omitted=19 ===
+
+=== 2026-11-17T09:01:15.057Z PYTHON run=a01ecb654088 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Local\\uv\\cache\\builds-v0\\.tmpa1pwPZ\\Scripts\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\svg_to_pptx.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117"]
+stderr:
+  Error: default release export requires a passing final SVG quality report for the current svg_output/; found not-provided.
+  Run: python3 skills/ppt-master/scripts/svg_quality_checker.py "D:\Economics Research Crew\projects\economics-research-crew_20261117" --canonical-authoring --stage final --json
+=== 2026-11-17T09:01:15.731Z END run=a01ecb654088 elapsed_ms=672 output_lines=2 retained=2 omitted=0 ===
+
+=== 2026-11-17T09:01:23.471Z PYTHON run=ffcc55912642 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Local\\uv\\cache\\builds-v0\\.tmpKS4bnH\\Scripts\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\svg_quality_checker.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117", "--canonical-authoring", "--stage", "final", "--json"]
+stdout:
+  [WARN] 01_cover.svg - Passed (with warnings)
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (19 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[5]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[6]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 37 ungrouped top-level Slide-local element(s) in svg_output (<rect> #2, <rect> #3, <text> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+  [ERROR] 02_positioning.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (25 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 39 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 03_architecture.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] <text> (x=428, y=622; text='核心目录：Meta/（index、log…') exceeds the root viewBox on the horizontal axis: content (428.0, 607.5)-(1300.1, 628.0), canvas (0.0, 0.0)-(1280.0, 720.0), overflow horizontal 1.6%, vertical 0.0%; move or reflow the text until its estimated bounds stay on-page; ≈10.4 px per mixed char at 17px without headroom; ≈123 chars fit in 1280 px
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 19 (10 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (25 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 44 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 04_rules.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (38 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 52 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 05_skills.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 19 (10 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (26 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 57 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 06_subagents.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 13 (22 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (32 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 63 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 07_director.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 12 (8 occurrences), 13 (22 occurrences), 19 (10 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (36 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 88 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 08_hooks.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 13 (22 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (32 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 59 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 09_wiki.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (25 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 45 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 10_paper.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 13 (22 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (33 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 59 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 11_multiplatform.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 13 (22 occurrences), 19 (10 occurrences), 36 (10 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (35 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[3]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 63 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [ERROR] 12_summary.svg - Failed
+     viewBox: 0 0 1280 720
+     [ERROR] spec_lock typography-size recurrence: undeclared font-size 13 (22 occurrences) exceeds the sparse-display limit of 2 occurrences. Structural text must return to its declared role band; a genuinely recurring display treatment needs a justified named role in the Design Spec and spec_lock.
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (22 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[4]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[5]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 42 ungrouped top-level Slide-local element(s) in svg_output (<rect> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+     [WARN] page SVG is missing root data-pptx-page-role
+  [SUMMARY] Check Summary
+  Total files: 12
+    [OK] Fully passed: 0 (0%)
+    [WARN] With warnings: 1 (8%)
+    [ERROR] With errors: 11 (91%)
+  Provenance categories:
+    blocking: 12         hard findings; gate also requires exit 0
+    introduced: 48       advisory; new or changed
+    inherited: 0         informational; prototype-identical
+    source-import: 0     informational; source-conversion loss
+  [CARRIERS] Actual-use receipt (informational; not a quota)
+    Pages: 12 | text: 420 | images: 0 | icons: 24
+    Geometry: SVG elements 216 | native presets 0 | page-frame elements 0 | marker uses 0
+  [REPORT] JSON quality report exported: D:\Economics Research Crew\projects\economics-research-crew_20261117\validation\svg_quality_report.json
+=== 2026-11-17T09:01:24.692Z END run=ffcc55912642 elapsed_ms=1233 output_lines=135 retained=96 omitted=39 ===
+
+=== 2026-11-17T09:02:40.025Z PYTHON run=944f20aa0fae ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Local\\uv\\cache\\builds-v0\\.tmpX3gpuc\\Scripts\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\svg_quality_checker.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117", "--canonical-authoring", "--stage", "final", "--json"]
+stdout:
+  [WARN] 01_cover.svg - Passed (with warnings)
+     [WARN] Noncanonical compact authoring: Visible text requires one direct root font-family default; semantic groups and text elements keep only real overrides (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] Noncanonical compact authoring: Authoring SVG contains noncanonical or redundant inherited style declarations (19 change(s)); examples (group:attr None -> value hoists the shared value onto that group; child:attr value -> None drops the copy the child now inherits): svg[1]:font-family None -> "'Microsoft YaHei', Arial, sans-serif"; text[5]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None; text[6]:font-family "'Microsoft YaHei', Arial, sans-serif" -> None (advisory; normalize with `python3 scripts/compact_svg_styles.py <svg_output> --inplace`, re-stamp pages that carry Chart/Table fallbacks, and rerun the final gate, or leave the explicit form)
+     [WARN] 37 ungrouped top-level Slide-local element(s) in svg_output (<rect> #2, <rect> #3, <text> #4, ...); group only logical content units in a top-level <g id="...">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as "background" or "decoration"
+  [SUMMARY] Check Summary
+  Total files: 12
+    [OK] Fully passed: 0 (0%)
+    [WARN] With warnings: 12 (100%)
+    [ERROR] With errors: 0 (0%)
+  Provenance categories:
+    blocking: 0          hard findings; gate also requires exit 0
+    introduced: 48       advisory; new or changed
+    inherited: 0         informational; prototype-identical
+    source-import: 0     informational; source-conversion loss
+  [CARRIERS] Actual-use receipt (informational; not a quota)
+    Pages: 12 | text: 420 | images: 0 | icons: 24
+    Geometry: SVG elements 216 | native presets 0 | page-frame elements 0 | marker uses 0
+  [REPORT] JSON quality report exported: D:\Economics Research Crew\projects\economics-research-crew_20261117\validation\svg_quality_report.json
+=== 2026-11-17T09:02:41.032Z END run=944f20aa0fae elapsed_ms=1000 output_lines=116 retained=18 omitted=98 ===
+
+=== 2026-11-17T09:03:00.812Z PYTHON run=28e09cdfd5c5 ===
+cwd: D:\Economics Research Crew
+argv: ["C:\\Users\\zhous\\AppData\\Local\\uv\\cache\\builds-v0\\.tmpRtKRwE\\Scripts\\python.exe", "C:\\Users\\zhous\\.gemini\\antigravity-cli\\skills\\ppt-master\\scripts\\svg_to_pptx.py", "D:\\Economics Research Crew\\projects\\economics-research-crew_20261117"]
+stdout:
+  [Done] Saved: D:\Economics Research Crew\projects\economics-research-crew_20261117\exports\economics-research-crew_20261117_170301.pptx
+    [POSTFLIGHT] status=passed-with-warnings quality_gate=passed slides=12 warning_categories=2
+    [POSTFLIGHT][WARNING] quality_introduced_warnings=48
+    [POSTFLIGHT][WARNING] unresolved_template_tokens=4
+    [PPTX] D:\Economics Research Crew\projects\economics-research-crew_20261117\exports\economics-research-crew_20261117_170301.pptx
+    [REPORT] D:\Economics Research Crew\projects\economics-research-crew_20261117\validation\economics-research-crew_20261117_170301.report.json
+=== 2026-11-17T09:03:03.298Z END run=28e09cdfd5c5 elapsed_ms=2485 output_lines=57 retained=6 omitted=51 ===

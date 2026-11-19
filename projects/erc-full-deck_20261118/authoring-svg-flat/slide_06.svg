@@ -1,0 +1,252 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="720" viewBox="0 0 1280 720" font-family="Arial, &quot;Microsoft YaHei&quot;, sans-serif"><rect x="0" y="0" width="1280" height="720" fill="#FFFFFF" />
+<g id="shape-2" data-pptx-object="shape" data-pptx-frame="63.4 39.33 263.92 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:2" data-pptx-semantic-object="shape">
+<path d="M 63.4 39.33 L 327.32 39.33 L 327.32 62.43 L 63.4 62.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="63.4" y="54" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#4A7BB5" font-weight="bold" letter-spacing="1.49" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">PART 01 · 基础概念 (03 / 08)</tspan></text>
+</g>
+<g id="shape-3" data-pptx-object="shape" data-pptx-frame="62.56 65.33 749.2 55.44" data-pptx-prst="rect" data-pptx-source-ref="slide:3" data-pptx-semantic-object="shape">
+<path d="M 62.56 65.33 L 811.76 65.33 L 811.76 120.77 L 62.56 120.77 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="62.56" y="100" text-anchor="start" xml:space="preserve" font-size="36" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">基础 ③ | Skills：模型按需自动调用的能力包</tspan></text>
+</g>
+<g id="shape-4" data-pptx-object="shape" data-pptx-frame="64 122 1152 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:4" data-pptx-semantic-object="shape">
+<path d="M 64 122 L 1216 122" data-pptx-part="geometry" fill="none" stroke-width="1.50005" stroke="#DCE2EA" />
+</g>
+<g id="shape-5" data-pptx-object="shape" data-pptx-frame="64 146 540 510" data-pptx-prst="roundRect" data-pptx-av-adj="val 784" data-pptx-source-ref="slide:5" data-pptx-semantic-object="shape">
+<path d="M 64 150 A 4 4 0 0 1 68 146 L 600 146 A 4 4 0 0 1 604 150 L 604 652 A 4 4 0 0 1 600 656 L 68 656 A 4 4 0 0 1 64 652 Z" fill="#F4F6F8" stroke-width="1.50005" stroke="#DCE2EA" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-6" data-pptx-object="shape" data-pptx-frame="64 146 540 46" data-pptx-prst="rect" data-pptx-source-ref="slide:6" data-pptx-semantic-object="shape">
+<path d="M 64 146 L 604 146 L 604 192 L 64 192 Z" fill="#1A3A6B" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-12" data-pptx-object="group" data-pptx-frame="86 159 16 18" data-pptx-source-ref="slide:12">
+<g id="shape-7" data-pptx-object="shape" data-pptx-frame="86 159 16 18" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:7" data-pptx-semantic-object="shape">
+<path d="M 94 159 L 102 163.5 L 102 172.5 L 94 177 L 86 172.5 L 86 163.5 L 94 159" data-pptx-part="geometry" fill="none" stroke-width="2" stroke="#E8A317" />
+</g>
+<g id="shape-8" data-pptx-object="shape" data-pptx-frame="94 163.5 8 4.5" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:8" data-pptx-semantic-object="shape">
+<path d="M 94 168 L 102 163.5" data-pptx-part="geometry" fill="none" stroke-width="2" stroke="#E8A317" />
+</g>
+<g id="shape-9" data-pptx-object="shape" data-pptx-frame="94 168 1 9" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:9" data-pptx-semantic-object="shape">
+<path d="M 94 168 L 94 177" data-pptx-part="geometry" fill="none" stroke-width="2" stroke="#E8A317" />
+</g>
+<g id="shape-10" data-pptx-object="shape" data-pptx-frame="86 163.5 8 4.5" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:10" data-pptx-semantic-object="shape">
+<path d="M 94 168 L 86 163.5" data-pptx-part="geometry" fill="none" stroke-width="2" stroke="#E8A317" />
+</g>
+<g id="shape-11" data-pptx-object="shape" data-pptx-frame="90 161.25 8 4.5" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:11" data-pptx-semantic-object="shape">
+<path d="M 98 161.25 L 90 165.75" data-pptx-part="geometry" fill="none" stroke-width="2" stroke="#E8A317" />
+</g>
+</g>
+<g id="shape-13" data-pptx-object="shape" data-pptx-frame="115.24 157.33 413.96 29.26" data-pptx-prst="rect" data-pptx-source-ref="slide:13" data-pptx-semantic-object="shape">
+<path d="M 115.24 157.33 L 529.2 157.33 L 529.2 186.59 L 115.24 186.59 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="115.24" y="176" text-anchor="start" xml:space="preserve" font-size="18.93" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">Skill 的本质：能力文件夹 (Folder Package)</tspan></text>
+</g>
+<g id="shape-14" data-pptx-object="shape" data-pptx-frame="88 210 492 196" data-pptx-prst="roundRect" data-pptx-av-adj="val 2041" data-pptx-source-ref="slide:14" data-pptx-semantic-object="shape">
+<path d="M 88 214 A 4 4 0 0 1 92 210 L 576 210 A 4 4 0 0 1 580 214 L 580 402 A 4 4 0 0 1 576 406 L 92 406 A 4 4 0 0 1 88 402 Z" fill="#FFFFFF" stroke-width="1.50005" stroke="#4A7BB5" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-15" data-pptx-object="shape" data-pptx-frame="107.36 227.33 262.46 24.64" data-pptx-prst="rect" data-pptx-source-ref="slide:15" data-pptx-semantic-object="shape">
+<path d="M 107.36 227.33 L 369.82 227.33 L 369.82 251.97 L 107.36 251.97 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="107.36" y="242" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="16" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">.claude/skills/&lt;skill-name&gt;/</tspan></text>
+</g>
+<g id="shape-16" data-pptx-object="shape" data-pptx-frame="127.4 259.33 109.9 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:16" data-pptx-semantic-object="shape">
+<path d="M 127.4 259.33 L 237.3 259.33 L 237.3 282.43 L 127.4 282.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="127.4" y="274" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14.93" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">├── SKILL.md</tspan></text>
+</g>
+<g id="shape-17" data-pptx-object="shape" data-pptx-frame="277.44 260.67 281.64 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:17" data-pptx-semantic-object="shape">
+<path d="M 277.44 260.67 L 559.08 260.67 L 559.08 282.23 L 277.44 282.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="277.44" y="274" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">YAML 元数据 (name/description) + 指令</tspan></text>
+</g>
+<g id="shape-18" data-pptx-object="shape" data-pptx-frame="127.4 291.33 105.67 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:18" data-pptx-semantic-object="shape">
+<path d="M 127.4 291.33 L 233.07 291.33 L 233.07 314.43 L 127.4 314.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="127.4" y="306" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">├── scripts/</tspan></text>
+</g>
+<g id="shape-19" data-pptx-object="shape" data-pptx-frame="277.44 292.67 229.29 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:19" data-pptx-semantic-object="shape">
+<path d="M 277.44 292.67 L 506.73 292.67 L 506.73 314.23 L 277.44 314.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="277.44" y="306" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">可执行的 Python / Shell 辅助脚本</tspan></text>
+</g>
+<g id="shape-20" data-pptx-object="shape" data-pptx-frame="127.4 323.33 123.09 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:20" data-pptx-semantic-object="shape">
+<path d="M 127.4 323.33 L 250.49 323.33 L 250.49 346.43 L 127.4 346.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="127.4" y="338" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">├── templates/</tspan></text>
+</g>
+<g id="shape-21" data-pptx-object="shape" data-pptx-frame="277.44 324.67 164.36 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:21" data-pptx-semantic-object="shape">
+<path d="M 277.44 324.67 L 441.8 324.67 L 441.8 346.23 L 277.44 346.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="277.44" y="338" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">标准输出模板与参考样例</tspan></text>
+</g>
+<g id="shape-22" data-pptx-object="shape" data-pptx-frame="127.4 355.33 131.79 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:22" data-pptx-semantic-object="shape">
+<path d="M 127.4 355.33 L 259.19 355.33 L 259.19 378.43 L 127.4 378.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="127.4" y="370" text-anchor="start" xml:space="preserve" font-family="Consolas, sans-serif" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">└── references/</tspan></text>
+</g>
+<g id="shape-23" data-pptx-object="shape" data-pptx-frame="277.44 356.67 223.72 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:23" data-pptx-semantic-object="shape">
+<path d="M 277.44 356.67 L 501.16 356.67 L 501.16 378.23 L 277.44 378.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="277.44" y="370" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">按需读取的补充文档（省上下文）</tspan></text>
+</g>
+<g id="shape-24" data-pptx-object="shape" data-pptx-frame="87.28 424.67 171.11 27.72" data-pptx-prst="rect" data-pptx-source-ref="slide:24" data-pptx-semantic-object="shape">
+<path d="M 87.28 424.67 L 258.39 424.67 L 258.39 452.39 L 87.28 452.39 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.28" y="442" text-anchor="start" xml:space="preserve" font-size="18" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">4 种来源与作用域：</tspan></text>
+</g>
+<g id="shape-25" data-pptx-object="shape" data-pptx-frame="87.4 461.33 433.9 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:25" data-pptx-semantic-object="shape">
+<path d="M 87.4 461.33 L 521.3 461.33 L 521.3 484.43 L 87.4 484.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="476" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Pre-built 内置：全局可用（如 pptx / xlsx / docx / pdf）</tspan></text>
+</g>
+<g id="shape-26" data-pptx-object="shape" data-pptx-frame="87.4 493.33 375.3 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:26" data-pptx-semantic-object="shape">
+<path d="M 87.4 493.33 L 462.7 493.33 L 462.7 516.43 L 87.4 516.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="508" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Personal 个人：~/.claude/skills/（个人自动化）</tspan></text>
+</g>
+<g id="shape-27" data-pptx-object="shape" data-pptx-frame="87.4 525.33 392.43 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:27" data-pptx-semantic-object="shape">
+<path d="M 87.4 525.33 L 479.83 525.33 L 479.83 548.43 L 87.4 548.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="540" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Project 项目：.claude/skills/（Git 共享团队标准）</tspan></text>
+</g>
+<g id="shape-28" data-pptx-object="shape" data-pptx-frame="87.4 557.33 253.38 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:28" data-pptx-semantic-object="shape">
+<path d="M 87.4 557.33 L 340.78 557.33 L 340.78 580.43 L 87.4 580.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="572" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Plugin 插件：随插件安装自动注册</tspan></text>
+</g>
+<g id="shape-29" data-pptx-object="shape" data-pptx-frame="87.4 605.33 340.03 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:29" data-pptx-semantic-object="shape">
+<path d="M 87.4 605.33 L 427.43 605.33 L 427.43 628.43 L 87.4 628.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="87.4" y="620" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#4A7BB5" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">注：也支持用户直接输入 /skill-name 显式触发</tspan></text>
+</g>
+<g id="shape-30" data-pptx-object="shape" data-pptx-frame="632 146 584 510" data-pptx-prst="roundRect" data-pptx-av-adj="val 784" data-pptx-source-ref="slide:30" data-pptx-semantic-object="shape">
+<path d="M 632 150 A 4 4 0 0 1 636 146 L 1212 146 A 4 4 0 0 1 1216 150 L 1216 652 A 4 4 0 0 1 1212 656 L 636 656 A 4 4 0 0 1 632 652 Z" fill="#FFFFFF" stroke-width="1.50005" stroke="#1A3A6B" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-31" data-pptx-object="shape" data-pptx-frame="632 146 584 46" data-pptx-prst="rect" data-pptx-source-ref="slide:31" data-pptx-semantic-object="shape">
+<path d="M 632 146 L 1216 146 L 1216 192 L 632 192 Z" fill="#4A7BB5" stroke="none" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-32" data-pptx-object="shape" data-pptx-frame="653.24 157.33 385.35 29.26" data-pptx-prst="rect" data-pptx-source-ref="slide:32" data-pptx-semantic-object="shape">
+<path d="M 653.24 157.33 L 1038.59 157.33 L 1038.59 186.59 L 653.24 186.59 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="653.24" y="176" text-anchor="start" xml:space="preserve" font-size="18.93" fill="#FFFFFF" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">高频混淆点：Skills vs. Slash Commands</tspan></text>
+</g>
+<g id="shape-33" data-pptx-object="shape" data-pptx-frame="655.32 216 263.13 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:33" data-pptx-semantic-object="shape">
+<path d="M 655.32 216 L 918.45 216 L 918.45 242.28 L 655.32 242.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="655.32" y="232" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">1. 触发机制不同（最核心差异）</tspan></text>
+</g>
+<g id="shape-34" data-pptx-object="shape" data-pptx-frame="655.4 247.33 348.15 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:34" data-pptx-semantic-object="shape">
+<path d="M 655.4 247.33 L 1003.55 247.33 L 1003.55 270.43 L 655.4 270.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="655.4" y="262" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Slash Command：用户显式输入 /cmd 才执行。</tspan></text>
+</g>
+<g id="shape-35" data-pptx-object="shape" data-pptx-frame="655.4 273.33 349.36 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:35" data-pptx-semantic-object="shape">
+<path d="M 655.4 273.33 L 1004.76 273.33 L 1004.76 296.43 L 655.4 296.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="655.4" y="288" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Skill：启动时只加载 YAML 摘要，模型根据用户</tspan></text>
+</g>
+<g id="shape-36" data-pptx-object="shape" data-pptx-frame="669.4 299.33 331.05 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:36" data-pptx-semantic-object="shape">
+<path d="M 669.4 299.33 L 1000.45 299.33 L 1000.45 322.43 L 669.4 322.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="669.4" y="314" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">需求语义自动匹配并按需读入完整 SKILL.md。</tspan></text>
+</g>
+<g id="shape-37" data-pptx-object="shape" data-pptx-frame="656 338 536 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:37" data-pptx-semantic-object="shape">
+<path d="M 656 338 L 1192 338" data-pptx-part="geometry" fill="none" stroke-width="1" stroke="#DCE2EA" />
+</g>
+<g id="shape-38" data-pptx-object="shape" data-pptx-frame="655.32 358 154.59 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:38" data-pptx-semantic-object="shape">
+<path d="M 655.32 358 L 809.91 358 L 809.91 384.28 L 655.32 384.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="655.32" y="374" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">2. 载体复杂度不同</tspan></text>
+</g>
+<g id="shape-39" data-pptx-object="shape" data-pptx-frame="655.4 389.33 355.09 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:39" data-pptx-semantic-object="shape">
+<path d="M 655.4 389.33 L 1010.49 389.33 L 1010.49 412.43 L 655.4 412.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="655.4" y="404" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Slash Command：单个 Markdown 提示词文件。</tspan></text>
+</g>
+<g id="shape-40" data-pptx-object="shape" data-pptx-frame="655.4 415.33 362.5 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:40" data-pptx-semantic-object="shape">
+<path d="M 655.4 415.33 L 1017.9 415.33 L 1017.9 438.43 L 655.4 438.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="655.4" y="430" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Skill：完整目录，可打包脚本、模板与参考手册，</tspan></text>
+</g>
+<g id="shape-41" data-pptx-object="shape" data-pptx-frame="669.4 441.33 344.23 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:41" data-pptx-semantic-object="shape">
+<path d="M 669.4 441.33 L 1013.63 441.33 L 1013.63 464.43 L 669.4 464.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="669.4" y="456" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">实现“渐进式披露 (Progressive Disclosure)”。</tspan></text>
+</g>
+<g id="shape-42" data-pptx-object="shape" data-pptx-frame="656 480 536 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:42" data-pptx-semantic-object="shape">
+<path d="M 656 480 L 1192 480" data-pptx-part="geometry" fill="none" stroke-width="1" stroke="#DCE2EA" />
+</g>
+<g id="shape-43" data-pptx-object="shape" data-pptx-frame="656 502 536 130" data-pptx-prst="roundRect" data-pptx-av-adj="val 3077" data-pptx-source-ref="slide:43" data-pptx-semantic-object="shape">
+<path d="M 656 506 A 4 4 0 0 1 660 502 L 1188 502 A 4 4 0 0 1 1192 506 L 1192 628 A 4 4 0 0 1 1188 632 L 660 632 A 4 4 0 0 1 656 628 Z" fill="#FFF8E7" stroke-width="1.50005" stroke="#E8A317" data-pptx-part="geometry" />
+
+</g>
+<g id="shape-44" data-pptx-object="shape" data-pptx-frame="675.32 518 136.5 26.28" data-pptx-prst="rect" data-pptx-source-ref="slide:44" data-pptx-semantic-object="shape">
+<path d="M 675.32 518 L 811.82 518 L 811.82 544.28 L 675.32 544.28 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="675.32" y="534" text-anchor="start" xml:space="preserve" font-size="17.07" fill="#C07B00" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">3. 何时用哪个？</tspan></text>
+</g>
+<g id="shape-45" data-pptx-object="shape" data-pptx-frame="675.4 551.33 271.55 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:45" data-pptx-semantic-object="shape">
+<path d="M 675.4 551.33 L 946.95 551.33 L 946.95 574.43 L 675.4 574.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="675.4" y="566" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">简单单步快捷操作 → Slash Command</tspan></text>
+</g>
+<g id="shape-46" data-pptx-object="shape" data-pptx-frame="675.4 581.33 349.25 23.1" data-pptx-prst="rect" data-pptx-source-ref="slide:46" data-pptx-semantic-object="shape">
+<path d="M 675.4 581.33 L 1024.65 581.33 L 1024.65 604.43 L 675.4 604.43 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="675.4" y="596" text-anchor="start" xml:space="preserve" font-size="14.93" fill="#1D2430" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">• </tspan><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">带多步检查点、脚本和模板的专业工作流 → Skill</tspan></text>
+</g>
+<g id="shape-47" data-pptx-object="shape" data-pptx-frame="675.44 608.67 329.28 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:47" data-pptx-semantic-object="shape">
+<path d="M 675.44 608.67 L 1004.72 608.67 L 1004.72 630.23 L 675.44 630.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="675.44" y="622" text-anchor="start" xml:space="preserve" font-size="14" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">（Part 2 的 14 个科研流程全部采用 Skill 封装）</tspan></text>
+</g>
+<g id="shape-48" data-pptx-object="shape" data-pptx-frame="64 680 1152 1" data-pptx-geometry-kind="custom" data-pptx-source-ref="slide:48" data-pptx-semantic-object="shape">
+<path d="M 64 680 L 1216 680" data-pptx-part="geometry" fill="none" stroke-width="1" stroke="#DCE2EA" />
+</g>
+<g id="shape-49" data-pptx-object="shape" data-pptx-frame="63.44 688.67 338.31 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:49" data-pptx-semantic-object="shape">
+<path d="M 63.44 688.67 L 401.75 688.67 L 401.75 710.23 L 63.44 710.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="63.44" y="702" text-anchor="start" xml:space="preserve" font-size="14" fill="#5A6577" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-weight="normal" font-style="normal" text-decoration="none">Part 1 · Claude Code 基础概念（claude-howto）</tspan></text>
+</g>
+<g id="shape-50" data-pptx-object="shape" data-pptx-frame="1163.24 688.67 53.32 21.56" data-pptx-prst="rect" data-pptx-source-ref="slide:50" data-pptx-semantic-object="shape">
+<path d="M 1163.24 688.67 L 1216.56 688.67 L 1216.56 710.23 L 1163.24 710.23 Z" fill="none" stroke="none" data-pptx-part="geometry" />
+
+
+<text x="1216.56" y="702" text-anchor="end" xml:space="preserve" font-size="14" fill="#1A3A6B" font-weight="bold" data-pptx-text-baseline="metrics-v1"><tspan fill-opacity="1" font-style="normal" text-decoration="none">06 / 18</tspan></text>
+</g></svg>
