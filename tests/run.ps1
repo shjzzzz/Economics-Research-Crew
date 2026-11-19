@@ -54,11 +54,11 @@ $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
 Ok ($skillCount -eq 15) "15 skills (got $skillCount)"
 Ok ($agentCount -eq 7) "7 agents (got $agentCount)"
-Ok (-not (Test-Path (Join-Path $v ".claude\skills\cnki-search"))) "extras are not installed by default"
-if (Test-Path (Join-Path $pkg "payload-extras")) {
+Ok (-not (Test-Path (Join-Path $v ".claude\skills\thu-digitizer-main"))) "extras are not installed by default"
+if (Test-Path (Join-Path $pkg "payload-extras\skills\thu-digitizer-main")) {
 $vx = New-Vault
 Ok ((Run-Install $vx @("-WithExtras")) -eq 0) "install -WithExtras exit 0"
-Ok ((Test-Path (Join-Path $vx ".claude\skills\cnki-search\SKILL.md")) -and (Test-Path (Join-Path $vx ".claude\agents\cnki-researcher.md")) -and (Test-Path (Join-Path $vx "Meta\extras\INDEX.md"))) "-WithExtras installs extra skills, agent and index"
+Ok (Test-Path (Join-Path $vx ".claude\skills\thu-digitizer-main\SKILL.md")) "-WithExtras installs the extra skills"
 Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (15 + (Get-ChildItem (Join-Path $pkg "payload-extras\skills") -Directory).Count)) "-WithExtras adds only the extras on top of the 15 core skills"
 Ok (-not (Test-Path (Join-Path $vx ".mcp.json"))) "-WithExtras installs no MCP config"
 }

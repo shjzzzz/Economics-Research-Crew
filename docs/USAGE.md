@@ -168,6 +168,6 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 - **安装脚本提示“跳过(已存在)”**：正常，说明保护了你已有的文件。想获取新版内容，用 `-Update`：已存在且有差异的文件会生成 `<文件>.new`（如 `SKILL.md.new`，不会被当作 Skill/Agent 加载），原文件不动，你人工比对合并。
 - **怎么确认安装器没坏**：运行 `tests/run.ps1`（5.1 与 pwsh 7 各一次），覆盖安装、幂等、保留中文 CLAUDE.md、`-WhatIf`、`-Update`、`-WithHooks`、两个 hook 与 lint。
 - **中文乱码**：用 UTF-8 打开；`.ps1` 已带 BOM，Windows PowerShell 5.1 与 pwsh 7 均可运行。
-- **`-WithExtras`**：另装 `payload-extras/` 的 52 个第三方 Skill 和 `cnki-researcher` 代理（只新增、不覆盖），清单与使用规则见知识库 `Meta/extras/INDEX.md`。它们会占用启动上下文，且未经审计；与核心 Skill 重叠时先走核心 Skill，输出不得改动 `raw`/`_sources`，联网取数不得外发受限数据，文献与数字仍须先进引文表/结果登记簿。CNKI 组需手动 `claude mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest`，登录与验证码由本人完成，只取题录、不批量下载。
+- **`-WithExtras`**：另装 `payload-extras/` 里的第三方 Skill（公开仓库只含 MIT 许可的两个；作者本机另有更多，不公开）和其中的代理（只新增、不覆盖），使用规则见 `payload-extras/README.md`；若存在 `Meta/extras/INDEX.md` 则以它为准。它们会占用启动上下文，且未经审计；与核心 Skill 重叠时先走核心 Skill，输出不得改动 `raw`/`_sources`，联网取数不得外发受限数据，文献与数字仍须先进引文表/结果登记簿。CNKI 组需手动 `claude mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest`，登录与验证码由本人完成，只取题录、不批量下载。
 - **`-WithUpstream`**：需同时给 `-RepoUrl`；上游构建参数未经本项目验证，运行前请先读其 `launchme.sh`。
 - **卸载**：本项目不提供自动卸载。按 `README` 列出的文件手动删除；安装前的 `CLAUDE.md` 等备份在 `_erc-backups/<时间戳>/`。

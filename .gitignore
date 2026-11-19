@@ -2,4 +2,9 @@ __pycache__/
 *.pyc
 tasks/
 _erc-backups/
-payload-extras/
+payload-extras/*
+!payload-extras/README.md
+!payload-extras/skills/
+payload-extras/skills/*
+!payload-extras/skills/neishengxing-main/
+!payload-extras/skills/thu-digitizer-main/

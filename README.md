@@ -10,7 +10,7 @@
 - 借鉴 `llm_wiki` 的“可积累 wiki”思路（purpose / index / log / 两步摄入 / lint）、`My-Brain-Is-Full-Crew` 的 hooks 强制执行与安装器回归测试，以及 `Imbad0202/academic-research-skills` 的设计理念（苏格拉底防越位、魔鬼代言人让步门槛与框架锁定检测、L3 引文锚点与主张对齐审计、`data_access_level` 数据隔离、7 类 AI 失效模式闸门、文风校准与 R&R 返修追溯矩阵；仅借设计模式并在本项目原生重写，不含其代码）。
 - 不覆盖已有 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`；不安装 MCP、不启用上游 Hooks。
 - 不自动运行任何回归；脚本、数据、环境由研究者确认。
-- 扩展 Skills 为**可选**：加 `-WithExtras` 安装 `payload-extras/` 中第三方的数据获取、数据分析、可视化和 CNKI 共 52 个 Skill（来自 `franklee16/academic-research-skills`，原样放入、未经本项目审计、多数上游无许可证，见 `payload-extras/extras/THIRD-PARTY.md`）。CNKI 需你自行开启 Chrome DevTools MCP，安装器不配置任何 MCP。
+- 扩展 Skills 为**可选**：加 `-WithExtras` 安装 `payload-extras/` 中的第三方 Skill（未经本项目审计）。公开仓库只含上游为 MIT 许可的两个（`neishengxing-main`、`thu-digitizer-main`，来自 `franklee16/academic-research-skills` 汇编库，保留其 LICENSE），其余无许可证或非商用许可的不随仓库发布，见 `payload-extras/README.md`；安装器不配置任何 MCP。
 - 上游框架（My-Brain-Is-Full-Crew）为**可选**：加 `-WithUpstream` 才会克隆并在隔离目录构建。
 
 ## 安装
