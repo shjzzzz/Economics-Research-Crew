@@ -69,6 +69,19 @@ def wr(path, text):
         fh.write(text.encode("utf-8"))
 
 
+def copy(src, dst):
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    shutil.copyfile(src, dst)
+
+
+def block_span(text):
+    """(start, end) of the marked ERC block in text, which must contain BEGIN."""
+    i, j = text.index(BEGIN), text.find(END)
+    if j < 0:
+        sys.exit("AGENTS.md has the ERC begin marker but no end marker; fix it by hand")
+    return i, j + len(END)
+
+
 def rewrite(text, pairs):
     for old, new in pairs:
         text = text.replace(old, new)
@@ -138,18 +151,16 @@ def build(payload, stage, platforms):
                 if f.endswith(".md"):
                     wr(t, rewrite(rd(s), TEXT_REWRITES))
                 else:
-                    os.makedirs(os.path.dirname(t), exist_ok=True)
-                    shutil.copyfile(s, t)
+                    copy(s, t)
     # scripts
     sc_src = os.path.join(src, "scripts")
     if os.path.isdir(sc_src):
         for f in os.listdir(sc_src):
             if f.endswith(".py"):
-                os.makedirs(os.path.join(agents_root, "scripts"), exist_ok=True)
-                shutil.copyfile(os.path.join(sc_src, f), os.path.join(agents_root, "scripts", f))
+                copy(os.path.join(sc_src, f), os.path.join(agents_root, "scripts", f))
     stages = os.path.join(src, "pipeline-stages.json")
     if os.path.exists(stages):
-        shutil.copyfile(stages, os.path.join(agents_root, "pipeline-stages.json"))
+        copy(stages, os.path.join(agents_root, "pipeline-stages.json"))
     # agents
     ag_src = os.path.join(src, "agents")
     for f in sorted(os.listdir(ag_src)):
@@ -164,9 +175,8 @@ def build(payload, stage, platforms):
     # agy hooks
     if "agy" in platforms:
         for f in ("protect_raw.py", "routing_hint.py"):
-            os.makedirs(os.path.join(agents_root, "hooks"), exist_ok=True)
-            shutil.copyfile(os.path.join(src, "hooks", f), os.path.join(agents_root, "hooks", f))
-        shutil.copyfile(os.path.join(src, "routing-triggers.json"), os.path.join(agents_root, "routing-triggers.json"))
+            copy(os.path.join(src, "hooks", f), os.path.join(agents_root, "hooks", f))
+        copy(os.path.join(src, "routing-triggers.json"), os.path.join(agents_root, "routing-triggers.json"))
         snippet = {HOOK_KEY: {
             "PreToolUse": [{"matcher": "*", "hooks": [
                 {"type": "command", "command": "python hooks/protect_raw.py", "timeout": 10}]}],
@@ -189,14 +199,11 @@ def merge_agents_md(target, block_file, update):
         wr(target, cur.rstrip() + "\n\n" + block)
         print("appended")
         return
-    i, j = cur.index(BEGIN), cur.find(END)
-    if j < 0:
-        sys.exit("AGENTS.md has the ERC begin marker but no end marker; fix it by hand")
-    old = cur[i:j + len(END)] + "\n"
-    if old == block:
+    i, end = block_span(cur)
+    if cur[i:end] + "\n" == block:
         print("unchanged")
     elif update:
-        wr(target + ".new", cur[:i] + block + cur[j + len(END):].lstrip("\n"))
+        wr(target + ".new", cur[:i] + block + cur[end:].lstrip("\n"))
         print("pending")
     else:
         print("stale")
@@ -218,15 +225,13 @@ def sync_vault(vault, check):
     target = os.path.join(vault, "AGENTS.md")
     cur = rd(target) if os.path.exists(target) else ""
     if BEGIN in cur:
-        i, j = cur.index(BEGIN), cur.find(END)
-        if j < 0:
-            sys.exit("AGENTS.md has the ERC begin marker but no end marker; fix it by hand")
-        if cur[i:j + len(END)] + chr(10) == block:
+        i, end = block_span(cur)
+        if cur[i:end] + "\n" == block:
             print("in-sync")
             return
-        new = cur[:i] + block + cur[j + len(END):].lstrip(chr(10))
+        new = cur[:i] + block + cur[end:].lstrip("\n")
     else:
-        new = (cur.rstrip() + chr(10) * 2 if cur else "") + block
+        new = (cur.rstrip() + "\n\n" if cur else "") + block
     if check:
         print("out-of-sync")
         sys.exit(1)

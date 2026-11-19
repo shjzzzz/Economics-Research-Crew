@@ -47,6 +47,7 @@ $packageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $payload = Join-Path $packageRoot "payload"
 if (-not (Test-Path $payload)) { throw "未找到 payload 目录，请完整解压安装包。" }
 $claudeDir = Join-Path $VaultPath ".claude"
+$hasPython = [bool](Get-Command python -ErrorAction SilentlyContinue)
 
 # 0. 平台
 $detected = @("claude","agy","codex" | Where-Object { Get-Command $_ -ErrorAction SilentlyContinue })
@@ -58,7 +59,7 @@ $platforms = @(switch ($Platform) {
 $doClaude = $platforms -contains "claude"
 $doAgents = ($platforms -contains "agy") -or ($platforms -contains "codex")
 Write-Host ("平台：{0}（-Platform {1}；本机检测到：{2}）" -f ($platforms -join ", "), $Platform, $(if ($detected) { $detected -join ", " } else { "无" })) -ForegroundColor Cyan
-if ($doAgents -and -not (Get-Command python -ErrorAction SilentlyContinue)) { throw "为 agy/Codex 生成文件需要 python 在 PATH 中。" }
+if ($doAgents -and -not $hasPython) { throw "为 agy/Codex 生成文件需要 python 在 PATH 中。" }
 
 # 1. 备份
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -145,7 +146,7 @@ if ($doAgents) {
     }
 }
 
-# 3a. 可选：扩展 Skills（-WithExtras；只新增，不覆盖已有文件；不安装任何 MCP）
+# 3b. 可选：扩展 Skills（-WithExtras；只新增，不覆盖已有文件；不安装任何 MCP）
 if ($WithExtras) {
     $extras = Join-Path $packageRoot "payload-extras"
     if (-not (Test-Path $extras)) { throw "-WithExtras 需要 payload-extras 目录。" }
@@ -158,9 +159,9 @@ if ($WithExtras) {
     Write-Host "已安装扩展 Skills（见 Meta\extras\INDEX.md；CNKI 需自行开启 Chrome DevTools MCP，安装器不会代你配置）。" -ForegroundColor Cyan
 }
 
-# 3b. 可选：hooks（修改 settings.json，需 -WithHooks；已在步骤 1 备份）
+# 3c. 可选：hooks（修改 settings.json，需 -WithHooks；已在步骤 1 备份）
 if ($WithHooks -and $doClaude) {
-    if (-not (Get-Command python -ErrorAction SilentlyContinue)) { throw "-WithHooks 需要 python 在 PATH 中。" }
+    if (-not $hasPython) { throw "-WithHooks 需要 python 在 PATH 中。" }
     $merge = Join-Path $packageRoot "tools\merge_hooks.py"
     $snippet = Join-Path $payload ".claude\settings.hooks.json"
     $settingsFile = Join-Path $claudeDir "settings.json"
@@ -173,11 +174,11 @@ if ($WithHooks -and $doClaude) {
 # 4. 根 CLAUDE.md 仅追加缺失的 import
 $rootClaude = Join-Path $VaultPath "CLAUDE.md"
 $enc = [System.Text.UTF8Encoding]::new($false)
+$tpl = Join-Path $payload "CLAUDE.template.md"
 if (-not $doClaude) {
     # 未选择 Claude Code：不创建、不修改 CLAUDE.md
 } elseif (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
-        $tpl = Join-Path $payload "CLAUDE.template.md"
         $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# Research Workspace" }
         $extra = @($importLines | Where-Object { $body -notmatch [regex]::Escape($_) })
         if ($extra.Count -gt 0) { $body += "`r`n`r`n" + ($extra -join "`r`n") }
@@ -186,7 +187,6 @@ if (-not $doClaude) {
 } else {
     $existing = [IO.File]::ReadAllText($rootClaude, $enc)
     # -Update：模板有新版且与现有 CLAUDE.md 不同 -> 生成 CLAUDE.md.new 供人工合并（不覆盖）
-    $tpl = Join-Path $payload "CLAUDE.template.md"
     if ($Update -and (Test-Path $tpl)) {
         $tplBody = [IO.File]::ReadAllText($tpl, $enc).Replace("`r`n","`n").TrimEnd()
         # 带标记的地图区块由 wiki_lint.py map 生成，比较时忽略
@@ -212,7 +212,7 @@ foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\
 }
 # 5b. 生成两张地图（文件夹地图、双链地图），并刷新 CLAUDE.md / AGENTS.md 中带标记的精简版
 $lintPy = Join-Path $VaultPath ".claude\scripts\wiki_lint.py"
-if ((Test-Path $lintPy) -and (Get-Command python -ErrorAction SilentlyContinue) -and $PSCmdlet.ShouldProcess($VaultPath, "生成 Meta/folder-map.md 与 Meta/link-map.md")) {
+if ((Test-Path $lintPy) -and $hasPython -and $PSCmdlet.ShouldProcess($VaultPath, "生成 Meta/folder-map.md 与 Meta/link-map.md")) {
     $mapOut = (& python -X utf8 $lintPy map --vault $VaultPath | Out-String).Trim()
     Write-Host $mapOut
     if ($mapOut -match "CLAUDE\.md: no-markers") { Write-Host "  现有 CLAUDE.md 没有 ERC:MAP 标记，精简版未写入；合并 CLAUDE.md.new（或把模板里的 ERC:MAP 区块加进去）后再运行 wiki_lint.py map。" -ForegroundColor Yellow }

@@ -41,6 +41,7 @@ import re
 import sys
 import urllib.parse
 import urllib.request
+from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -87,6 +88,21 @@ def save(path, obj):
 def read_text(path):
     with open(path, encoding="utf-8-sig", errors="replace") as fh:
         return fh.read()
+
+
+def relpath(path, vault):
+    return os.path.relpath(path, vault).replace("\\", "/")
+
+
+def in_vault(vault, path):
+    return os.path.abspath(path if os.path.isabs(path) else os.path.join(vault, path))
+
+
+def print_findings(errors, warns):
+    for x in errors:
+        print("错误  " + x)
+    for x in warns:
+        print("警告  " + x)
 
 
 def strip_code(text):
@@ -145,13 +161,10 @@ def crossref_fetch(doi=None, title=None):
 
 def verify_entry(e, off):
     """Update status/verified_by on entry e in place; returns the status."""
-    if e.get("type") in ("chinese", "legal"):
+    manual = e.get("type") in ("chinese", "legal")
+    if manual or off:
         if e.get("status") not in OK_STATUS:
-            e["status"] = "manual"
-        return e["status"]
-    if off:
-        if e.get("status") not in OK_STATUS:
-            e["status"] = "unverified"
+            e["status"] = "manual" if manual else "unverified"
         return e["status"]
     cands = crossref_fetch(doi=e["doi"]) if e.get("doi") else crossref_fetch(title=e["title"])
     if not cands:
@@ -167,16 +180,12 @@ def verify_entry(e, off):
     viable = [c for c in cands if similar(c["title"], e["title"]) >= 0.9 and year_ok_for(c)]
     best = max(viable or cands, key=lambda c: similar(c["title"], e["title"]))
     ratio = similar(best["title"], e["title"])
-    year_ok = year_ok_for(best)
-    if ratio >= 0.9 and year_ok:
+    if ratio >= 0.9 and year_ok_for(best):
         e["status"], e["verified_by"] = "verified", "crossref"
         e["doi"] = e.get("doi") or best.get("doi")
-        if not e.get("year") and best.get("year"):
-            e["year"] = best["year"]
-        if not e.get("venue") and best.get("venue"):
-            e["venue"] = best["venue"]
-        if not e.get("authors") and best.get("authors"):
-            e["authors"] = best["authors"]
+        for fld in ("year", "venue", "authors"):
+            if not e.get(fld) and best.get(fld):
+                e[fld] = best[fld]
         e["note_verify"] = "标题相似度 %.2f" % ratio
     elif e.get("doi"):
         e["status"] = "mismatch"
@@ -204,10 +213,10 @@ def cmd_cite_add(a):
     e = {"key": a.key, "title": a.title, "authors": [x.strip() for x in (a.authors or "").split(";") if x.strip()],
          "year": a.year, "doi": (a.doi or "").strip() or None, "venue": a.venue or "", "type": a.type,
          "status": "unverified", "added": now()}
-    if getattr(a, "locator", None) and a.locator.strip():
-        e["locator"] = a.locator.strip()
-    if getattr(a, "claim_scope", None) and a.claim_scope.strip():
-        e["claim_scope"] = a.claim_scope.strip()
+    for fld in ("locator", "claim_scope"):
+        val = (getattr(a, fld, None) or "").strip()
+        if val:
+            e[fld] = val
     if a.type == "legal":
         if not (a.doc_no and a.effective):
             sys.exit("法规文件必须提供 --doc-no（文号）和 --effective（生效日期）。")
@@ -262,10 +271,10 @@ def cite_problems(vault, files, strict):
     _, m = cmap(vault)
     errors, warns, used = [], [], set()
     for f in files:
+        rel = relpath(f, vault)
         for k in draft_keys(read_text(f)):
             used.add(k)
             e = m["entries"].get(k)
-            rel = os.path.relpath(f, vault).replace("\\", "/")
             if e is None:
                 errors.append("%s：引用键 @%s 不在引文表中" % (rel, k))
             elif e.get("status") not in OK_STATUS:
@@ -277,10 +286,7 @@ def cmd_cite_check(a):
     vault = vault_of(a)
     errors, warns, used = cite_problems(vault, a.files, a.strict)
     _, m = cmap(vault)
-    for x in errors:
-        print("错误  " + x)
-    for x in warns:
-        print("警告  " + x)
+    print_findings(errors, warns)
     unused = sorted(set(m["entries"]) - used)
     if unused:
         print("提示  引文表中未被引用：" + ", ".join(unused))
@@ -339,10 +345,10 @@ def register(vault, m, rid, value, label="", se=None, n=None, source=None, scrip
          "note": note, "registered": now()}
     for fld, p in (("source", source), ("script", script)):
         if p:
-            ap = os.path.abspath(p if os.path.isabs(p) else os.path.join(vault, p))
+            ap = in_vault(vault, p)
             if not orc.inside(ap, vault) or not os.path.isfile(ap):
                 sys.exit("%s 必须是库内已存在的文件：%s" % (fld, p))
-            e[fld] = os.path.relpath(ap, vault).replace("\\", "/")
+            e[fld] = relpath(ap, vault)
             if fld == "source":
                 e["source_sha256"] = sha256(ap)
     m["entries"][rid] = e
@@ -363,7 +369,7 @@ def cmd_results_register(a):
 def cmd_results_import(a):
     vault = vault_of(a)
     path, m = rmap(vault)
-    csv_path = os.path.abspath(a.csv if os.path.isabs(a.csv) else os.path.join(vault, a.csv))
+    csv_path = in_vault(vault, a.csv)
     if not os.path.isfile(csv_path):
         sys.exit("找不到 %s" % a.csv)
     with open(csv_path, encoding="utf-8-sig", newline="") as fh:
@@ -431,7 +437,7 @@ def results_problems(vault, files):
     _, m = rmap(vault)
     errors, warns = [], []
     for f in files:
-        text, rel = read_text(f), os.path.relpath(f, vault).replace("\\", "/")
+        text, rel = read_text(f), relpath(f, vault)
         for mo in PLACEHOLDER.finditer(strip_code(text)):
             e = m["entries"].get(mo.group(1))
             if e is None:
@@ -449,10 +455,7 @@ def results_problems(vault, files):
 def cmd_results_check(a):
     vault = vault_of(a)
     errors, warns = results_problems(vault, a.files)
-    for x in errors:
-        print("错误  " + x)
-    for x in warns:
-        print("警告  " + x)
+    print_findings(errors, warns)
     print("错误 %d，警告 %d。" % (len(errors), len(warns)))
     sys.exit(1 if errors else 0)
 
@@ -473,7 +476,7 @@ def cmd_questions(a):
     for f in a.files:
         for q in open_questions(read_text(f)):
             total += 1
-            print("%s：⟦问：%s⟧" % (os.path.relpath(f, vault).replace("\\", "/"), q))
+            print("%s：⟦问：%s⟧" % (relpath(f, vault), q))
     print("未回答 %d 个。" % total)
     sys.exit(1 if total else 0)
 
@@ -535,7 +538,7 @@ def cmd_refine_start(a):
     with open(src, "rb") as fi, open(v0, "wb") as fo:
         fo.write(fi.read())
     save(os.path.join(pd, "reviews.json"), {"max_rounds": MAX_ROUNDS, "current": "v0", "rounds": []})
-    orc.ledger_append(vault, "refine_start", draft=os.path.relpath(src, vault).replace("\\", "/"))
+    orc.ledger_append(vault, "refine_start", draft=relpath(src, vault))
     print("已保存 %s。先对 v0 做一次独立评审，再用 refine record --version v0 登记基线。" % os.path.relpath(v0, vault))
 
 
@@ -629,29 +632,27 @@ def claim_limited_to_association(rest):
     return any(w in typ for w in ("相关", "关联")) or any(w in wording for w in ("相关", "关联", "仅描述"))
 
 
+def find_outline(vault, files, project):
+    """outline.md of the project's paper/ folder, else next to the first draft file, else None."""
+    candidates = []
+    try:
+        candidates.append(os.path.join(paper_dir(argparse.Namespace(project=project), vault), "outline.md"))
+    except SystemExit:
+        pass
+    if files:
+        candidates.append(os.path.join(os.path.dirname(os.path.abspath(files[0])), "outline.md"))
+    return next((c for c in candidates if os.path.isfile(c)), None)
+
+
 def claim_problems(vault, files, strict=False, project=None):
     """L3 claim-source alignment checks: anchorless citations, untagged result blocks, and causal overstatement."""
     _, cm = cmap(vault)
     errors, warns = [], []
-    outline_claims = {}
-    op = None
-    try:
-        pd = paper_dir(argparse.Namespace(project=project), vault)
-        cand = os.path.join(pd, "outline.md")
-        if os.path.isfile(cand):
-            op = cand
-    except SystemExit:
-        pass
-    if op is None and files:
-        cand = os.path.join(os.path.dirname(os.path.abspath(files[0])), "outline.md")
-        if os.path.isfile(cand):
-            op = cand
-    if op is not None:
-        for cid, rest in OUTLINE_CLAIM_ROW_RE.findall(read_text(op)):
-            outline_claims[cid] = rest
+    op = find_outline(vault, files, project)
+    outline_claims = dict(OUTLINE_CLAIM_ROW_RE.findall(read_text(op))) if op else {}
 
     for f in files:
-        rel = os.path.relpath(f, vault).replace("\\", "/")
+        rel = relpath(f, vault)
         txt = strip_code(read_text(f))
         for k in draft_keys(txt):
             e = cm["entries"].get(k)
@@ -673,10 +674,7 @@ def claim_problems(vault, files, strict=False, project=None):
 def cmd_claim_check(a):
     vault = vault_of(a)
     errors, warns = claim_problems(vault, a.files, a.strict, getattr(a, "project", None))
-    for x in errors:
-        print("错误  " + x)
-    for x in warns:
-        print("警告  " + x)
+    print_findings(errors, warns)
     print("主张审计：错误 %d，警告 %d。" % (len(errors), len(warns)))
     sys.exit(1 if errors else 0)
 
@@ -735,10 +733,10 @@ def prose_paragraphs(text):
 def scan_text(text, cfg, rules):
     hits = []
     max_zh, max_en = cfg.get("max_sentence_chars_zh", 90), cfg.get("max_sentence_words_en", 40)
+    connectives = tuple(cfg.get("connective_starts_zh", []) + cfg.get("connective_starts_en", []))
     for line_no, para in prose_paragraphs(text):
         sents = [s.strip() for s in SENT_SPLIT.split(para) if s.strip()]
-        starts_zh, starts_en = cfg.get("connective_starts_zh", []), cfg.get("connective_starts_en", [])
-        seq = [s for s in sents if any(s.startswith(w) for w in (starts_zh + starts_en))]
+        seq = [s for s in sents if s.startswith(connectives)]
         if len(seq) >= cfg.get("connective_threshold", 3):
             hits.append((line_no, "连接词过度", seq[0][:12], "同一段多句以连接词开头；让逻辑承担连接，合并或删去"))
         for s in sents:
@@ -758,8 +756,7 @@ def scan_text(text, cfg, rules):
             if keys >= cfg.get("cite_dump_threshold", 4):
                 hits.append((line_no, "文献堆砌", "%d 个引用" % keys, "只留最相关的 1–2 篇并说明相关在哪里"))
             n = len(s) if zh else len(s.split())
-            limit = max_zh if zh else max_en
-            if n > limit:
+            if n > (max_zh if zh else max_en):
                 hits.append((line_no, "超长句", "%d %s" % (n, "字" if zh else "词"), "拆成一句一个意思，删去不承载信息的从句"))
     return sorted(hits, key=lambda h: (h[0], h[1]))
 
@@ -767,13 +764,13 @@ def scan_text(text, cfg, rules):
 def cmd_polish_scan(a):
     vault = vault_of(a)
     cfg, rules = load_tells(vault)
-    total, by_cat = 0, {}
+    total, by_cat = 0, Counter()
     for f in a.files:
         hits = scan_text(read_text(f), cfg, rules)
-        rel = os.path.relpath(f, vault).replace("\\", "/")
+        rel = relpath(f, vault)
         for line_no, cat, matched, hint in hits:
             print("%s:%d [%s] 「%s」 %s" % (rel, line_no, cat, matched, hint))
-            by_cat[cat] = by_cat.get(cat, 0) + 1
+            by_cat[cat] += 1
         total += len(hits)
     print("命中 %d 处（%s）。仅作提示：先判断是否真是套话或夸大，再改；数字、引文、占位符与标记一律不改。" % (
         total, "、".join("%s %d" % kv for kv in sorted(by_cat.items())) or "无"))
@@ -795,7 +792,6 @@ def polish_signature(text):
 
 
 def multiset_diff(before, after):
-    from collections import Counter
     b, c = Counter(before), Counter(after)
     return sorted((b - c).elements()), sorted((c - b).elements())
 
@@ -809,32 +805,25 @@ def cmd_polish_check(a):
             errors.append("%s 有变化：减少 %s；新增 %s" % (k, gone[:8] or "无", new[:8] or "无"))
     if sb["标题"] != sa["标题"]:
         warns.append("标题有变化（润色不应改章节标题）：%d → %d 个" % (len(sb["标题"]), len(sa["标题"])))
-    for x in errors:
-        print("错误  " + x)
-    for x in warns:
-        print("警告  " + x)
+    print_findings(errors, warns)
     if not errors:
         print("通过：引文键、{{res}} 占位符、主张标注、问答标记与正文数字与润色前完全一致。")
     sys.exit(1 if errors else 0)
 
 
-
 def stage_check(vault, name, files):
+    """Error list for one named stage check (warnings are not stage blockers)."""
     md = [f for f in files if f.lower().endswith(".md") and os.path.isfile(f)]
     if name == "citations_resolved":
-        e, _, _ = cite_problems(vault, md, strict=False)
-        return e
+        return cite_problems(vault, md, strict=False)[0]
     if name == "citations_verified":
-        e, _, _ = cite_problems(vault, md, strict=True)
-        return e
+        return cite_problems(vault, md, strict=True)[0]
     if name == "results_linked":
-        e, _ = results_problems(vault, md)
-        return e
+        return results_problems(vault, md)[0]
     if name == "claims_aligned":
-        e, _ = claim_problems(vault, md, strict=True)
-        return e
+        return claim_problems(vault, md, strict=True)[0]
     if name == "no_open_questions":
-        return ["%s：有未回答的 ⟦问：%s⟧" % (os.path.relpath(f, vault).replace("\\", "/"), q[:30])
+        return ["%s：有未回答的 ⟦问：%s⟧" % (relpath(f, vault), q[:30])
                 for f in md for q in open_questions(read_text(f))]
     return ["未知检查项：%s" % name]
 
@@ -844,9 +833,7 @@ def cmd_report(a):
     vault = vault_of(a)
     _, cm = cmap(vault)
     _, rm = rmap(vault)
-    st_counts = {}
-    for e in cm["entries"].values():
-        st_counts[e.get("status")] = st_counts.get(e.get("status"), 0) + 1
+    st_counts = dict(Counter(e.get("status") for e in cm["entries"].values()))
     pd = None
     try:
         pd = paper_dir(a, vault)
@@ -857,7 +844,7 @@ def cmd_report(a):
         # only the live manuscript files: versions/ and worklogs quote keys and ids in prose
         drafts = [os.path.join(pd, f) for f in ("outline.md", "draft.md", "final.md") if os.path.isfile(os.path.join(pd, f))]
     cited = set()
-    unknown, linked, bare, openq = 0, 0, 0, 0
+    linked, bare, openq = 0, 0, 0
     for f in drafts:
         t = read_text(f)
         cited |= set(draft_keys(t))

@@ -12,6 +12,9 @@ function Get-Front([string]$Path) {
     foreach ($l in $Matches[1] -split '\r?\n') { if ($l -match '^([\w-]+):\s*(.*)$') { $h[$Matches[1]] = $Matches[2].Trim('"') } }
     $h
 }
+function Test-Files([string[]]$Paths) {
+    foreach ($m in $Paths) { if (-not (Test-Path (Join-Path $VaultPath $m))) { $script:errors += "缺少文件: $m" } }
+}
 function Test-Defs([string]$Root) {
     $validAccess = "raw","redacted","verified_only"
     $validTask = "open-ended","outcome-gradable"
@@ -36,14 +39,12 @@ $hasClaude = (Test-Path (Join-Path $VaultPath ".claude\skills")) -or (Test-Path 
 $hasAgents = (Test-Path (Join-Path $VaultPath ".agents\skills")) -or (Test-Path (Join-Path $VaultPath "AGENTS.md"))
 if (-not ($hasClaude -or $hasAgents)) { $errors += "未发现任何平台的安装（.claude/ 或 .agents/）" }
 
-foreach ($m in "Meta\purpose.md","Meta\index.md","Meta\review-queue.md","Meta\vault-map.md","Meta\research-standards.md","Meta\source-registry.md","Meta\research-log.md") {
-    if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" }
-}
+Test-Files "Meta\purpose.md","Meta\index.md","Meta\review-queue.md","Meta\vault-map.md","Meta\research-standards.md","Meta\source-registry.md","Meta\research-log.md"
 foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Path (Join-Path $VaultPath $d))) { $errors += "缺少目录: $d" } }
 
 if ($hasClaude) {
     Test-Defs ".claude"
-    foreach ($m in ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Templates\rebuttal-matrix.md","Meta\collaboration-protocol.md") { if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" } }
+    Test-Files ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Templates\rebuttal-matrix.md","Meta\collaboration-protocol.md"
     $rc = Join-Path $VaultPath "CLAUDE.md"
     if (-not (Test-Path $rc) -or (Get-Content $rc -Raw) -notmatch [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md")) { $errors += "根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md" }
     $sj = Join-Path $VaultPath ".claude\settings.json"
@@ -56,9 +57,7 @@ if ($hasClaude) {
 }
 if ($hasAgents) {
     Test-Defs ".agents"
-    foreach ($m in ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\scripts\paper_tools.py",".agents\pipeline-stages.json") {
-        if (-not (Test-Path (Join-Path $VaultPath $m))) { $errors += "缺少文件: $m" }
-    }
+    Test-Files ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\scripts\paper_tools.py",".agents\pipeline-stages.json"
     $am = Join-Path $VaultPath "AGENTS.md"
     if (-not (Test-Path $am)) { $errors += "缺少根 AGENTS.md" }
     else {
@@ -68,8 +67,8 @@ if ($hasAgents) {
     }
     $hj = Join-Path $VaultPath ".agents\hooks.json"
     if (Test-Path $hj) {
-        try { $null = [IO.File]::ReadAllText($hj) | ConvertFrom-Json } catch { $errors += ".agents\hooks.json 不是有效 JSON" }
         $ht = [IO.File]::ReadAllText($hj)
+        try { $null = $ht | ConvertFrom-Json } catch { $errors += ".agents\hooks.json 不是有效 JSON" }
         foreach ($h in "protect_raw.py","routing_hint.py") {
             if ($ht -match [regex]::Escape($h) -and -not (Test-Path (Join-Path $VaultPath ".agents\hooks\$h"))) { $errors += "hooks.json 引用了 hook 但文件缺失: $h" }
         }

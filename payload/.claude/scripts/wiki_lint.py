@@ -24,6 +24,7 @@ import json
 import os
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 SCOPE = ["01-Research-Projects", "03-Literature", "04-Theories",
@@ -90,6 +91,19 @@ def looks_like_path(s):
     return ("/" in s or "\\" in s or s.lower().endswith(PATH_EXT)) and not re.match(r"^(https?:|doi:|10\.\d)", s, re.I)
 
 
+def _target(raw):
+    """Lower-cased page name a [[wikilink]] target resolves to (folder and .md stripped)."""
+    t = raw.strip().replace("\\", "/").split("/")[-1]
+    return (t[:-3] if t.lower().endswith(".md") else t).lower()
+
+
+def _stem_index(pages):
+    stems = {}
+    for p in pages:
+        stems.setdefault(p.stem.lower(), []).append(p)
+    return stems
+
+
 def lint(vault, strict=False):
     findings = []
 
@@ -98,9 +112,7 @@ def lint(vault, strict=False):
 
     scope_pages = sorted(md_files(vault, SCOPE))
     all_pages = list(md_files(vault))
-    stems = {}
-    for p in all_pages:
-        stems.setdefault(p.stem.lower(), []).append(p)
+    stems = _stem_index(all_pages)
 
     index = vault / "Meta" / "index.md"
     index_text = read(index) if index.exists() else None
@@ -137,10 +149,8 @@ def lint(vault, strict=False):
                     if not ((vault / s).exists() or (p.parent / s).exists()):
                         add("error", rel, "sources", "source path not found: %s" % s)
         for m in WIKILINK.finditer(text):
-            target = m.group(1).strip().replace("\\", "/").split("/")[-1]
-            if target.lower().endswith(".md"):
-                target = target[:-3]
-            if not stems.get(target.lower()) and not target.lower().endswith(NON_PAGE_EXT):
+            target = _target(m.group(1))
+            if not stems.get(target) and not target.endswith(NON_PAGE_EXT):
                 add("error", rel, "link", "broken wikilink [[%s]]" % m.group(1).strip())
         if index_text is not None and p.stem.lower() not in index_targets:
             add("warning", rel, "index", "not listed in Meta/index.md")
@@ -155,10 +165,7 @@ def lint(vault, strict=False):
         except OSError:
             continue
         for m in WIKILINK.finditer(src_text):
-            target = m.group(1).strip().replace("\\", "/").split("/")[-1]
-            if target.lower().endswith(".md"):
-                target = target[:-3]
-            for h in stems.get(target.lower(), []):
+            for h in stems.get(_target(m.group(1)), []):
                 if h in scope_set and h != src:
                     inbound[h].add(src)
 
@@ -216,7 +223,7 @@ def _map_pages(vault):
             return False
         if rel.parts[0] == "Meta" and len(rel.parts) == 2 and p.name in GENERATED_MAPS:
             return False
-        if rel.parts[0] == "Meta" and len(rel.parts) > 1 and rel.parts[1] == "backups":
+        if rel.parts[0] == "Meta" and len(rel.parts) > 1 and rel.parts[1] in ("backups", "extras"):
             return False
         return True
     graph = sorted(p for p in md_files(vault, GRAPH_DIRS) if keep(p))
@@ -226,16 +233,9 @@ def _map_pages(vault):
     return graph, legacy, allp
 
 
-def _target(raw):
-    t = raw.strip().replace("\\", "/").split("/")[-1]
-    return (t[:-3] if t.lower().endswith(".md") else t).lower()
-
-
 def build_graph(vault):
     graph, legacy, allp = _map_pages(vault)
-    stems = {}
-    for p in allp:
-        stems.setdefault(p.stem.lower(), []).append(p)
+    stems = _stem_index(allp)
     gset = set(graph)
     rel = lambda p: p.relative_to(vault).as_posix()
     out_edges = {p: [] for p in graph}      # resolved links to other graph pages
@@ -282,7 +282,7 @@ def build_graph(vault):
 
 
 def _hubs(g, n):
-    cand = [p for p in g["graph"] if g["rel"](p).split("/")[0] not in ("Meta",)]
+    cand = [p for p in g["graph"] if g["rel"](p).split("/")[0] != "Meta"]
     cand.sort(key=lambda p: (-len(g["in_res"][p]), -len(g["out"][p]), g["rel"](p)))
     return [p for p in cand[:n] if g["in_res"][p] or g["out"][p]]
 
@@ -317,12 +317,9 @@ def folder_entries(vault):
         subs = sorted(s for s in d.iterdir()
                       if s.is_dir() and s.name not in MAP_HIDDEN and not s.name.startswith("_erc") and not s.name.startswith("."))
         for s in subs:
-            rp = (d.name + "/" + s.name)
+            rp = d.name + "/" + s.name
             sm, sa = _count_files(s, vault)
-            f2 = []
-            if rp in READ_ONLY:
-                f2.append("只读")
-            rows.append((rp, 2, sm, sa, "", f2))
+            rows.append((rp, 2, sm, sa, "", ["只读"] if rp in READ_ONLY else []))
     return rows
 
 
@@ -383,9 +380,7 @@ def render_link_map(vault, g=None):
     lines += ["", "## 重名主干名（`[[链接]]` 指向不明，建议改名）"]
     lines += (["- `%s`：%s" % (k, "；".join("`%s`" % x for x in v)) for k, v in g["dups"]] or ["- 无"])
     lines += ["", "## 旧资料（目录级汇总，不进图）", "| 文件夹 | Markdown 页 | 页内链接 | 其中指向研究页 |", "|---|---|---|---|"]
-    leg = {}
-    for p in g["legacy"]:
-        leg[rel(p).split("/")[0]] = leg.get(rel(p).split("/")[0], 0) + 1
+    leg = Counter(rel(p).split("/")[0] for p in g["legacy"])
     for top in sorted(leg):
         st = g["legacy_stat"].get(top, {"links": 0, "to_graph": 0})
         lines.append("| `%s` | %d | %d | %d |" % (top, leg[top], st["links"], st["to_graph"]))
@@ -474,7 +469,6 @@ def cmd_map(vault, check=False, embed=True, quiet=False):
             if r == "too-big":
                 say("  AGENTS.md would exceed %d bytes; shorten the map or CLAUDE.md" % limit)
     return 1 if drift else 0
-
 
 
 def cmd_hash(vault, file):

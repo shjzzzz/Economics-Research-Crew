@@ -93,18 +93,24 @@ def state_paths(vault):
     return sorted(glob.glob(os.path.join(vault, PROJECTS_DIR, "*", "STATE.json")))
 
 
-def active_project(vault):
-    """Most recently updated STATE.json whose status is active, or None."""
+def newest_project(vault, active_only):
+    """(path, state) of the most recently updated readable STATE.json, or None."""
     best = None
     for p in state_paths(vault):
         try:
             st = rjson(p)
         except (OSError, ValueError):
             continue
-        if st.get("active"):
-            if best is None or st.get("updated", "") > best[1].get("updated", ""):
-                best = (p, st)
+        if active_only and not st.get("active"):
+            continue
+        if best is None or st.get("updated", "") > best[1].get("updated", ""):
+            best = (p, st)
     return best
+
+
+def active_project(vault):
+    """Most recently updated STATE.json whose status is active, or None."""
+    return newest_project(vault, active_only=True)
 
 
 def stage_index(cfg, sid):
@@ -112,6 +118,11 @@ def stage_index(cfg, sid):
         if s["id"] == sid:
             return i
     return -1
+
+
+def retry_budget(cfg):
+    """Dispatches allowed per agent and stage: the first attempt plus max_retries."""
+    return 1 + cfg.get("max_retries", 2)
 
 
 def agent_stage_index(cfg, agent):
@@ -170,15 +181,7 @@ def project_ctx(args, need=True, readonly=False):
         return vault, p, rjson(p)
     ap = active_project(vault)
     if not ap and readonly:  # stopped/completed projects can still be inspected
-        newest = None
-        for p in state_paths(vault):
-            try:
-                st = rjson(p)
-            except (OSError, ValueError):
-                continue
-            if newest is None or st.get("updated", "") > newest[1].get("updated", ""):
-                newest = (p, st)
-        ap = newest
+        ap = newest_project(vault, active_only=False)
     if not ap:
         if need:
             sys.exit("没有进行中的项目。先运行：orchestrator.py init 01-Research-Projects/<项目名>")
@@ -189,6 +192,12 @@ def project_ctx(args, need=True, readonly=False):
 def save(vault, path, st):
     st["updated"] = now()
     wjson(path, st)
+
+
+def print_problems(header, problems):
+    print(header)
+    for p in problems:
+        print("  - " + p)
 
 
 # ---------------------------------------------------------------- verify
@@ -237,10 +246,9 @@ def cmd_init(a):
     vault = find_vault(a.vault)
     if not vault:
         sys.exit("找不到研究库根目录（需要同时有 Meta/ 和 %s/）。" % PROJECTS_DIR)
-    pdir = a.project_dir if os.path.isabs(a.project_dir) else os.path.join(vault, a.project_dir)
-    pdir = os.path.abspath(pdir)
-    if os.path.commonpath([pdir, os.path.join(vault, PROJECTS_DIR)]) != os.path.join(vault, PROJECTS_DIR) or \
-            os.path.dirname(pdir) != os.path.join(vault, PROJECTS_DIR):
+    pdir = os.path.abspath(a.project_dir if os.path.isabs(a.project_dir) else os.path.join(vault, a.project_dir))
+    projects = os.path.join(vault, PROJECTS_DIR)
+    if os.path.commonpath([pdir, projects]) != projects or os.path.dirname(pdir) != projects:
         sys.exit("项目目录必须是 %s/<项目名>。" % PROJECTS_DIR)
     sp = os.path.join(pdir, "STATE.json")
     if os.path.exists(sp):
@@ -284,15 +292,13 @@ def cmd_next(a):
     rec = st["stages"][sid]
     print("当前阶段 %s %s；负责：%s" % (sid, s["name"], s["owner"]))
     if s.get("agents"):
-        budget = 1 + cfg.get("max_retries", 2)
+        budget = retry_budget(cfg)
         for ag in s["agents"]:
             n = rec["attempts"].get(ag, 0)
             print("  Agent %s：已失败 %d 次，%s" % (ag, n, "可重试" if n < budget else "已达重试上限，停下并向研究者报告"))
     problems = verify_stage(vault, cfg, st, sid)
     if problems:
-        print("通过关卡前还缺：")
-        for p in problems:
-            print("  - " + p)
+        print_problems("通过关卡前还缺：", problems)
     else:
         print("退出条件已满足。请向研究者汇报，并询问关卡问题：「%s」" % s["gate"])
         print("研究者表态后，再运行：orchestrator.py gate --decision pass|revise|return|stop --note \"…\"")
@@ -327,9 +333,7 @@ def cmd_verify(a):
     problems = verify_stage(vault, cfg, st, sid)
     ledger_append(vault, "verify", project=st["project"], stage=sid, ok=not problems, problems=problems or None)
     if problems:
-        print("阶段 %s 未满足退出条件：" % sid)
-        for p in problems:
-            print("  - " + p)
+        print_problems("阶段 %s 未满足退出条件：" % sid, problems)
         sys.exit(1)
     print("阶段 %s 的退出条件已满足。" % sid)
 
@@ -350,9 +354,7 @@ def cmd_gate(a):
         if sid == "S7" and not a.fatal_resolved:
             problems.append("S7 通过必须加 --fatal-resolved，表示研究者确认致命问题已解决")
         if problems and not a.force:
-            print("阶段 %s 未满足退出条件，不能通过（研究者坚持时用 --force 并在 --note 写明原因）：" % sid)
-            for p in problems:
-                print("  - " + p)
+            print_problems("阶段 %s 未满足退出条件，不能通过（研究者坚持时用 --force 并在 --note 写明原因）：" % sid, problems)
             sys.exit(1)
         rec["status"] = "passed"
         if idx + 1 < len(cfg["stages"]):
@@ -393,7 +395,7 @@ def cmd_fail(a):
     sid = st["stage"]
     rec = st["stages"][sid]
     rec["attempts"][a.agent] = rec["attempts"].get(a.agent, 0) + 1
-    n, budget = rec["attempts"][a.agent], 1 + cfg.get("max_retries", 2)
+    n, budget = rec["attempts"][a.agent], retry_budget(cfg)
     save(vault, path, st)
     ledger_append(vault, "fail", project=st["project"], stage=sid, agent=a.agent, reason=a.reason, attempts=n)
     if n < budget:
