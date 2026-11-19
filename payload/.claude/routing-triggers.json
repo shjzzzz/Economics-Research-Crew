@@ -54,6 +54,17 @@
       ]
     },
     {
+      "skill": "paper-polish",
+      "patterns": [
+        "润色",
+        "去\\s*AI\\s*味",
+        "语言(精修|打磨)",
+        "文风(校准|统一|调整)",
+        "(消除|去除|删掉)套话",
+        "\\bpolish\\b"
+      ]
+    },
+    {
       "skill": "paper-draft",
       "patterns": [
         "起草(论文|全文|初稿)",

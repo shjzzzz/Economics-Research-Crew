@@ -3,6 +3,8 @@ param(
     [string]$VaultPath = "D:\Economicresearchwiki",
     [switch]$WithUpstream,
     [switch]$WithHooks,
+    # 可选扩展：第三方数据获取/数据分析/可视化/CNKI Skills（payload-extras，未经审计，默认不装）
+    [switch]$WithExtras,
     [switch]$Update,
     [string]$RepoUrl = "",
     # auto：检测本机已安装的 claude / agy / codex，只为检测到的平台生成文件（都没检测到则装 Claude 版）
@@ -141,6 +143,19 @@ if ($doAgents) {
     } finally {
         Remove-Item -LiteralPath $stage -Recurse -Force -ErrorAction SilentlyContinue
     }
+}
+
+# 3a. 可选：扩展 Skills（-WithExtras；只新增，不覆盖已有文件；不安装任何 MCP）
+if ($WithExtras) {
+    $extras = Join-Path $packageRoot "payload-extras"
+    if (-not (Test-Path $extras)) { throw "-WithExtras 需要 payload-extras 目录。" }
+    if ($doClaude) {
+        Copy-NoOverwrite (Join-Path $extras "skills") (Join-Path $claudeDir "skills")
+        Copy-NoOverwrite (Join-Path $extras "agents") (Join-Path $claudeDir "agents")
+    }
+    if ($doAgents) { Copy-NoOverwrite (Join-Path $extras "skills") (Join-Path $VaultPath ".agents\skills") }
+    Copy-NoOverwrite (Join-Path $extras "extras") (Join-Path $VaultPath "Meta\extras")
+    Write-Host "已安装扩展 Skills（见 Meta\extras\INDEX.md；CNKI 需自行开启 Chrome DevTools MCP，安装器不会代你配置）。" -ForegroundColor Cyan
 }
 
 # 3b. 可选：hooks（修改 settings.json，需 -WithHooks；已在步骤 1 备份）

@@ -52,8 +52,16 @@ Ok ((Run-Install $v) -eq 0) "install exit 0"
 Ok ((Run-Check $v) -eq 0) "checker exit 0"
 $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
-Ok ($skillCount -eq 14) "14 skills (got $skillCount)"
+Ok ($skillCount -eq 15) "15 skills (got $skillCount)"
 Ok ($agentCount -eq 7) "7 agents (got $agentCount)"
+Ok (-not (Test-Path (Join-Path $v ".claude\skills\cnki-search"))) "extras are not installed by default"
+if (Test-Path (Join-Path $pkg "payload-extras")) {
+$vx = New-Vault
+Ok ((Run-Install $vx @("-WithExtras")) -eq 0) "install -WithExtras exit 0"
+Ok ((Test-Path (Join-Path $vx ".claude\skills\cnki-search\SKILL.md")) -and (Test-Path (Join-Path $vx ".claude\agents\cnki-researcher.md")) -and (Test-Path (Join-Path $vx "Meta\extras\INDEX.md"))) "-WithExtras installs extra skills, agent and index"
+Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (15 + (Get-ChildItem (Join-Path $pkg "payload-extras\skills") -Directory).Count)) "-WithExtras adds only the extras on top of the 15 core skills"
+Ok (-not (Test-Path (Join-Path $vx ".mcp.json"))) "-WithExtras installs no MCP config"
+}
 $mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
 $tpl = ([IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
 $got = ([IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
@@ -241,7 +249,7 @@ Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform in
 Ok ((Run-Check $v10) -eq 0) "checker passes for all platforms"
 Ok ((Test-Path (Join-Path $v10 "CLAUDE.md")) -and (Test-Path (Join-Path $v10 ".claude\skills"))) "Claude files present"
 $sk = @(Get-ChildItem (Join-Path $v10 ".agents\skills") -Directory)
-Ok ($sk.Count -eq 14) ".agents has 14 skills (got $($sk.Count))"
+Ok ($sk.Count -eq 15) ".agents has 15 skills (got $($sk.Count))"
 $badName = @($sk | Where-Object { ([IO.File]::ReadAllText((Join-Path $_.FullName "SKILL.md"), $enc)) -notmatch ("(?m)^name:\s*" + [regex]::Escape($_.Name) + "\s*$") })
 Ok ($badName.Count -eq 0) "every SKILL.md name equals its folder"
 $ag = @(Get-ChildItem (Join-Path $v10 ".agents\agents") -Filter *.md)
@@ -581,10 +589,22 @@ Ok ((& $py -X utf8 $builderPy sync-vault $v12 --check 2>&1) -match "in-sync") "s
 [IO.File]::WriteAllText((Join-Path $v12 "04-Theories\alpha.md"), "---`ntype: theory`n---`n同名页`n", $enc)
 Ok ((LM @("lint","--vault",$v12)) -match "duplicate") "lint warns about duplicate page names"
 Remove-Item (Join-Path $v12 "04-Theories\alpha.md") -Force
+
+# language polish: scan lists tells; check proves protected content is unchanged
+$pd = Join-Path $v12 "01-Research-Projects\demo\paper"
+New-Item -ItemType Directory -Force $pd | Out-Null
+$orig = Join-Path $pd "p0.md"; $good = Join-Path $pd "p1.md"; $bad = Join-Path $pd "p2.md"
+[IO.File]::WriteAllText($orig, "近年来，数字征管受到了广泛关注。本文证明了遵从提高 {{res:t1.coef}}，样本 3,936 家 [@a2020]。`n", $enc)
+[IO.File]::WriteAllText($good, "数字征管能否改变遵从？本文发现遵从提高 {{res:t1.coef}}，样本 3,936 家 [@a2020]。`n", $enc)
+[IO.File]::WriteAllText($bad, "数字征管能否改变遵从？本文发现遵从提高 {{res:t1.coef}}，样本 3,900 家 [@a2020]。`n", $enc)
+Ok ((PT @("polish","scan",$orig)) -match "套话开头" -and (PT @("polish","scan",$orig)) -match "措辞强于证据") "polish scan flags a formulaic opener and an over-claiming verb"
+Ok ((PT @("polish","check","--before",$orig,"--after",$good)) -match "通过") "polish check passes when only wording changed"
+Ok ((PT @("polish","check","--before",$orig,"--after",$bad)) -match "正文数字" -and (PT @("polish","check","--before",$orig,"--after",$bad)) -match "rc=1") "polish check fails when a number changed"
+Ok ((Hint "帮我润色这一节的表达") -match "paper-polish") "routing: polish request -> paper-polish"
 Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
 
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

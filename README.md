@@ -3,12 +3,14 @@
 面向税收经济学、公共经济学、计量经济学与因果推断的研究环境扩展，支持 Claude Code、Antigravity CLI（`agy`）与 Codex CLI。
 
 ## 设计
-- 7 个研究 Subagents、14 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
+- 7 个研究 Subagents、15 个 Skills（含 `/research-pipeline` 研究总协调与质量闭环，以及 `/ingest-source`、`/query-wiki`、`/wiki-lint` 知识库维护流程）、研究规范、模板。
 - 两张自动生成的地图（文件夹地图 `Meta/folder-map.md`、双链地图 `Meta/link-map.md`）及其精简版写在 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成；旧税法笔记只做目录级汇总。
 - 路由规则与角色映射见 [docs/USAGE.md](docs/USAGE.md) 第 4 节。
+- 语言精修借鉴（思路，已按本项目约束重写，未复制文本）：`AIScientists-Dev/academic-humanizer`（MIT）、`hanlulong/econ-writing-skill`（MIT）、`humanizer-zh-academic`（MIT，仅采用中文套话的模式分类，**不采用**其“降低 AIGC 检测率”目标）；`franklee16/academic-research-skills` 为汇编库，根目录无许可证，仅作参考。本项目不用于规避 AI 检测，AI 参与仍须按期刊要求披露。
 - 借鉴 `llm_wiki` 的“可积累 wiki”思路（purpose / index / log / 两步摄入 / lint）、`My-Brain-Is-Full-Crew` 的 hooks 强制执行与安装器回归测试，以及 `Imbad0202/academic-research-skills` 的设计理念（苏格拉底防越位、魔鬼代言人让步门槛与框架锁定检测、L3 引文锚点与主张对齐审计、`data_access_level` 数据隔离、7 类 AI 失效模式闸门、文风校准与 R&R 返修追溯矩阵；仅借设计模式并在本项目原生重写，不含其代码）。
 - 不覆盖已有 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`；不安装 MCP、不启用上游 Hooks。
 - 不自动运行任何回归；脚本、数据、环境由研究者确认。
+- 扩展 Skills 为**可选**：加 `-WithExtras` 安装 `payload-extras/` 中第三方的数据获取、数据分析、可视化和 CNKI 共 52 个 Skill（来自 `franklee16/academic-research-skills`，原样放入、未经本项目审计、多数上游无许可证，见 `payload-extras/extras/THIRD-PARTY.md`）。CNKI 需你自行开启 Chrome DevTools MCP，安装器不配置任何 MCP。
 - 上游框架（My-Brain-Is-Full-Crew）为**可选**：加 `-WithUpstream` 才会克隆并在隔离目录构建。
 
 ## 安装
@@ -32,7 +34,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 ### 论文写作与人机协作（S8–S12）
 借鉴 PaperOrchestra 的思路（只借想法，不含其代码）：写作输入受限，引文与数字机械地可追溯。
-- 流程：大纲 `/paper-outline` → 引文 → 成稿 `/paper-draft` → 精修 `/paper-refine`（最多 3 轮，改进才接受）→ 终检；每步有研究者检查点 C1–C5，规则见 `Meta/collaboration-protocol.md`。
+- 流程：大纲 `/paper-outline` → 引文 → 成稿 `/paper-draft` → 精修 `/paper-refine`（最多 3 轮，改进才接受）→ 语言精修 `/paper-polish`（数字、引文、占位符机械核对不变）→ 终检；每步有研究者检查点 C1–C5，规则见 `Meta/collaboration-protocol.md`。
 - `paper_tools.py`：引文表（Crossref 联网核验，**只发送被引文献的标题/DOI，不发送研究内容**；中文文献与法规文件标为人工核验，法规须写文号与生效日期；`--offline` 或 `ERC_OFFLINE=1` 可关闭）、结果登记簿（正文数字写成 `{{res:id}}`）、精修判定、`report` 指标。
 - 稿内标记：引用 `[@key]`、数字 `{{res:id}}`、AI 提问 `⟦问：…⟧`、研究者回答 `⟦答：…⟧`。
 - 期刊模板 `Templates/venues/` 只给通用章节骨架，篇幅与格式要求须由研究者对照官网核对；`Meta/mechanism-library.md` 的参考文献全部标“待核实”。
@@ -60,14 +62,14 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```
 
 ## 用法
-/research-question /literature-review /theory-modeling /tax-policy-analysis /causal-inference-audit /econometric-analysis /academic-review /ingest-source /query-wiki /wiki-lint /research-pipeline
+/research-question /literature-review /theory-modeling /tax-policy-analysis /causal-inference-audit /econometric-analysis /academic-review /ingest-source /query-wiki /wiki-lint /paper-outline /paper-draft /paper-refine /paper-polish /research-pipeline
 
 ## 规范摘要
 原始数据只读；不删除文件；不虚构文献/法条/结果；区分相关与因果；结果必须关联脚本、数据版本与样本；法规核验时效。
 
 ## 验证流程
 1. `Test-EconomicsResearchCrew.ps1`：文件存在、frontmatter 合法（name/description）、agent 名与文件名一致、根 CLAUDE.md 含 import。
-2. 在 Claude Code 中运行 `/agents` 应列出 7 个 Agent；`/skills` 应列出 14 个 Skill。
+2. 在 Claude Code 中运行 `/agents` 应列出 7 个 Agent；`/skills` 应列出 15 个 Skill。
 3. 回归测试：`powershell -NoProfile -File tests\run.ps1` 与 `pwsh -NoProfile -File tests\run.ps1`（需要 Python；全部在临时目录进行，不碰你的库）。
    路由测试（消耗 Claude 额度）：`python tests/routing_eval.py --vault <装好本扩展的临时库>`。
 4. 冒烟测试：`/causal-inference-audit` 给一个 DID 设想，检查是否先问 estimand 而不是直接跑回归。

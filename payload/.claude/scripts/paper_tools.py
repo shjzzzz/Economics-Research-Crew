@@ -19,6 +19,9 @@ cite keys that exist in a verified citation table, and every number must trace t
   refine record --version vN --fatal F --major M --minor m --scores a=5,b=6
                                               record a review and get the accept / revert decision
   refine status
+  polish scan DRAFT.md... [--strict]          list AI-writing tells (patterns from Meta/ai-tells.json); advisory
+  polish check --before A.md --after B.md     a language pass must leave citation keys, {{res}} placeholders,
+                                              claim tags, question markers and every number unchanged
   questions DRAFT.md...                       unanswered researcher questions (marker for researcher: see below)
   report                                      metrics: citations verified, numbers linked, open questions, rounds
 
@@ -678,6 +681,144 @@ def cmd_claim_check(a):
     sys.exit(1 if errors else 0)
 
 
+# ------------------------------------------------------------------ language polish: scan for AI tells, check invariants
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
+EVIDENCE_RE = re.compile(r"\d|\{\{res:|表\s*[\dA-Za-z]|图\s*[\dA-Za-z]|\bTable\b|\bFigure\b")
+CITE_EVIDENCE_RE = re.compile(r"\[[^\[\]]*@")
+SENT_SPLIT = re.compile(r"(?<=[。！？!?])|(?<=[.])\s+(?=[A-Z\[])")
+NUM_RE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)*%?")
+HEADING_RE = re.compile(r"^#{1,6}\s+.*$", re.M)
+
+
+def load_tells(vault):
+    path = os.path.join(vault, "Meta", "ai-tells.json")
+    if not os.path.isfile(path):
+        sys.exit("找不到 %s；请先安装或从包里复制 Meta/ai-tells.json。" % path)
+    cfg = json.loads(read_text(path))
+    rules = []
+    for r in cfg.get("rules", []):
+        try:
+            rules.append(dict(r, _re=re.compile(r["regex"])))
+        except (re.error, KeyError) as e:
+            sys.exit("ai-tells.json 规则 %s 无效：%s" % (r.get("id", "?"), e))
+    return cfg, rules
+
+
+def is_zh(s):
+    cjk = sum(1 for ch in s if "一" <= ch <= "鿿")
+    return cjk >= max(4, 0.2 * len(s))
+
+
+def prose_paragraphs(text):
+    """Yield (first_line_no, paragraph_text) for prose only: no code, comments, headings, tables, front matter."""
+    text = HTML_COMMENT.sub(lambda m: "\n" * m.group(0).count("\n"), strip_code(text))
+    lines = text.split("\n")
+    if lines and lines[0].strip() == "---":
+        for i in range(1, len(lines)):
+            if lines[i].strip() == "---":
+                lines = [""] * (i + 1) + lines[i + 1:]
+                break
+    buf, start = [], 0
+    for no, ln in enumerate(lines, 1):
+        if not ln.strip() or ln.lstrip().startswith(("#", "|", ">", "```")):
+            if buf:
+                yield start, " ".join(buf)
+                buf = []
+            continue
+        if not buf:
+            start = no
+        buf.append(ln.strip())
+    if buf:
+        yield start, " ".join(buf)
+
+
+def scan_text(text, cfg, rules):
+    hits = []
+    max_zh, max_en = cfg.get("max_sentence_chars_zh", 90), cfg.get("max_sentence_words_en", 40)
+    for line_no, para in prose_paragraphs(text):
+        sents = [s.strip() for s in SENT_SPLIT.split(para) if s.strip()]
+        starts_zh, starts_en = cfg.get("connective_starts_zh", []), cfg.get("connective_starts_en", [])
+        seq = [s for s in sents if any(s.startswith(w) for w in (starts_zh + starts_en))]
+        if len(seq) >= cfg.get("connective_threshold", 3):
+            hits.append((line_no, "连接词过度", seq[0][:12], "同一段多句以连接词开头；让逻辑承担连接，合并或删去"))
+        for s in sents:
+            zh = is_zh(s)
+            for r in rules:
+                lang = r.get("lang", "any")
+                if (lang == "zh" and not zh) or (lang == "en" and zh):
+                    continue
+                m = r["_re"].search(s)
+                if not m:
+                    continue
+                need = r.get("needs_evidence")
+                if need and (CITE_EVIDENCE_RE if need == "cite" else EVIDENCE_RE).search(s):
+                    continue
+                hits.append((line_no, r.get("category", r["id"]), m.group(0), r.get("hint", "")))
+            keys = sum(len(CITE_KEY.findall(g)) for g in CITE_GROUP.findall(s))
+            if keys >= cfg.get("cite_dump_threshold", 4):
+                hits.append((line_no, "文献堆砌", "%d 个引用" % keys, "只留最相关的 1–2 篇并说明相关在哪里"))
+            n = len(s) if zh else len(s.split())
+            limit = max_zh if zh else max_en
+            if n > limit:
+                hits.append((line_no, "超长句", "%d %s" % (n, "字" if zh else "词"), "拆成一句一个意思，删去不承载信息的从句"))
+    return sorted(hits, key=lambda h: (h[0], h[1]))
+
+
+def cmd_polish_scan(a):
+    vault = vault_of(a)
+    cfg, rules = load_tells(vault)
+    total, by_cat = 0, {}
+    for f in a.files:
+        hits = scan_text(read_text(f), cfg, rules)
+        rel = os.path.relpath(f, vault).replace("\\", "/")
+        for line_no, cat, matched, hint in hits:
+            print("%s:%d [%s] 「%s」 %s" % (rel, line_no, cat, matched, hint))
+            by_cat[cat] = by_cat.get(cat, 0) + 1
+        total += len(hits)
+    print("命中 %d 处（%s）。仅作提示：先判断是否真是套话或夸大，再改；数字、引文、占位符与标记一律不改。" % (
+        total, "、".join("%s %d" % kv for kv in sorted(by_cat.items())) or "无"))
+    sys.exit(1 if (a.strict and total) else 0)
+
+
+def polish_signature(text):
+    body = strip_code(text)
+    prose = HTML_COMMENT.sub(" ", PLACEHOLDER.sub(" ", body))
+    prose = CITE_GROUP.sub(" ", prose)
+    return {
+        "引文键": sorted(CITE_KEY.findall(" ".join(CITE_GROUP.findall(body)))),
+        "结果占位符": sorted(m.group(0) for m in PLACEHOLDER.finditer(body)),
+        "主张标注": sorted(CLAIM_TAG_RE.findall(body)),
+        "研究者问答标记": sorted(Q_RE.findall(body) + A_RE.findall(body)),
+        "正文数字": sorted(NUM_RE.findall(prose)),
+        "标题": HEADING_RE.findall(body),
+    }
+
+
+def multiset_diff(before, after):
+    from collections import Counter
+    b, c = Counter(before), Counter(after)
+    return sorted((b - c).elements()), sorted((c - b).elements())
+
+
+def cmd_polish_check(a):
+    sb, sa = polish_signature(read_text(a.before)), polish_signature(read_text(a.after))
+    errors, warns = [], []
+    for k in ("引文键", "结果占位符", "主张标注", "研究者问答标记", "正文数字"):
+        gone, new = multiset_diff(sb[k], sa[k])
+        if gone or new:
+            errors.append("%s 有变化：减少 %s；新增 %s" % (k, gone[:8] or "无", new[:8] or "无"))
+    if sb["标题"] != sa["标题"]:
+        warns.append("标题有变化（润色不应改章节标题）：%d → %d 个" % (len(sb["标题"]), len(sa["标题"])))
+    for x in errors:
+        print("错误  " + x)
+    for x in warns:
+        print("警告  " + x)
+    if not errors:
+        print("通过：引文键、{{res}} 占位符、主张标注、问答标记与正文数字与润色前完全一致。")
+    sys.exit(1 if errors else 0)
+
+
+
 def stage_check(vault, name, files):
     md = [f for f in files if f.lower().endswith(".md") and os.path.isfile(f)]
     if name == "citations_resolved":
@@ -793,6 +934,12 @@ def main(argv=None):
     cl = top.add_parser("claim").add_subparsers(dest="cmd", required=True)
     p = cl.add_parser("check"); p.add_argument("files", nargs="+"); p.add_argument("--strict", action="store_true")
     p.set_defaults(f=cmd_claim_check)
+
+    po = top.add_parser("polish").add_subparsers(dest="cmd", required=True)
+    p = po.add_parser("scan"); p.add_argument("files", nargs="+"); p.add_argument("--strict", action="store_true")
+    p.set_defaults(f=cmd_polish_scan)
+    p = po.add_parser("check"); p.add_argument("--before", required=True); p.add_argument("--after", required=True)
+    p.set_defaults(f=cmd_polish_check)
 
     p = top.add_parser("questions"); p.add_argument("files", nargs="+"); p.set_defaults(f=cmd_questions)
     p = top.add_parser("report"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_report)

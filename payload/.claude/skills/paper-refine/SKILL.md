@@ -34,6 +34,7 @@ task_type: open-ended
 
 ## 收尾（C4 检查点）
 - 向研究者汇报：版本轨迹、当前采用版本、剩余 Fatal/Major、进入 review-queue 的“需要新分析”清单。
+- 内容定稿后，可选 `/paper-polish` 做语言精修：先 `polish check` 通过（引文键、`{{res}}`、主张标注、问答标记、数字全部不变），再由研究者认可。
 - 研究者认可后，把采用版复制为 `paper/final.md`；`orchestrator.py artifact paper/reviews.json paper/final.md`，`verify`，等研究者表态再 `gate`。
 - 终检（S12）前再运行 `cite check --strict`（所有被引文献须已核验或已由研究者确认）、`results check`、`claim check --strict`、`questions`，并起草 `paper/ai-disclosure.md`：依据 `orchestrator.py log` 与 `Meta/run-ledger.jsonl` 列出 AI 参与的阶段与任务，交研究者审定后再用于投稿。
 - 成稿后经研究者同意，把“主张—证据对照”整理为 `type: synthesis` 的 wiki 页，链回文献笔记与结果表来源。

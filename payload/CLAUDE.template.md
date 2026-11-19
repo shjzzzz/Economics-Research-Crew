@@ -67,6 +67,7 @@
 | `/wiki-lint` | 知识库体检：断链、孤立页、溯源、矛盾、过时 | 错误/警告报告与下一步建议 |
 | `/paper-outline` | 把冻结的研究产物变成论文架构：主张清单、章节计划、文献布局 | `paper/outline.md`（主张—证据—措辞强度） |
 | `/paper-draft` | 依据大纲分节写作；只用引文表与结果登记簿 | `paper/draft.md`、主张—证据对照表 |
+| `/paper-polish` | 语言与文风精修：去套话与夸大、措辞不强于证据；数字、引文、占位符一律不改 | `paper/polished.md`、变更报告、`polish check` 核对结果 |
 | `/paper-refine` | 评审（带编号问题清单）—修改—按基线清单复核—接受/回退，最多 3 轮 | `paper/versions/`、`reviews.json`、`final.md` |
 | `/research-pipeline` | 完整推进一个研究：分阶段、设关卡、Reviewer 质量闭环 | 阶段计划、项目状态 `PROJECT.md`、每阶段产出与决定记录 |
 

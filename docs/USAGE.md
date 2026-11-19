@@ -22,7 +22,7 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 7 个 Agent，`/skills` 确认 14 个 Skill。
+再用 `/agents` 确认 7 个 Agent，`/skills` 确认 15 个 Skill。
 
 ## 3. Skill 速查
 | 命令 | 何时用 | 产出 |
@@ -151,6 +151,7 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 2. 登记结果：`python .claude/scripts/paper_tools.py results import <csv> --prefix t2` 或 `results register`；登记引文：`cite add --key k --title "…" --year Y [--doi D]`，状态为 verified / mismatch / unverified / manual；`cite confirm` 由研究者人工确认（会触发权限提示）。
 3. `/paper-draft` 只用引文表与结果登记簿写作；`cite check`、`results check`、`questions` 检查草稿；`claim check` 核对引文定位锚点、结果段落的 `<!-- claim: Cn -->` 标注与措辞强度，终检（S12）会强制执行。
 4. `/paper-refine`：评审→修改→`refine record` 给出接受/回退，最多 3 轮；需要新分析的意见进入 `Meta/review-queue.md`。
+   `/paper-polish`：内容定稿后做语言精修；`paper_tools.py polish scan` 按 `Meta/ai-tells.json`（可自行增删）列出套话与夸大，`polish check --before 原稿 --after 润色稿` 机械核对引文键、`{{res}}` 占位符、主张标注、问答标记和所有数字未变。不用于规避 AI 检测，AI 参与仍须披露。
 5. `paper_tools.py report` 查看已核验引文率、数字链接率、未答问题数。
 
 ## 9b. 在 Antigravity（agy）或 Codex CLI 中使用
@@ -167,5 +168,6 @@ Claude 会按 `.claude/ECONOMICS-RESEARCH.md` 的分派规则，在任务确实�
 - **安装脚本提示“跳过(已存在)”**：正常，说明保护了你已有的文件。想获取新版内容，用 `-Update`：已存在且有差异的文件会生成 `<文件>.new`（如 `SKILL.md.new`，不会被当作 Skill/Agent 加载），原文件不动，你人工比对合并。
 - **怎么确认安装器没坏**：运行 `tests/run.ps1`（5.1 与 pwsh 7 各一次），覆盖安装、幂等、保留中文 CLAUDE.md、`-WhatIf`、`-Update`、`-WithHooks`、两个 hook 与 lint。
 - **中文乱码**：用 UTF-8 打开；`.ps1` 已带 BOM，Windows PowerShell 5.1 与 pwsh 7 均可运行。
+- **`-WithExtras`**：另装 `payload-extras/` 的 52 个第三方 Skill 和 `cnki-researcher` 代理（只新增、不覆盖），清单与使用规则见知识库 `Meta/extras/INDEX.md`。它们会占用启动上下文，且未经审计；与核心 Skill 重叠时先走核心 Skill，输出不得改动 `raw`/`_sources`，联网取数不得外发受限数据，文献与数字仍须先进引文表/结果登记簿。CNKI 组需手动 `claude mcp add chrome-devtools -- npx -y chrome-devtools-mcp@latest`，登录与验证码由本人完成，只取题录、不批量下载。
 - **`-WithUpstream`**：需同时给 `-RepoUrl`；上游构建参数未经本项目验证，运行前请先读其 `launchme.sh`。
 - **卸载**：本项目不提供自动卸载。按 `README` 列出的文件手动删除；安装前的 `CLAUDE.md` 等备份在 `_erc-backups/<时间戳>/`。
