@@ -1,1 +1,0 @@
-大家好！今天这次分享分为两部分：第一部分我们基于 claude-howto 教程仓库，把 Claude Code 最核心的 8 个基础概念一次讲透——包括 CLAUDE.md、Slash Commands、Skills、Subagents、MCP、Hooks、Git Worktree 和 Plugins；第二部分我们再来看 Economics Research Crew 这个项目，是如何把这些通用能力组装成一套严谨的经济学研究护栏的。

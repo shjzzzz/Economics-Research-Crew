@@ -1,1 +1,0 @@
-第四个关键概念是 Research Director 编排器。当你运行 `/research-pipeline` 时，它通过 `orchestrator.py` 维护项目状态文件 STATE.json 和运行账本 run-ledger.jsonl。整个研究被拆成 S1 到 S7 研究闭环，以及 S8 到 S12 论文写作闭环。它支持断点续跑、单阶段最多重试两次的熔断机制，以及最重要的铁律：AI 绝对不能自己决定过关，所有关卡必须停下来由研究者确认。

@@ -1,1 +1,0 @@
-第二个基础概念是 Slash Commands，也就是斜杠命令。它本质上是存放在 `.claude/commands/` 目录下的 Markdown 文件。当你输入 `/optimize` 时，Claude Code 会找到对应的 `optimize.md`，把里面的 Prompt 展开到当前会话。它非常强大，支持 `@文件路径` 引用、Bash 命令动态注入 `$(git ...)` 和传参。记住一个核心特点：Slash Command 是由人手动输入 `/名称` 来触发的。

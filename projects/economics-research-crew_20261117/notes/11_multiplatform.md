@@ -1,1 +1,0 @@
-第八个关键概念是多平台适配。整个项目以 `payload/.claude/` 作为唯一维护源，通过 PowerShell 安装器自动生成面向 Claude Code、Antigravity CLI（agy）和 Codex CLI 的配置文件。这里要特别讲清楚三者的能力边界：Claude Code 支持最完整的编排拦截 Hook；agy 已完成冒烟测试，支持原始材料保护和路由提示，但没有编排强拦截；Codex CLI 则主要依靠 AGENTS.md 文本约束。不管哪个平台，修改源码都应该改 `payload/.claude/` 后再更新同步。

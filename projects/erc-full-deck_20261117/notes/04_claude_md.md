@@ -1,1 +1,0 @@
-第一个基础概念是 CLAUDE.md，也就是 Claude Code 的记忆体系。claude-howto 把它拆解为 7 个层级：从企业管理员的 Managed Policy，到项目根目录的 CLAUDE.md 和模块化 rules，再到用户主目录的个人记忆、本地私有的 CLAUDE.local.md，以及自动学习的 Auto Memory。要注意的是，这 7 层是“拼接”而不是“覆盖”进上下文的，越靠近当前项目和本机的文件越晚读入。

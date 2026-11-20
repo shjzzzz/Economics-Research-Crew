@@ -1,1 +1,0 @@
-第三个基础概念是 Skills。很多同学分不清 Skill 和 Slash Command。其实核心差异有两点：第一，触发方式不同，Skill 启动时只加载 YAML 元数据摘要，模型会根据你的意图“自动匹配并按需加载”；第二，载体不同，Slash Command 只是一个 Markdown 文件，而 Skill 是一个完整的文件夹，里面可以打包 SKILL.md、辅助脚本、模板和参考手册。所以复杂的多步骤科研 SOP，在 Part 2 里全都是用 Skill 封装的。

@@ -1,1 +1,0 @@
-最后两个基础概念是 Git Worktree 和 Plugins。当你希望多个后台任务或 AI 会话同时改代码而不互相冲突时，用 `claude --worktree` 就能在 `.claude/worktrees/` 下开辟隔离分支目录，结束后没改动还会自动清理。而 Plugins 则是最高层级的打包机制，通过 `.claude-plugin/plugin.json` 把 Commands、Skills、Subagents、MCP 和 Hooks 一键打包分发。至此，Part 1 的 8 个基础原语就全部讲完了，接下来我们进入 Part 2，看 Economics Research Crew 如何把它们组装成科研护栏。

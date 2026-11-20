@@ -1,1 +1,0 @@
-结合 Part 1 讲过的 Subagents 上下文隔离和工具裁剪原理，Economics Research Crew 配置了 7 个分工明确的子代理：5 个研究与写作代理各自深耕，只有 econometrics-agent 拥有 Bash 执行权限，而 academic-reviewer 则是只读加联网、严禁写文件，并且只看交接单里的产物路径，真正实现“审写分离”和对抗式挑刺。
