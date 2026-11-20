@@ -62,7 +62,7 @@
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（247/247） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（246/246；本机放置 extras 时 249/249） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/` | `.claude/settings.json`（全 6 个 hooks） | 已测试 |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -106,7 +106,8 @@ chmod +x install.sh
 | `google-research/paper-orchestra` | Apache-2.0 | 借鉴受限输入写作、引文表、结果追溯与精修回退理念 | 原生重写，不含其代码；保留经济学研究者关卡 |
 | `Imbad0202/academic-research-skills`（截至 `v3.24.4`） | CC-BY-NC-4.0 | 借鉴苏格拉底防越位、让步门槛、框架锁定、L3 锚点、`data_access_level`、7 类 AI 失效闸门、R&R 矩阵、审稿引述/推荐文献核验、按稿件日期评判、分配归宿核查、`--no-source-reason` 诚实空值与 `Advisory` 分层 | **仅借设计模式并在本项目原生重写，绝不含其任何代码或提示词**；通过 `tools/check_ars_updates.py` 持续追踪 |
 | `academic-humanizer` / `econ-writing-skill` / `humanizer-zh-academic` | MIT | 借鉴语言精修分层、经济学章节公式与中文学术套话分类（`Meta/ai-tells.json`） | 原生重写；**不采用**“降低 AIGC 检测率”目标，AI 参与须如实披露 |
-| `payload-extras/`（可选 `-WithExtras`） | 本地自用 | 原 6 个绘图与制表 Skill（`publication-chart-skill` / `econ-visualization` / `scientific-visualization` / `copyplot` / `thu-digitizer` / `tikz`）已转入必装 `payload/.claude/skills/` | 未经本项目审计、默认不安装、不配置任何 MCP |
+| 2 个绘图 Skill（必装）：`thu-digitizer`、`scientific-visualization` | MIT（Rimagination；K-Dense Inc.） | 原样收录，保留上游 LICENSE / 许可声明 | 未经本项目安全审计；按 MIT 条款保留版权声明 |
+| `payload-extras/`（可选 `-WithExtras`） | 多为上游未附许可证 | 仅供用户本机自用的第三方 Skill（含 `publication-chart-skill` / `econ-visualization` / `copyplot` / `tikz`），**不随公开仓库分发**（已 gitignore） | 未经本项目审计、默认不安装、不配置任何 MCP |
 
 ---
 
@@ -121,7 +122,7 @@ chmod +x install.sh
 ### 回归验证命令
 | 验证项 | 命令 | 说明 |
 |---|---|---|
-| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、21 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 247 项测试，全在临时目录运行，不触碰真实知识库 |
+| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、17 Skills、frontmatter、全部 `Meta/` 与 Hooks |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 246 项测试（本机放置 extras 时 249 项），全在临时目录运行，不触碰真实知识库 |
 | 上游 ARS 更新检查 | `python tools/check_ars_updates.py check` | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报 |
 | 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | 消耗 Claude 额度；覆盖 `tests/routing_cases.json` 16 个路由用例 |

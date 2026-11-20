@@ -3,7 +3,7 @@ param([string]$VaultPath = "D:\Economicresearchwiki")
 $ErrorActionPreference = "Stop"
 $VaultPath = [System.IO.Path]::GetFullPath($VaultPath)
 $agents = "literature-agent","theory-agent","tax-policy-agent","econometrics-agent","causal-inference-agent","academic-reviewer","paper-writer-agent"
-$skills = "research-question","literature-review","theory-modeling","tax-policy-analysis","causal-inference-audit","econometric-analysis","academic-review","ingest-source","query-wiki","wiki-lint","research-pipeline","paper-outline","paper-draft","paper-refine","paper-polish","publication-chart-skill","econ-visualization","scientific-visualization","copyplot","tikz","thu-digitizer"
+$skills = "research-question","literature-review","theory-modeling","tax-policy-analysis","causal-inference-audit","econometric-analysis","academic-review","ingest-source","query-wiki","wiki-lint","research-pipeline","paper-outline","paper-draft","paper-refine","paper-polish","scientific-visualization","thu-digitizer"
 $errors = @()
 function Get-Front([string]$Path) {
     $t = Get-Content -LiteralPath $Path -Raw -Encoding UTF8

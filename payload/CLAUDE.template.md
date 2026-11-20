@@ -38,7 +38,7 @@
 7. 含个人信息或受限数据的内容不得发送到外部服务。
 8. 先读 `Meta/purpose.md`、`Meta/decisions.md`、`Meta/vault-map.md` 与知识地图再假定路径；检索旧税法笔记时不要在 `.claude`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中查找。
 
-## Skills（21 个）与 Agents（7 个）速查
+## Skills（17 个）与 Agents（7 个）速查
 | Skill | 阶段 / 职责 | 内部 Agent |
 |---|---|---|
 | `/research-question` | S1 收敛研究问题、estimand 与可行性（苏格拉底防越位） | — |
@@ -56,7 +56,7 @@
 | `/ingest-source` | 两步摄入 `_sources/`（分析→确认→写卡/更新概念页/双地图） | — |
 | `/query-wiki` | 沿 `index` + `link-map` 枢纽检索库内证据并区分推断 | — |
 | `/wiki-lint` | 确定性体检 + 语义矛盾/过时审计 + 刷新双地图 | — |
-| 绘图与制表（6 个） | `/publication-chart-skill`（出版图+表）、`/econ-visualization`（R 绘图）、`/scientific-visualization`（Python 期刊图）、`/copyplot`（复现图）、`/thu-digitizer`（图数据提取）、`/tikz`（TikZ 避障） | — |
+| 绘图（2 个） | `/scientific-visualization`（Python 期刊图）、`/thu-digitizer`（图数据提取） | — |
 
 ## 汇报格式
 重要改动或结论按 **改了什么 / 为什么 / 如何验证** 三段汇报；未验证项与残余风险明确写出。

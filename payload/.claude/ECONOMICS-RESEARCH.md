@@ -2,7 +2,7 @@
 
 > Single source of truth for routing, economics argument spine, orchestration, writing collaboration and evidence standards. Workspace layout and hard red lines live in `CLAUDE.md` / `Meta/vault-map.md`.
 
-## 1. Intent Routing Table (21 Skills)
+## 1. Intent Routing Table (17 Skills)
 | User intent (examples) | Primary Skill | Authorized Agent |
 |---|---|---|
 | 选题、收敛研究问题、定题、确定 estimand | `/research-question` | — |
@@ -16,7 +16,7 @@
 | 起草论文、写初稿、分节写作、把大纲写成正文 | `/paper-draft` | `paper-writer-agent` |
 | 精修、按审稿意见修改、返修、R&R、多轮修改 | `/paper-refine` | `paper-writer-agent` / `academic-reviewer` |
 | 润色、去 AI 味、语言精修、文风校准、消除套话 | `/paper-polish` | — |
-| 出版级图表与制表、R/Python 绘图、复现图、提取图数据、TikZ 避障 | `/publication-chart-skill`, `/econ-visualization`, `/scientific-visualization`, `/copyplot`, `/thu-digitizer`, `/tikz` | — |
+| 出版级期刊图（Python 多子图、误差棒、显著性标注）、从图表图片/PDF 提取数据 | `/scientific-visualization`, `/thu-digitizer` | — |
 | 摄入文献/来源到知识库、处理 `_sources` | `/ingest-source` | — |
 | 知识库里有什么、根据知识库回答、查已有文献 | `/query-wiki` | — |
 | 知识库体检、检查断链/孤立页/矛盾/过时 | `/wiki-lint` | — |

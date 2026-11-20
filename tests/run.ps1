@@ -52,14 +52,14 @@ Ok ((Run-Install $v) -eq 0) "install exit 0"
 Ok ((Run-Check $v) -eq 0) "checker exit 0"
 $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
-Ok ($skillCount -eq 21) "21 skills (got $skillCount)"
+Ok ($skillCount -eq 17) "17 skills (got $skillCount)"
 Ok ($agentCount -eq 7) "7 agents (got $agentCount)"
 Ok (Test-Path (Join-Path $v ".claude\skills\thu-digitizer\SKILL.md")) "built-in plot/table skills installed by default"
 $extraSkillDirs = if (Test-Path (Join-Path $pkg "payload-extras\skills")) { @(Get-ChildItem (Join-Path $pkg "payload-extras\skills") -Directory) } else { @() }
 if ($extraSkillDirs.Count -gt 0) {
 $vx = New-Vault
 Ok ((Run-Install $vx @("-WithExtras")) -eq 0) "install -WithExtras exit 0"
-Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (21 + $extraSkillDirs.Count)) "-WithExtras adds only the extras on top of the 21 core skills"
+Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (17 + $extraSkillDirs.Count)) "-WithExtras adds only the extras on top of the 17 core skills"
 Ok (-not (Test-Path (Join-Path $vx ".mcp.json"))) "-WithExtras installs no MCP config"
 }
 $mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
@@ -249,7 +249,7 @@ Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform in
 Ok ((Run-Check $v10) -eq 0) "checker passes for all platforms"
 Ok ((Test-Path (Join-Path $v10 "CLAUDE.md")) -and (Test-Path (Join-Path $v10 ".claude\skills"))) "Claude files present"
 $sk = @(Get-ChildItem (Join-Path $v10 ".agents\skills") -Directory)
-Ok ($sk.Count -eq 21) ".agents has 21 skills (got $($sk.Count))"
+Ok ($sk.Count -eq 17) ".agents has 17 skills (got $($sk.Count))"
 $badName = @($sk | Where-Object { ([IO.File]::ReadAllText((Join-Path $_.FullName "SKILL.md"), $enc)) -notmatch ("(?m)^name:\s*" + [regex]::Escape($_.Name) + "\s*$") })
 Ok ($badName.Count -eq 0) "every SKILL.md name equals its folder"
 $ag = @(Get-ChildItem (Join-Path $v10 ".agents\agents") -Filter *.md)
@@ -601,13 +601,16 @@ Ok ((PT @("polish","scan",$orig)) -match "套话开头" -and (PT @("polish","sca
 Ok ((PT @("polish","check","--before",$orig,"--after",$good)) -match "通过") "polish check passes when only wording changed"
 Ok ((PT @("polish","check","--before",$orig,"--after",$bad)) -match "正文数字" -and (PT @("polish","check","--before",$orig,"--after",$bad)) -match "rc=1") "polish check fails when a number changed"
 Ok ((Hint "帮我润色这一节的表达") -match "paper-polish") "routing: polish request -> paper-polish"
+Ok ((Hint "帮我从这张论文图里提取图中数据") -match "thu-digitizer") "routing: digitize request -> thu-digitizer"
+Ok ((Hint "帮我做一张期刊配图，多子图带误差棒") -match "scientific-visualization") "routing: figure request -> scientific-visualization"
+Ok ((Hint "帮我检查DID识别是否成立") -notmatch "scientific-visualization") "routing: plot route does not shadow causal audit"
 Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
 
 # --- 13. architecture, wiki isolation & argument spine upgrades ---------------
 Write-Host "[13] architecture & spine upgrades"
-# 13a. checker verifies all 21 skills (including paper-polish & 6 plot/table skills)
+# 13a. checker verifies all 17 skills (including paper-polish & 2 MIT plot skills)
 $chkText = ((& $shell -NoProfile -File $checker -VaultPath $v12 2>&1) -join "`n")
-Ok ($LASTEXITCODE -eq 0 -and $chkText -match "21 skills") "checker reports and validates all 21 skills"
+Ok ($LASTEXITCODE -eq 0 -and $chkText -match "17 skills") "checker reports and validates all 17 skills"
 # 13b. pure agy & codex installs generate folder-map / link-map via .agents/scripts/wiki_lint.py
 Ok ((Test-Path (Join-Path $v10b "Meta\folder-map.md")) -and (Test-Path (Join-Path $v10b "Meta\link-map.md"))) "agy-only install generates both maps"
 Ok ((MapBlock (Join-Path $v10b "AGENTS.md")) -notmatch "尚未生成") "agy-only AGENTS.md map block refreshed"

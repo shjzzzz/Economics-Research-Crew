@@ -46,7 +46,7 @@ https://github.com/Rimagination/thu-digitizer
 
 | 原图 | 提取覆盖 | 数据复现 |
 | --- | --- | --- |
-| [![真实 UpSet 复合图原图](gallery/assets/cases/nature-27341-fig1/original.png)](https://rimagination.github.io/thu-digitizer/#basic-nature-27341-fig1) | [![UpSet 复合图提取覆盖](gallery/assets/cases/nature-27341-fig1/overlay.png)](https://rimagination.github.io/thu-digitizer/#basic-nature-27341-fig1) | [![UpSet 复合图数据复现](gallery/assets/cases/nature-27341-fig1/recreated.png)](https://rimagination.github.io/thu-digitizer/#basic-nature-27341-fig1) |
+| [![真实 UpSet 复合图原图](https://rimagination.github.io/thu-digitizer/assets/cases/nature-27341-fig1/original.png)](https://rimagination.github.io/thu-digitizer/#basic-nature-27341-fig1) | [![UpSet 复合图提取覆盖](https://rimagination.github.io/thu-digitizer/assets/cases/nature-27341-fig1/overlay.png)](https://rimagination.github.io/thu-digitizer/#basic-nature-27341-fig1) | [![UpSet 复合图数据复现](https://rimagination.github.io/thu-digitizer/assets/cases/nature-27341-fig1/recreated.png)](https://rimagination.github.io/thu-digitizer/#basic-nature-27341-fig1) |
 
 一次任务通常会生成：
 
@@ -117,7 +117,7 @@ python -m unittest discover -s scripts -p "test_*.py" -v
 - [`scripts/extractor_registry.py`](scripts/extractor_registry.py)：机器可读的能力成熟度与路由注册表
 - [`references/research-quality-baseline.md`](references/research-quality-baseline.md)：候选路线的研究质量与提升门槛
 - [`references/official-source-data-validation.md`](references/official-source-data-validation.md)：官方源数据独立验证规范
-- [`gallery/ATTRIBUTION.md`](gallery/ATTRIBUTION.md)：画廊案例的来源与许可
+- [`gallery/ATTRIBUTION.md`](https://github.com/Rimagination/thu-digitizer/blob/main/gallery/ATTRIBUTION.md)：画廊案例的来源与许可
 
 ## 致谢与许可
 

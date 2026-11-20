@@ -5,7 +5,7 @@
 ## 1. 它是什么
 一组面向税收经济学、公共经济学、计量经济学与因果推断的 AI 研究协作框架：
 - **7 个专业 Subagent**（`.claude/agents/` / `.agents/agents/`）：各有职责、工具权限与 `data_access_level` 隔离。
-- **21 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 15 个 S1–S12 研究写作与知识库核心 Skill + 6 个学术绘图与制表 Skill（`publication-chart-skill`、`econ-visualization`、`scientific-visualization`、`copyplot`、`thu-digitizer`、`tikz`），用 `/名称` 触发。
+- **17 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 15 个 S1–S12 研究写作与知识库核心 Skill + 2 个 MIT 许可的绘图 Skill（`scientific-visualization`、`thu-digitizer`），用 `/名称` 触发。
 - **单源项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`，同步生成多平台 `AGENTS.md`）：定义路由、四层知识架构与论证脊柱。
 - **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板。
 - **确定性脚本与 6 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）；可选的原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
@@ -22,9 +22,9 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 **7 个 Agent**，`/skills` 确认 **21 个 Skill**。
+再用 `/agents` 确认 **7 个 Agent**，`/skills` 确认 **17 个 Skill**。
 
-## 3. 21 个必装 Skill 速查
+## 3. 17 个必装 Skill 速查
 | 命令 | 阶段 / 何时用 | 核心产出 |
 |---|---|---|
 | `/research-question <主题>` | S1：主题收敛为可检验研究问题与 estimand（苏格拉底防越位） | ≤3 候选（仅获明确指令后）、理想 vs 准实验对比、可行性评估、`PROJECT.md` |
@@ -42,12 +42,8 @@ claude
 | `/ingest-source <文件>` | 两步摄入 `03-Literature/_sources/` 来源到 wiki | 先分析停下等确认；确认后写文献卡（含 `cite_key`）、关联概念页、刷新双地图 |
 | `/query-wiki <问题>` | 沿 `index` + `link-map` 枢纽页检索库内证据 | 区分事实与推断的带引用回答，可回存 `query` / `synthesis` 笔记 |
 | `/wiki-lint` | 知识库确定性体检、论文指标联动与语义审计 | 断链/孤立页/重名/矛盾/过时/知识回流报告，批准后再修 |
-| `/publication-chart-skill` | 出版级科研图表与三线表/LaTeX 表一体工作流（`pubfig`/`pubtab`） | 论文级图表 + 配套出版表格 |
-| `/econ-visualization` | 经济学论文出版级 R / `ggplot2` 图表 | 经济学期刊规范图表脚本与图件 |
 | `/scientific-visualization` | 期刊投稿级 Python 多子图、误差棒与显著性标注 | 顶刊格式 PDF/SVG/TIFF 图件 |
-| `/copyplot` | 逆向分析并复现论文图表（Python/Matplotlib + 示例数据） | 可复现绘图脚本 + Excel 示例数据 |
 | `/thu-digitizer` | 从图表图片/PDF 校准坐标轴并本地提取可复核数值数据 | 校准提取 CSV/JSON + 残差校验报告 |
-| `/tikz` | 审计并数学修复 `.tex` 中 TikZ 图形标签/箭头碰撞 | 无碰撞 TikZ 代码与编译验证 |
 
 ## 4. 路由与角色映射
 收到请求时按序路由：
@@ -134,7 +130,7 @@ claude
 
 ## 11. 自定义、扩展与常见问题
 - **自定义**：修改 `.claude/agents/*.md`、`.claude/skills/<name>/SKILL.md`、`Meta/style-guide.md`、`Meta/ai-tells.json` 后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。升级用 `-Update` 生成 `.new` 副本，绝不覆盖你的本地改动。
-- **`-WithExtras`**：可选安装 `payload-extras/` 中的本地自用第三方 Skill（只新增、不装 MCP、未经审计；原 6 个精选绘图/制表 Skill 已转入必装），使用规则见 `payload-extras/README.md`；与必装 21 个 Skill 重叠时必装 Skill 优先。
+- **`-WithExtras`**：可选安装 `payload-extras/` 中的本地自用第三方 Skill（只新增、不装 MCP、未经审计；其中含 4 个上游未附许可证、仅供本机自用的绘图/制表 Skill：`publication-chart-skill`、`econ-visualization`、`copyplot`、`tikz`），使用规则见 `payload-extras/README.md`；与必装 17 个 Skill 重叠时必装 Skill 优先。
 - **`-WithUpstream`**：需同时指定 `-RepoUrl`，在隔离目录构建，不自动导入会冲突的上游 dispatcher。
 - **验证回归**：运行 `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1`（全在临时目录运行，不触碰真实知识库）。
 - **卸载**：不提供自动卸载，按 README 文件清单手动删除；安装前备份保留在 `_erc-backups/<时间戳>/`。
