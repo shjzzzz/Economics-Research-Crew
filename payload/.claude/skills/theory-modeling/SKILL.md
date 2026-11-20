@@ -27,7 +27,7 @@ task_type: open-ended
 
 ## 4. 产出与知识回流
 - 输出：模型设定、假设表、逐步推导、比较静态、竞争机制排他推论表、简化式映射与强假设清单。
-- 跨项目可复用的机制模型写入 `04-Theories/`（frontmatter 含 `type: theory`、`sources`、`updated`、`verification`），更新 `Meta/index.md` 与 `Meta/research-log.md`；项目专属假说同步写入 `PROJECT.md`。
+- 跨项目可复用的机制模型写入 `04-Theories/`（frontmatter 含 `type: theory`、`sources`、`updated`、`verification`），更新 `Meta/index.md` 与 `Meta/log.md`；项目专属假说同步写入 `PROJECT.md`。
 
 ## 5. 硬性禁止
 禁止无推导直接宣布 Proposition；禁止装饰性方程（实证完全用不到的符号堆砌）；禁止凭记忆为机制库补写未核实引文。

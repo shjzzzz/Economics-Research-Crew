@@ -29,7 +29,7 @@ task_type: open-ended
    - 新增引文：运行 `python .claude/scripts/paper_tools.py cite add --key <k> --title "…" --year Y [--doi D] --locator "…" --claim-scope "…"`；中文文献加 `--type chinese`，法规加 `--type legal --doc-no "…" --effective YYYY-MM-DD`，均须由研究者核对原文后执行 `cite confirm`。
 
 ## 4. 产出与知识回流
-- 输出：检索记录、争论簇文献矩阵、精确研究缺口、未核实清单；写入项目目录或经研究者确认后按 `Templates/literature-note.md`（含 `cite_key` 与 `locator`）沉淀至 `03-Literature/`，更新 `Meta/index.md`、`Meta/research-log.md` 并刷新双地图。
+- 输出：检索记录、争论簇文献矩阵、精确研究缺口、未核实清单；写入项目目录或经研究者确认后按 `Templates/literature-note.md`（含 `cite_key` 与 `locator`）沉淀至 `03-Literature/`，更新 `Meta/index.md`、`Meta/log.md` 并刷新双地图。
 - 下游交接：缺口与竞争机制交给 S3；`Meta/citation-map.json` 交给 S8/S10。
 
 ## 5. 硬性禁止

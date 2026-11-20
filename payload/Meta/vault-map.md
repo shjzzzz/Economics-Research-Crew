@@ -45,7 +45,7 @@ moc: MOC
 
 ## Meta 控制面（三类文件）
 - **静态规范（研究者可编辑）**：`purpose.md`、`research-standards.md`、`collaboration-protocol.md`、`style-guide.md`、`mechanism-library.md`、`ai-tells.json`、`vault-map.md`。
-- **协作账本（人机共同维护）**：`index.md`、`source-registry.md`、`research-log.md`、`review-queue.md`、`decisions.md`。
+- **协作账本（人机共同维护）**：`index.md`、`source-registry.md`、`log.md`、`review-queue.md`、`decisions.md`。
 - **脚本独占机读文件（禁止手改）**：`citation-map.json`、`results-ledger.json`（`paper_tools.py`）；`run-ledger.jsonl`（`orchestrator.py`）；`folder-map.md`、`link-map.md`（`wiki_lint.py map`，精简版嵌入 `CLAUDE.md`/`AGENTS.md` 的 `ERC:MAP` 区块）。
 
 ## 检索边界

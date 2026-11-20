@@ -88,7 +88,7 @@ claude
 
 ## 6. 知识库维护（可积累的 Wiki）
 - **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界；研究者关键决定记入 `Meta/decisions.md`。
-- **两步摄入（`/ingest-source`）**：原始文件放 `03-Literature/_sources/`，先算 SHA256 去重并输出分析（含拟定 `cite_key` 与拟关联概念页），**等你确认后**才写卡、更新 `Meta/index.md`/`source-registry.md`/`research-log.md` 并刷新双地图；可一键用 `paper_tools.py cite from-note` 桥接入论文引文表。
+- **两步摄入（`/ingest-source`）**：原始文件放 `03-Literature/_sources/`，先算 SHA256 去重并输出分析（含拟定 `cite_key` 与拟关联概念页），**等你确认后**才写卡、更新 `Meta/index.md`/`source-registry.md`/`log.md` 并刷新双地图；可一键用 `paper_tools.py cite from-note` 桥接入论文引文表。
 - **图谱检索（`/query-wiki`）**：先读 `Meta/index.md` 与 `Meta/link-map.md` 枢纽页，沿 `[[双链]]` 展开，回答区分“事实”与“推断”。
 - **体检与双地图（`/wiki-lint`）**：`python .claude/scripts/wiki_lint.py lint --vault .` 与 `map --vault .` 生成 `Meta/folder-map.md`、`Meta/link-map.md` 并刷新 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 区块；自动排除旧税法笔记、`paper/versions/` 与项目过程稿的孤立/重名噪音。
 

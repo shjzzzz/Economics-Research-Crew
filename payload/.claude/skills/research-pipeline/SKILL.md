@@ -13,7 +13,7 @@ task_type: open-ended
 
 ## 2. 前置读取与项目状态恢复
 编排命令统一写作 `ORC = python .claude/scripts/orchestrator.py`（库根目录运行）。`01-Research-Projects/<项目>/STATE.json` 与 `Meta/run-ledger.jsonl` **只能通过 `ORC` 修改，禁止手改**。
-1. 读取 `Meta/purpose.md`（未填则提醒，不代编方向）、`Meta/decisions.md`、`Meta/index.md` 及近期日志（`grep "^## \[" Meta/research-log.md | tail -10`）。
+1. 读取 `Meta/purpose.md`（未填则提醒，不代编方向）、`Meta/decisions.md`、`Meta/index.md` 及近期日志（`grep "^## \[" Meta/log.md | tail -10`）。
 2. **新项目**：先只输出 S1–S12 阶段计划（每阶段目标、负责 Skill/Agent、核心产物、关卡问题）并停下；研究者批准后，按 `Templates/research-project.md` 建 `01-Research-Projects/<项目名>/PROJECT.md`，运行 `ORC init 01-Research-Projects/<项目名>`，从 S1 起步。计划获批前不检索、不写文件。
 3. **恢复项目**：运行 `ORC status` 与 `ORC next`，对照 `PROJECT.md` 的待决事项，从 `STATE.json` 当前阶段续作；不重做已通过关卡的阶段，除非研究者决定退回（`return`）。
 
@@ -53,7 +53,7 @@ task_type: open-ended
 终检通过前，经研究者同意把本项目的可复利资产回流至 Tier 1 知识库：
 - 核心发现与主张—证据对照 → `08-Research-Notes/<项目>-synthesis.md`（`type: synthesis`，链回 `[[文献卡]]` 与 `[[PROJECT]]`）；
 - 新提炼的机制或识别方法 → 更新 `04-Theories/`、`05-Methods/`；
-- 更新 `Meta/index.md`、`Meta/research-log.md`（每阶段通过均追加 `## [YYYY-MM-DD] analysis | <项目> S<n> <阶段名>`），并运行 `python .claude/scripts/wiki_lint.py map --vault .` 刷新双地图。
+- 更新 `Meta/index.md`、`Meta/log.md`（每阶段通过均追加 `## [YYYY-MM-DD] analysis | <项目> S<n> <阶段名>`），并运行 `python .claude/scripts/wiki_lint.py map --vault .` 刷新双地图。
 
 ## 5. 硬性禁止
 禁止替研究者通过任何关卡；禁止在存在未解决 Fatal Flaw 时推进至 S8；禁止绕开 `ORC` 直接编辑 `STATE.json` 或 `run-ledger.jsonl`；牢记“代码跑通 ≠ 识别成立”“文献摘要 ≠ 文献综述”“知识关联 ≠ 理论创新”。

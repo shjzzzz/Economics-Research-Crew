@@ -36,7 +36,7 @@ task_type: open-ended
 
 ## 4. 产出与知识回流
 - 输出：识别审查报告 + 基于 `Templates/analysis-plan.md` 的预设分析计划（经研究者确认后冻结，作为 S4 产物与 S8 措辞上限依据）。
-- 通用方法论经验可沉淀至 `05-Methods/`（`type: method`），更新 `Meta/index.md` 与 `Meta/research-log.md`。
+- 通用方法论经验可沉淀至 `05-Methods/`（`type: method`），更新 `Meta/index.md` 与 `Meta/log.md`。
 
 ## 5. 硬性禁止
 禁止在本 Skill 中跑回归或改数据；禁止把固定效应或事前系数不显著当成因果证明；禁止由 AI 单方面拍板识别策略或放宽因果措辞上限（A3 事项）。

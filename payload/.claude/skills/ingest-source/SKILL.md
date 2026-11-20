@@ -34,12 +34,12 @@ task_type: open-ended
 1. 按 `Templates/literature-note.md` 写入 `03-Literature/`，frontmatter 必填：`type: literature`、`cite_key`、`title`、`locator`、`claim_scope`、`sources`（指向 `_sources` 文件）、`sha256`、`updated`、`verification`（`verified | unverified`）。
 2. 更新已确认触及的 `04-Theories/`、`05-Methods/` 或 `MOC/` 页面：只追加相关段落与 `[[双链]]`，不整页重写；文末“更新记录”注明日期与来源。
 3. 矛盾处理：在相关页面并列写出两侧主张与来源，同时记入 `Meta/review-queue.md`（状态 `open`）。
-4. 更新 `Meta/index.md`（每页一行，附 `cite_key`）、在 `Meta/source-registry.md` 登记 SHA256 与访问日期、在 `Meta/research-log.md` 追加 `## [YYYY-MM-DD] ingest | 标题`。
+4. 更新 `Meta/index.md`（每页一行，附 `cite_key`）、在 `Meta/source-registry.md` 登记 SHA256 与访问日期、在 `Meta/log.md` 追加 `## [YYYY-MM-DD] ingest | 标题`。
 5. 若研究者同意同时进入论文引文表，运行 `python .claude/scripts/paper_tools.py cite from-note <文献卡路径>`（中文/法规条目提醒人工 `cite confirm`）。
 6. 运行 `python .claude/scripts/wiki_lint.py map --vault .` 刷新双地图，再运行 `python .claude/scripts/wiki_lint.py lint --vault .`；有错误必须修完再收尾。
 
 ## 4. 产出与知识回流
-- 新增/更新的 Tier 1 知识页、更新后的 `index`/`source-registry`/`research-log`、刷新后的两张地图与 lint 报告。
+- 新增/更新的 Tier 1 知识页、更新后的 `index`/`source-registry`/`log`、刷新后的两张地图与 lint 报告。
 
 ## 5. 硬性禁止
 禁止跳过确认直接写文件；禁止修改或移动 `03-Literature/_sources/`；禁止编造 DOI/页码/法条；禁止擅自裁决来源矛盾；禁止把受限/含个人信息来源外发外部服务。

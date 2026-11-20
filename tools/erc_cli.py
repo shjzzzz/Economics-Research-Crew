@@ -45,7 +45,7 @@ SKILLS = [
 ]
 META_REQUIRED = [
     "Meta/purpose.md", "Meta/index.md", "Meta/review-queue.md", "Meta/vault-map.md",
-    "Meta/research-standards.md", "Meta/source-registry.md", "Meta/research-log.md",
+    "Meta/research-standards.md", "Meta/source-registry.md", "Meta/log.md",
     "Meta/collaboration-protocol.md", "Meta/style-guide.md", "Meta/mechanism-library.md",
     "Meta/decisions.md", "Meta/ai-tells.json", "Meta/upstream-ars.json",
 ]

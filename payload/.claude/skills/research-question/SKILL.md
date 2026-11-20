@@ -30,7 +30,7 @@ task_type: open-ended
 6. **最小推进证据与收敛建议**：给出推进到 S2/S4 所需的最小证据；目标型模式下推荐 1 个主问题并单列未解决的硬风险。
 
 ## 4. 产出与知识回流
-- 仅在研究者批准定题后，用 `Templates/research-project.md` 写入 `01-Research-Projects/<项目名>/PROJECT.md`（S1 产物），更新 `Meta/index.md` 与 `Meta/research-log.md`。
+- 仅在研究者批准定题后，用 `Templates/research-project.md` 写入 `01-Research-Projects/<项目名>/PROJECT.md`（S1 产物），更新 `Meta/index.md` 与 `Meta/log.md`。
 - 下游交接：把锁定后的 6 要素与待查文献缺口交给 S2 `/literature-review`。
 
 ## 5. 硬性禁止
