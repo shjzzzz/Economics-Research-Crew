@@ -660,8 +660,63 @@ Ok ($cc13 -match "OVERSTATED" -and $cc13 -match "C2 尚未在正文") "claim che
 $rep13 = PT13 @("--project","projA","report","--json")
 Ok ($rep13 -match '"claims_defined": 2' -and $rep13 -match '"claims_covered": 1') "report --json outputs claims_defined and claims_covered"
 
+# --- 14. ARS v3.24.4 patterns, upstream tracker & cross-platform installer ---
+Write-Host "[14] ARS v3.24.4 patterns, upstream tracker & cross-platform CLI"
+# 14a. honest null for results register (--no-source-reason)
+$hn1 = PT13 @("results","register","--id","conf1","--value","0.15","--no-source-reason","税务保密机房脱敏汇总")
+Ok ($hn1 -match "诚实空值" -and $hn1 -match "rc=0") "results register accepts --no-source-reason honest null"
+$sfile14 = Join-Path $v13 "06-Data\processed\s14.csv"
+New-Item -ItemType Directory -Force (Split-Path $sfile14) | Out-Null
+[IO.File]::WriteAllText($sfile14, "a,b`n1,2`n", $enc)
+$hnBad = PT13 @("results","register","--id","conf2","--value","0.2","--source","06-Data\processed\s14.csv","--no-source-reason","conflict")
+Ok ($hnBad -match "不能同时提供" -and $hnBad -match "rc=1") "results register rejects --source + --no-source-reason together"
+# 14b. paper_tools review verify (NFC quote check + suggested-references Crossref check)
+$rvDraft = Join-Path $p13 "rv_draft.md"
+$rvRep = Join-Path $p13 "rv_report.md"
+$rvMock = Join-Path $v13 "rv_mock.json"
+[IO.File]::WriteAllText($rvMock, (@{ "title:example study of tax salience" = @(@{doi="10.9999/ex.1"; title="Example Study of Tax Salience"; year=2009; venue="AER"; authors=@("A. Author")}) } | ConvertTo-Json -Depth 6), $enc)
+[IO.File]::WriteAllText($rvDraft, "本文发现征管数字化提高了小微企业增值税申报遵从率，并在样本期内保持稳健。`n", $enc)
+[IO.File]::WriteAllText($rvRep, "意见 M1：稿件称「本文发现征管数字化提高了小微企业增值税申报遵从率」，但未检验预期效应。`n意见 M2：稿件称「作者在附表九中剔除了全部制造业样本」，这是误读。`n``````yaml suggested-references`n- title: Example Study of Tax Salience`n  year: 2009`n- title: Totally Hallucinated Tax Paper`n  year: 2025`n```````n", $enc)
+$env:ERC_CROSSREF_MOCK = $rvMock
+$rvOut = PT13 @("review","verify","--review",$rvRep,"--manuscript",$rvDraft,"--strict")
+Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
+Ok ($rvOut -match "UNVERIFIED_QUOTE" -and $rvOut -match "引述 1/2 匹配" -and $rvOut -match "verified.*Example Study" -and $rvOut -match "unverified.*Totally Hallucinated" -and $rvOut -match "rc=1") "review verify catches misquoted passage and hallucinated suggested reference"
+# 14c. adaptive ARS upstream tracker (check_ars_updates.py)
+$cau = Join-Path $pkg "tools\check_ars_updates.py"
+$manCopy = Join-Path $v13 "upstream-ars.test.json"
+Copy-Item (Join-Path $pkg "payload\Meta\upstream-ars.json") $manCopy
+$mockSame = Join-Path $v13 "ars_same.json"
+$mockNew = Join-Path $v13 "ars_new.json"
+$manObj = [IO.File]::ReadAllText($manCopy, $enc) | ConvertFrom-Json
+[IO.File]::WriteAllText($mockSame, (@{releases=@(@{tag=$manObj.last_audited_tag; published_at="2026-11-19"; name="current"; body=""}); commits=@(@{sha=$manObj.last_audited_sha + "0000"; date="2026-11-20"; message="baseline"})} | ConvertTo-Json -Depth 6), $enc)
+[IO.File]::WriteAllText($mockNew, (@{releases=@(@{tag="v3.25.0"; published_at="2026-12-01"; name="New reviewer panel & citation check"; body="Adds citation locator rule and stakeholder audit"}, @{tag=$manObj.last_audited_tag; published_at="2026-11-19"; name="old"; body=""}); commits=@(@{sha="deadbeef1234"; date="2026-12-01"; message="feat(reviewer): improve frame-lock check"}, @{sha="cafe00001234"; date="2026-12-01"; message="docs: add zotero adapter note"}, @{sha=$manObj.last_audited_sha + "0000"; date="2026-11-20"; message="baseline"})} | ConvertTo-Json -Depth 6), $enc)
+$prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+$cSame = (& $py -X utf8 $cau check --manifest $manCopy --mock $mockSame 2>&1) -join "`n"; $rcSame = $LASTEXITCODE
+$repOut = Join-Path $v13 "ars-brief.md"
+$cNew = (& $py -X utf8 $cau check --manifest $manCopy --mock $mockNew --out $repOut 2>&1) -join "`n"; $rcNew = $LASTEXITCODE
+$cMark = (& $py -X utf8 $cau mark-audited --manifest $manCopy --tag v3.25.0 --sha deadbeef 2>&1) -join "`n"; $rcMark = $LASTEXITCODE
+[Console]::OutputEncoding = $prev
+Ok ($rcSame -eq 0 -and $cSame -match "已是最新") "check_ars_updates: up-to-date returns exit 0"
+Ok ($rcNew -eq 2 -and (Test-Path $repOut) -and $cNew -match "reviewer_audit" -and $cNew -match "zotero_jsonschema_adapters") "check_ars_updates: new release returns exit 2, maps ERC modules and filters excluded items"
+Ok ($rcMark -eq 0 -and ([IO.File]::ReadAllText($manCopy, $enc)) -match '"v3\.25\.0"') "check_ars_updates: mark-audited updates manifest baseline"
+# 14d. cross-platform Python CLI (tools/erc_cli.py): Win11 + simulated macOS (python3 hooks)
+$cli = Join-Path $pkg "tools\erc_cli.py"
+$v14 = New-Vault
+$ErrorActionPreference = "Continue"
+& $py -X utf8 $cli install --vault $v14 --platform all --with-hooks --target-os macos --python-cmd python3 *> $null
+$rc14i = $LASTEXITCODE
+& $py -X utf8 $cli test --vault $v14 *> $null
+$rc14t = $LASTEXITCODE
+& $py -X utf8 $cli sync --vault $v14 --check *> $null
+$rc14s = $LASTEXITCODE
+Ok ($rc14i -eq 0 -and $rc14t -eq 0 -and $rc14s -eq 0) "erc_cli.py install/test/sync pass for full platform + hooks"
+$sj14 = [IO.File]::ReadAllText((Join-Path $v14 ".claude\settings.json"), $enc)
+$hj14 = [IO.File]::ReadAllText((Join-Path $v14 ".agents\hooks.json"), $enc)
+Ok ($sj14 -match 'python3 .*protect_raw\.py' -and $hj14 -match 'python3 hooks/protect_raw\.py') "macOS mode adapts Claude and agy hook commands to python3"
+Ok (Test-Path (Join-Path $pkg "install.sh")) "macOS/Linux install.sh launcher present"
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

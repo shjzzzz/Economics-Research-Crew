@@ -13,7 +13,25 @@ Usage: python merge_hooks.py SETTINGS_JSON SNIPPET_JSON
 import json
 import os
 import re
+import shutil
 import sys
+
+
+def default_python_cmd():
+    if sys.platform == "win32":
+        return "python"
+    return "python3" if shutil.which("python3") else "python"
+
+
+def adapt_group(group, python_cmd):
+    if python_cmd == "python":
+        return group
+    g = json.loads(json.dumps(group))
+    for h in g.get("hooks", []):
+        cmd = h.get("command", "")
+        if cmd.startswith("python "):
+            h["command"] = python_cmd + cmd[len("python"):]
+    return g
 
 
 def script_names(group):
@@ -25,7 +43,8 @@ def script_names(group):
     return names
 
 
-def main(settings_path, snippet_path):
+def main(settings_path, snippet_path, python_cmd=None):
+    python_cmd = python_cmd or default_python_cmd()
     with open(snippet_path, encoding="utf-8-sig") as fh:
         snippet = json.load(fh)
     if os.path.exists(settings_path):
@@ -44,7 +63,8 @@ def main(settings_path, snippet_path):
     hooks = settings.setdefault("hooks", {})
     for event, groups in snippet.get("hooks", {}).items():
         existing = hooks.setdefault(event, [])
-        for g in groups:
+        for raw_g in groups:
+            g = adapt_group(raw_g, python_cmd)
             names = script_names(g)
             match = next((e for e in existing if names and names & script_names(e)), None)
             if match is None:
@@ -70,7 +90,16 @@ def main(settings_path, snippet_path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    py_cmd = None
+    if "--python-cmd" in args:
+        idx = args.index("--python-cmd")
+        if idx + 1 >= len(args):
+            sys.stderr.write(__doc__)
+            sys.exit(2)
+        py_cmd = args[idx + 1]
+        args = args[:idx] + args[idx + 2:]
+    if len(args) != 2:
         sys.stderr.write(__doc__)
         sys.exit(2)
-    sys.exit(main(sys.argv[1], sys.argv[2]))
+    sys.exit(main(args[0], args[1], py_cmd))

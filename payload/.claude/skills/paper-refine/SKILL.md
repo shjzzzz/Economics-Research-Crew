@@ -18,7 +18,7 @@ task_type: open-ended
 ## 3. 核心流程与委派规则
 ### 3.1 内部对抗精修循环（最多 3 轮，版本全保留）
 0. **快照基线**：`python .claude/scripts/paper_tools.py refine start paper/draft.md` 生成 `paper/versions/v0.md` 与 `paper/reviews.json`。
-1. **基线独立评审**：派出 `academic-reviewer`（独立上下文，一次一个，按 `Templates/handoff.md` **只给产物路径**：稿件、主张—证据对照表、结果登记簿、分析计划；不传作者推理）。要求按 `/academic-review` 契约输出：带编号清单（`F1…`、`M1…`、`m1…`，每条指向具体位置）+ 5 维 1–10 分（`ident, contrib, inst, consist, write`）+ 框架锁定检测 + 7 类 AI 失效核查。
+1. **基线独立评审与审稿报告复核**：派出 `academic-reviewer`（独立上下文，一次一个，按 `Templates/handoff.md` **只给产物路径**：稿件、主张—证据对照表、结果登记簿、分析计划；不传作者推理）。要求按 `/academic-review` 契约输出：已读文件清单 + 带编号清单（`F1…`、`M1…`、`m1…` + 可选 `Advisory/Watchlist`）+ 5 维 1–10 分（`ident, contrib, inst, consist, write`）+ 建议文献块 + 框架锁定与 7 类 AI 失效核查。保存审稿报告后运行 `python .claude/scripts/paper_tools.py review verify --review <报告> --manuscript paper/versions/v0.md` 核验审稿人引述与推荐文献，剔除误读或幻觉推荐后再动稿。
 2. **登记基线**：`python .claude/scripts/paper_tools.py refine record --version v0 --fatal F --major M --minor m --scores ident=5,contrib=6,inst=6,consist=7,write=6`。
 3. **针对性改稿**（写成 `paper/versions/v1.md`…`v3.md`，长篇修改可派 `paper-writer-agent`）：
    - 通过修改正文直接化解弱点，保留评审认可的“优点”段落；遵守 `Meta/style-guide.md` 避免引入 AI 套话。
@@ -37,7 +37,7 @@ task_type: open-ended
 - 每条回复绑定正文节/段、证据锚点与复核状态，确保“改稿处—回复信—证据”三方完全一致。
 
 ## 4. 收尾与停点（C4 → 可选 `/paper-polish` → S12）
-1. 向研究者汇报：精修版本轨迹、当前采用版、剩余 Fatal/Major 及转入 `Meta/review-queue.md` 的“需新分析”清单。
+1. 向研究者提交**简洁中文修改简报**（不含内部机读标签，逐条映射全部 Fatal/Major 到具体修改动作或待决项）以及：精修版本轨迹、当前采用版、剩余 Fatal/Major、`Advisory/Watchlist` 提示、`review verify` 结果及转入 `Meta/review-queue.md` 的“需新分析”清单。
 2. **内容定稿后，可选调用 `/paper-polish`** 做纯语言精修：必须通过 `polish check`（引文、`{{res}}`、主张标注、问答标记、数字全不变）并经研究者认可。
 3. 研究者确认采用版后，复制为 `paper/final.md`；运行 `orchestrator.py artifact paper/reviews.json paper/final.md` 与 `verify`，等研究者表态再 `gate`。
 4. **S12 终检准备**：运行 `cite check --strict`、`results check`、`claim check --strict`、`questions`，清零 7 类 AI 失效模式，依据 `orchestrator.py log` 与 `Meta/run-ledger.jsonl` 起草 `paper/ai-disclosure.md` 交研究者审定；结项后经研究者同意将“主张—证据对照”回流为 `08-Research-Notes/` 的 `type: synthesis` 页并刷新双地图。

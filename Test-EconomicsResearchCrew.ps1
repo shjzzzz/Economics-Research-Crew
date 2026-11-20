@@ -39,7 +39,7 @@ $hasClaude = (Test-Path (Join-Path $VaultPath ".claude\skills")) -or (Test-Path 
 $hasAgents = (Test-Path (Join-Path $VaultPath ".agents\skills")) -or (Test-Path (Join-Path $VaultPath "AGENTS.md"))
 if (-not ($hasClaude -or $hasAgents)) { $errors += "未发现任何平台的安装（.claude/ 或 .agents/）" }
 
-Test-Files "Meta\purpose.md","Meta\index.md","Meta\review-queue.md","Meta\vault-map.md","Meta\research-standards.md","Meta\source-registry.md","Meta\research-log.md","Meta\collaboration-protocol.md","Meta\style-guide.md","Meta\mechanism-library.md","Meta\decisions.md","Meta\ai-tells.json"
+Test-Files "Meta\purpose.md","Meta\index.md","Meta\review-queue.md","Meta\vault-map.md","Meta\research-standards.md","Meta\source-registry.md","Meta\research-log.md","Meta\collaboration-protocol.md","Meta\style-guide.md","Meta\mechanism-library.md","Meta\decisions.md","Meta\ai-tells.json","Meta\upstream-ars.json"
 foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Path (Join-Path $VaultPath $d))) { $errors += "缺少目录: $d" } }
 
 if ($hasClaude) {

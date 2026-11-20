@@ -110,16 +110,18 @@ claude
 
 ## 9. 论文写作工具链（`paper_tools.py`）
 1. **大纲（S8）**：`/paper-outline` 生成含主张清单与 6 步引言蓝图的 `paper/outline.md`。
-2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`。
+2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`；若为保密税务微数据/官方年鉴手工摘录而无法提供库内源文件，用 `--no-source-reason "…"` 做“诚实空值”披露（与 `--source` 互斥）。
 3. **引文管理（S9）**：
    - 从知识库文献卡直接桥接：`paper_tools.py cite from-note 03-Literature/<卡片>.md`；
    - 手动新增：`paper_tools.py cite add --key k --title "…" --year Y --locator "p.12, Table 2" --claim-scope "…" [--doi D | --type chinese | --type legal --doc-no … --effective …]`；
    - 人工确认：`paper_tools.py cite confirm --key k --note "…"`（触发权限提示）；导出 BibTeX：`cite bib -o paper/citations.bib`。
 4. **成稿与主张审计（S10）**：`cite check`、`results check`、`claim check`（核对 `locator` 锚点、大纲主张覆盖度与因果动词越界）、`questions`、`report`。
-5. **精修与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记全不变）。
+5. **精修、审稿复核与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `paper_tools.py review verify --review <报告> --manuscript <稿件>`（NFC 核对审稿原文引述 + Crossref 核验审稿推荐文献存在性）→ `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记全不变）。
 
-## 10. 多平台支持（Claude Code / Antigravity `agy` / Codex CLI）
-- `-Platform auto` 自动检测本机 CLI，也可用 `claude` / `agy` / `codex` / `all` 指定；`payload/.claude/` 是唯一源。
+## 10. 多平台与跨系统支持（Windows 11 / macOS；Claude Code / Antigravity `agy` / Codex CLI）
+- **跨系统安装**：Windows 11 使用 `Install-EconomicsResearchCrew.ps1`（或 `python tools/erc_cli.py`）；macOS / Linux 使用 `./install.sh --vault ~/Economicresearchwiki [--platform all] [--with-hooks]`（自动将 hooks 里的命令适配为 `python3`，Windows 11 保持 `python`）。
+- **多 CLI 自适应**：`-Platform auto` / `--platform auto` 自动检测本机 CLI，也可用 `claude` / `agy` / `codex` / `all` 指定；`payload/.claude/` 是唯一源。
+- **ARS 上游自适应追踪**：运行 `python tools/check_ars_updates.py check`（或 macOS `./install.sh check-ars`）按 `Meta/upstream-ars.json` 能力映射表检测 `Imbad0202/academic-research-skills` 新版本并输出原生适配简报（零 LLM 额度、不拷贝 CC-BY-NC 代码）；适配后用 `mark-audited --tag <tag> --sha <sha>` 推进基线。
 - agy 与 Codex 共用根目录 `AGENTS.md`（自包含 `ERC:BEGIN…ERC:END` 区块，压控在 ≤24,000 字节上限内）、`.agents/skills/`、`.agents/agents/`、`.agents/scripts/`。安装器在纯 agy/Codex 环境下也会自动调用 `.agents/scripts/wiki_lint.py map` 生成双地图。
 - 修改库内 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md` 后，运行 `.\Sync-AgentsMd.ps1 -VaultPath <库>` 同步 `AGENTS.md` 区块（`-Check` 只查不写）。
 - agy 在 `-WithHooks` 下安装 `protect_raw.py`（放行时返回 `ask`，不自动批准）与 `routing_hint.py`；Codex 无 hook，原始材料只读靠规则约束。

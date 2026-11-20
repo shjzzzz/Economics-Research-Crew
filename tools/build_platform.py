@@ -135,7 +135,14 @@ def build_rules_block(payload=None, claude_md=None, rules_md=None):
     return BEGIN + "\n" + body + END + "\n"
 
 
-def build(payload, stage, platforms):
+def default_python_cmd():
+    if sys.platform == "win32":
+        return "python"
+    return "python3" if shutil.which("python3") else "python"
+
+
+def build(payload, stage, platforms, python_cmd=None):
+    python_cmd = python_cmd or default_python_cmd()
     src = os.path.join(payload, ".claude")
     agents_root = os.path.join(stage, ".agents")
     # skills (shared by agy and Codex)
@@ -179,8 +186,8 @@ def build(payload, stage, platforms):
         copy(os.path.join(src, "routing-triggers.json"), os.path.join(agents_root, "routing-triggers.json"))
         snippet = {HOOK_KEY: {
             "PreToolUse": [{"matcher": "*", "hooks": [
-                {"type": "command", "command": "python hooks/protect_raw.py", "timeout": 10}]}],
-            "PreInvocation": [{"type": "command", "command": "python hooks/routing_hint.py", "timeout": 10}],
+                {"type": "command", "command": "%s hooks/protect_raw.py" % python_cmd, "timeout": 10}]}],
+            "PreInvocation": [{"type": "command", "command": "%s hooks/routing_hint.py" % python_cmd, "timeout": 10}],
         }}
         wr(os.path.join(stage, "hooks.erc.json"), json.dumps(snippet, ensure_ascii=False, indent=2) + "\n")
     print("built %s (AGENTS block %d bytes)" % (",".join(sorted(platforms)), size))
@@ -261,7 +268,8 @@ def main(argv):
         plats = {"agy", "codex"}
         if "--platforms" in argv:
             plats = set(argv[argv.index("--platforms") + 1].split(","))
-        build(argv[1], argv[2], plats)
+        py_cmd = argv[argv.index("--python-cmd") + 1] if "--python-cmd" in argv else None
+        build(argv[1], argv[2], plats, py_cmd)
     elif len(argv) >= 3 and argv[0] == "merge-agents-md":
         merge_agents_md(argv[1], argv[2], "--update" in argv)
     elif len(argv) >= 2 and argv[0] == "sync-vault":

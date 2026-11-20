@@ -13,10 +13,12 @@ cite keys that exist in a verified citation table, and every number must trace t
   cite check DRAFT.md...                      unknown keys (error), unverified keys (warning), unused entries
   cite bib [-o refs.bib]                      BibTeX of the table
   cite list
-  results register --id ID --value V [--label L --se S --n N --source FILE --script FILE --note T]
+  results register --id ID --value V [--label L --se S --n N --source FILE --script FILE --no-source-reason T --note T]
   results import CSV --prefix P --source FILE [--script FILE]   register every cell as P.<row>.<col>
   results render DRAFT.md [-o OUT.md]         fill {{res:id}} / {{res:id:3}} placeholders from the ledger
   results check DRAFT.md...                   unknown ids, stale sources, bare statistics not linked to results
+  review verify --review R.md --manuscript M.md [--offline] [--strict] [--json]
+                                              verify reviewer quotes against manuscript (NFC) & suggested references
   refine start DRAFT.md                       snapshot paper/versions/v0.md
   refine record --version vN --fatal F --major M --minor m --scores a=5,b=6
                                               record a review and get the accept / revert decision
@@ -41,6 +43,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.parse
 import urllib.request
 from collections import Counter
@@ -399,11 +402,16 @@ def to_float(s):
         return None
 
 
-def register(vault, m, rid, value, label="", se=None, n=None, source=None, script=None, note=""):
+def register(vault, m, rid, value, label="", se=None, n=None, source=None, script=None, note="", no_source_reason=None):
     if not re.match(r"^[A-Za-z0-9_.\-:]+$", rid):
         sys.exit("id 只能含字母数字、下划线、点、冒号、连字符：%s" % rid)
+    if source and no_source_reason:
+        sys.exit("不能同时提供 --source 和 --no-source-reason；有源文件只填 --source，确无源文件才填诚实理由。")
     e = {"id": rid, "value": str(value), "numeric": to_float(value), "label": label, "se": se, "n": n,
          "note": note, "registered": now()}
+    if no_source_reason:
+        e["source"] = None
+        e["no_source_reason"] = no_source_reason.strip()
     for fld, p in (("source", source), ("script", script)):
         if p:
             ap = in_vault(vault, p)
@@ -420,11 +428,17 @@ def cmd_results_register(a):
     path, m = rmap(vault)
     if a.id in m["entries"] and not a.replace:
         sys.exit("id 已存在：%s（要覆盖请加 --replace）" % a.id)
-    register(vault, m, a.id, a.value, a.label, a.se, a.n, a.source, a.script, a.note or "")
+    register(vault, m, a.id, a.value, a.label, a.se, a.n, a.source, a.script, a.note or "", a.no_source_reason)
     save(path, m)
     orc.ledger_append(vault, "result_register", id=a.id)
     e = m["entries"][a.id]
-    print("%s = %s%s" % (a.id, e["value"], "" if e.get("source") else "  （警告：没有 --source，无法追溯来源）"))
+    if e.get("no_source_reason"):
+        suffix = "  （诚实空值：%s）" % e["no_source_reason"]
+    elif e.get("source"):
+        suffix = ""
+    else:
+        suffix = "  （警告：没有 --source，无法追溯来源；若确无库内源文件请用 --no-source-reason 说明）"
+    print("%s = %s%s" % (a.id, e["value"], suffix))
 
 
 def cmd_results_import(a):
@@ -955,6 +969,99 @@ def cmd_report(a):
         print("精修：当前 %s；" % rv["current"] + "；".join("%s %s" % (r["version"], r["decision"]) for r in rv["rounds"]))
 
 
+# ------------------------------------------------------------------ review verify (advisory audit of reviewer output)
+QUOTE_PATTERNS = [
+    re.compile(r"「([^「」\n]{6,220})」"),
+    re.compile(r"“([^“”\n]{6,220})”"),
+    re.compile(r'"([^"\n]{12,220})"'),
+]
+SUGGESTED_BLOCK_RE = re.compile(r"```(?:yaml\s+)?suggested-references\s*\r?\n(.*?)```", re.S | re.I)
+
+
+def _norm_ws(s):
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", s or "")).strip()
+
+
+def _extract_quotes(review_text):
+    clean = strip_code(review_text)
+    seen, out = set(), []
+    for pat in QUOTE_PATTERNS:
+        for m in pat.finditer(clean):
+            q = m.group(1).strip()
+            nq = _norm_ws(q)
+            if nq and nq not in seen:
+                seen.add(nq)
+                out.append(q)
+    return out
+
+
+def _parse_suggested_refs(review_text):
+    """Parse minimal YAML-like list items inside ```yaml suggested-references ...``` blocks."""
+    refs = []
+    for m in SUGGESTED_BLOCK_RE.finditer(review_text):
+        cur = None
+        for raw in m.group(1).splitlines():
+            ln = raw.strip()
+            if not ln or ln.startswith("#") or ln == "[]":
+                continue
+            if ln.startswith("- "):
+                if cur and (cur.get("title") or cur.get("doi")):
+                    refs.append(cur)
+                cur = {}
+                ln = ln[2:].strip()
+            if cur is None:
+                continue
+            kv = re.match(r"^([A-Za-z_]+)\s*:\s*(.*)$", ln)
+            if kv:
+                k, v = kv.group(1).lower(), kv.group(2).strip().strip("\"'")
+                if v:
+                    cur[k] = v
+        if cur and (cur.get("title") or cur.get("doi")):
+            refs.append(cur)
+    return refs
+
+
+def cmd_review_verify(a):
+    """Advisory audit of a reviewer report: verify quoted manuscript passages (NFC) & suggested references."""
+    if not os.path.isfile(a.review):
+        sys.exit("找不到审稿报告：%s" % a.review)
+    if not os.path.isfile(a.manuscript):
+        sys.exit("找不到稿件文件：%s" % a.manuscript)
+    rtext = read_text(a.review)
+    mtext_norm = _norm_ws(read_text(a.manuscript))
+    quotes = _extract_quotes(rtext)
+    verified_q, unverified_q = [], []
+    for q in quotes:
+        if _norm_ws(q) in mtext_norm:
+            verified_q.append(q)
+        else:
+            unverified_q.append(q)
+    refs_raw = _parse_suggested_refs(rtext)
+    refs_checked = []
+    off = offline(a)
+    for item in refs_raw:
+        title = item.get("title", "")
+        ctype = item.get("type", "chinese" if is_zh(title) else "article")
+        e = {"title": title, "year": item.get("year"), "doi": item.get("doi"), "type": ctype, "status": "unverified"}
+        st = verify_entry(e, off)
+        refs_checked.append({"title": title, "year": e.get("year"), "doi": e.get("doi"),
+                             "status": st, "note": e.get("note_verify", "")})
+    bad_refs = [r for r in refs_checked if r["status"] in ("mismatch", "unverified")]
+    res = {"quotes_total": len(quotes), "quotes_verified": len(verified_q), "unverified_quotes": unverified_q,
+           "suggested_refs": refs_checked}
+    if a.json:
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+    else:
+        for q in unverified_q:
+            print("警告  UNVERIFIED_QUOTE（稿件中未找到该引述）：%s" % q[:80])
+        for r in refs_checked:
+            tag = "通过" if r["status"] == "verified" else ("人工" if r["status"] == "manual" else "警告")
+            print("%s  推荐文献 [%s] %s%s" % (tag, r["status"], r["title"][:60], ("（%s）" % r["note"]) if r["note"] else ""))
+        print("审稿复核：引述 %d/%d 匹配，未匹配 %d；推荐文献 %d 条（待核/不符 %d）。" % (
+            len(verified_q), len(quotes), len(unverified_q), len(refs_checked), len(bad_refs)))
+    sys.exit(1 if (a.strict and (unverified_q or bad_refs)) else 0)
+
+
 # ------------------------------------------------------------------ cli
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -986,7 +1093,8 @@ def main(argv=None):
     p = r.add_parser("register")
     p.add_argument("--id", required=True); p.add_argument("--value", required=True); p.add_argument("--label", default="")
     p.add_argument("--se"); p.add_argument("--n"); p.add_argument("--source"); p.add_argument("--script")
-    p.add_argument("--note"); p.add_argument("--replace", action="store_true"); p.set_defaults(f=cmd_results_register)
+    p.add_argument("--no-source-reason"); p.add_argument("--note"); p.add_argument("--replace", action="store_true")
+    p.set_defaults(f=cmd_results_register)
     p = r.add_parser("import"); p.add_argument("csv"); p.add_argument("--prefix", required=True)
     p.add_argument("--source"); p.add_argument("--script"); p.set_defaults(f=cmd_results_import)
     p = r.add_parser("render"); p.add_argument("draft"); p.add_argument("-o", "--output"); p.set_defaults(f=cmd_results_render)
@@ -1011,6 +1119,12 @@ def main(argv=None):
     p.set_defaults(f=cmd_polish_scan)
     p = po.add_parser("check"); p.add_argument("--before", required=True); p.add_argument("--after", required=True)
     p.set_defaults(f=cmd_polish_check)
+
+    rv_sub = top.add_parser("review").add_subparsers(dest="cmd", required=True)
+    p = rv_sub.add_parser("verify")
+    p.add_argument("--review", required=True); p.add_argument("--manuscript", required=True)
+    p.add_argument("--offline", action="store_true"); p.add_argument("--strict", action="store_true")
+    p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_review_verify)
 
     p = top.add_parser("questions"); p.add_argument("files", nargs="+"); p.set_defaults(f=cmd_questions)
     p = top.add_parser("report"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_report)
