@@ -106,7 +106,7 @@ chmod +x install.sh
 | `google-research/paper-orchestra` | Apache-2.0 | 借鉴受限输入写作、引文表、结果追溯与精修回退理念 | 原生重写，不含其代码；保留经济学研究者关卡 |
 | `Imbad0202/academic-research-skills`（截至 `v3.24.4`） | CC-BY-NC-4.0 | 借鉴苏格拉底防越位、让步门槛、框架锁定、L3 锚点、`data_access_level`、7 类 AI 失效闸门、R&R 矩阵、审稿引述/推荐文献核验、按稿件日期评判、分配归宿核查、`--no-source-reason` 诚实空值与 `Advisory` 分层 | **仅借设计模式并在本项目原生重写，绝不含其任何代码或提示词**；通过 `tools/check_ars_updates.py` 持续追踪 |
 | `academic-humanizer` / `econ-writing-skill` / `humanizer-zh-academic` | MIT | 借鉴语言精修分层、经济学章节公式与中文学术套话分类（`Meta/ai-tells.json`） | 原生重写；**不采用**“降低 AIGC 检测率”目标，AI 参与须如实披露 |
-| `payload-extras/`（可选 `-WithExtras`） | MIT（公开仓库仅含 2 个） | 公开仓库仅收录 MIT 许可的 `neishengxing-main`、`thu-digitizer-main`（见 `payload-extras/README.md`） | 未经本项目审计、默认不安装、不配置任何 MCP |
+| `payload-extras/`（可选 `-WithExtras`） | 本地自用 | 原 6 个绘图与制表 Skill（`publication-chart-skill` / `econ-visualization` / `scientific-visualization` / `copyplot` / `thu-digitizer` / `tikz`）已转入必装 `payload/.claude/skills/` | 未经本项目审计、默认不安装、不配置任何 MCP |
 
 ---
 
@@ -121,7 +121,7 @@ chmod +x install.sh
 ### 回归验证命令
 | 验证项 | 命令 | 说明 |
 |---|---|---|
-| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、15 Skills、frontmatter、全部 `Meta/` 与 Hooks |
+| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、21 Skills、frontmatter、全部 `Meta/` 与 Hooks |
 | 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 247 项测试，全在临时目录运行，不触碰真实知识库 |
 | 上游 ARS 更新检查 | `python tools/check_ars_updates.py check` | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报 |
 | 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | 消耗 Claude 额度；覆盖 `tests/routing_cases.json` 16 个路由用例 |

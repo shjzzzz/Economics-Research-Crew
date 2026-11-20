@@ -40,6 +40,8 @@ SKILLS = [
     "causal-inference-audit", "econometric-analysis", "academic-review",
     "ingest-source", "query-wiki", "wiki-lint", "research-pipeline",
     "paper-outline", "paper-draft", "paper-refine", "paper-polish",
+    "publication-chart-skill", "econ-visualization", "scientific-visualization",
+    "copyplot", "tikz", "thu-digitizer",
 ]
 META_REQUIRED = [
     "Meta/purpose.md", "Meta/index.md", "Meta/review-queue.md", "Meta/vault-map.md",
