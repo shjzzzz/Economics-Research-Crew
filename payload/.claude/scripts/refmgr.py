@@ -547,6 +547,14 @@ def note_text(e, template, src_rel=None, sha=None, today=""):
 
 
 # ------------------------------------------------------------------ Zotero API (read-only GET)
+def _open(req, timeout):
+    """urlopen that never routes loopback traffic through HTTP(S)_PROXY (a system proxy answers 503 for 127.0.0.1)."""
+    host = (urllib.parse.urlparse(req.full_url).hostname or "").lower()
+    if host in LOCAL_HOSTS or host == "::1":
+        return urllib.request.build_opener(urllib.request.ProxyHandler({})).open(req, timeout=timeout)
+    return urllib.request.urlopen(req, timeout=timeout)
+
+
 def check_base(base, offline_flag):
     u = urllib.parse.urlparse(base)
     host = (u.hostname or "").lower()
@@ -568,7 +576,7 @@ def zotero_fetch(base, api_key=None, collection=None, limit=None, timeout=20):
     while True:
         url = "%s%s?format=csljson&limit=%d&start=%d" % (base.rstrip("/"), path, page, start)
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=hdrs), timeout=timeout) as resp:
+            with _open(urllib.request.Request(url, headers=hdrs), timeout) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as ex:
             hint = {403: "（Zotero 7：设置 → 高级 → 勾选“允许此计算机上的其他应用程序与 Zotero 通信”；网络库请检查 API 密钥权限）",
@@ -593,7 +601,7 @@ def zotero_fetch(base, api_key=None, collection=None, limit=None, timeout=20):
 def _http(url, hdrs, data=None, timeout=20):
     try:
         req = urllib.request.Request(url, headers=hdrs, data=data)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with _open(req, timeout) as resp:
             body = resp.read().decode("utf-8")
             return json.loads(body) if body.strip() else {}
     except urllib.error.HTTPError as ex:
