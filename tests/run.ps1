@@ -718,8 +718,22 @@ $hj14 = [IO.File]::ReadAllText((Join-Path $v14 ".agents\hooks.json"), $enc)
 Ok ($sj14 -match 'python3 .*protect_raw\.py' -and $hj14 -match 'python3 hooks/protect_raw\.py') "macOS mode adapts Claude and agy hook commands to python3"
 Ok (Test-Path (Join-Path $pkg "install.sh")) "macOS/Linux install.sh launcher present"
 
+# --- 15. EndNote / Zotero exchange (cite import | ris | csl | zotero) --------------------
+Write-Host "[15] reference-manager exchange"
+$v15 = New-Vault
+Ok ((Run-Install $v15) -eq 0) "v15 fresh install exit 0"
+Ok (Test-Path (Join-Path $v15 ".claude\scripts\refmgr.py")) "refmgr.py installed with the scripts"
+$ErrorActionPreference = "Continue"
+$selftest = Join-Path $pkg "tests\refmgr_selftest.py"
+$stOut = & $py -X utf8 $selftest (Join-Path $v15 ".claude\scripts\paper_tools.py") $v15 2>&1
+foreach ($ln in $stOut) {
+    $m = [regex]::Match([string]$ln, '^\s+(PASS|FAIL) (.+)$')
+    if ($m.Success) { Ok ($m.Groups[1].Value -eq "PASS") ("refmgr: " + $m.Groups[2].Value) }
+}
+Ok ($LASTEXITCODE -eq 0) "refmgr selftest exit 0"
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

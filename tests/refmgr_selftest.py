@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+"""Self-test for EndNote / Zotero exchange (cite import | ris | csl | zotero). Usage:
+  python tests/refmgr_selftest.py <vault>/.claude/scripts/paper_tools.py <installed vault>
+Runs offline (ERC_OFFLINE=1); the Zotero test talks to a throw-away server on 127.0.0.1."""
+import http.server, json, os, re, subprocess, sys, tempfile, threading
+
+PT, VAULT = os.path.abspath(sys.argv[1]), os.path.abspath(sys.argv[2])
+sys.path.insert(0, os.path.dirname(PT))
+import refmgr  # noqa: E402
+
+fails = 0
+
+
+def check(cond, name):
+    global fails
+    print(("  PASS " if cond else "  FAIL ") + name)
+    fails += 0 if cond else 1
+
+
+def pt(vault, *args, env=None):
+    e = dict(os.environ, ERC_OFFLINE="1", PYTHONIOENCODING="utf-8")
+    e.update(env or {})
+    r = subprocess.run([sys.executable, "-X", "utf8", PT, "--vault", vault] + list(args),
+                       capture_output=True, text=True, encoding="utf-8", env=e)
+    return r.returncode, r.stdout + r.stderr
+
+
+def cmap(vault):
+    with open(os.path.join(vault, "Meta", "citation-map.json"), encoding="utf-8") as fh:
+        return json.load(fh)["entries"]
+
+
+tmp = tempfile.mkdtemp(prefix="erc-refmgr-")
+pdf_root = os.path.join(tmp, "Library.Data", "PDF", "ab")
+os.makedirs(pdf_root)
+pdf1 = os.path.join(pdf_root, "Chetty-2009.pdf")
+pdf2 = os.path.join(tmp, "autor.pdf")
+for p in (pdf1, pdf2):
+    with open(p, "wb") as fh:
+        fh.write(b"%PDF-1.4 test " + os.path.basename(p).encode())
+
+RIS = "\r\n".join([
+    "TY  - JOUR", "AU  - Chetty, Raj", "AU  - Looney, Adam", "AU  - Kroft, Kory", "PY  - 2009///",
+    "TI  - Salience and Taxation: Theory and Evidence", "JO  - American Economic Review", "VL  - 99", "IS  - 4",
+    "SP  - 1145", "EP  - 1177", "DO  - 10.1257/aer.99.4.1145", "AB  - We show that salience matters.",
+    "KW  - tax salience", "KW  - behavioral", "L1  - internal-pdf://1234/Chetty-2009.pdf", "ID  - 17", "ER  - ", "",
+    "TY  - JOUR", "AU  - 张三", "AU  - 李四", "PY  - 2024", "TI  - 数字化征管与企业税收遵从", "JO  - 经济研究", "ER  - ", "",
+    "TY  - STAT", "TI  - Some Tax Act", "PY  - 2018", "ER  - ", ""])
+ris_path = os.path.join(tmp, "endnote.ris")
+with open(ris_path, "w", encoding="utf-8", newline="") as fh:
+    fh.write(RIS)
+
+esc = pdf2.replace("\\", "\\\\").replace(":", "\\:")
+BIB = r"""@comment{jabref-meta: x}
+@article{Autor2013,
+  title = {The {China} Syndrome: Local Labor Market Effects of Import Competition in the {United States}},
+  author = {Autor, David H. and Dorn, David and Hanson, Gordon H.},
+  year = {2013}, journal = {American Economic Review}, doi = {10.1257/aer.103.6.2121},
+  file = {Full Text PDF:%s:application/pdf;Snapshot:x.html:text/html},
+  keywords = {trade, labor}
+}
+@book{angrist2009,
+  title = "Mostly Harmless " # "Econometrics",
+  author = {Angrist, Joshua D. and Pischke, J{\"o}rn-Steffen},
+  publisher = {Princeton University Press}, year = 2009
+}
+@article{dupe, title = {Salience and Taxation: Theory and Evidence}, author = {Chetty, Raj}, year = {2009}}
+""" % esc
+bib_path = os.path.join(tmp, "zotero.bib")
+with open(bib_path, "w", encoding="utf-8") as fh:
+    fh.write(BIB)
+
+CSL = [{"id": "ABCD1234", "type": "article-journal", "title": "Minimum Wages and Employment: A Case Study of the Fast-Food Industry",
+        "author": [{"family": "Card", "given": "David"}, {"family": "Krueger", "given": "Alan B."}],
+        "issued": {"date-parts": [[1994]]}, "container-title": "American Economic Review", "DOI": "10.1257/aer.84.4.772"},
+       {"id": "EFGH5678", "type": "article-journal", "title": "The China Syndrome: Local Labor Market Effects of Import Competition in the United States",
+        "author": [{"family": "Autor", "given": "David"}], "issued": {"date-parts": [[2013]]}, "DOI": "https://doi.org/10.1257/AER.103.6.2121"}]
+csl_path = os.path.join(tmp, "zotero.json")
+with open(csl_path, "w", encoding="utf-8") as fh:
+    json.dump(CSL, fh)
+
+print("[A] parsers")
+tb = refmgr.parse_bibtex('@string{x = "y"}\n@article{k1, title = "A {B} c" # " d", year = 2020, author={O{\\"}brien, Tim}}\n@misc{k2,\n title={Q}}')
+check(len(tb) == 2 and tb[0]["title"] == "A B c d" and tb[0]["year"] == "2020", "BibTeX: quoted + concatenation + bare year + @string skipped")
+check(refmgr.clean('J{\\"o}rn \\& {\\\'E}mile') == "Jörn & Émile", "BibTeX: LaTeX accents and escapes cleaned")
+check(refmgr.parse_bib_files("Full Text PDF:C\\:\\\\a\\\\b.pdf:application/pdf;:rel/x.pdf:PDF") == ["C:\\a\\b.pdf", "rel/x.pdf"], "BibTeX file field: Zotero and JabRef forms")
+check(refmgr.norm_author("Chetty, Raj") == "Raj Chetty" and refmgr.norm_author("张三") == "张三", "authors: 'Last, First' -> 'First Last'; CJK untouched")
+check(refmgr.norm_doi("https://doi.org/10.1257/AER.99.4.1145") == "10.1257/aer.99.4.1145", "DOI normalisation")
+check(refmgr.decode_bytes("数字化 税".encode("gb18030")) == "数字化 税", "GBK export decodes")
+
+print("[B] import EndNote RIS")
+c, o = pt(VAULT, "cite", "import", ris_path, "--attach", "--pdf-dir", os.path.join(tmp, "Library.Data"), "--dry-run")
+check(c == 0 and "[dry-run]" in o and "导入 2 条" in o, "dry-run reports what it would import")
+check(not os.path.exists(os.path.join(VAULT, "Meta", "citation-map.json")) and not os.path.exists(os.path.join(VAULT, "03-Literature", "chetty2009salience.md")), "dry-run writes nothing (no map, no note)")
+c, o = pt(VAULT, "cite", "import", ris_path, "--attach", "--pdf-dir", os.path.join(tmp, "Library.Data"))
+E = cmap(VAULT)
+check(c == 0 and "chetty2009salience" in E, "RIS: EndNote numeric ID replaced by chetty2009salience")
+check(E["chetty2009salience"]["authors"] == ["Raj Chetty", "Adam Looney", "Kory Kroft"] and E["chetty2009salience"]["year"] == "2009", "RIS: authors and year normalised")
+check(E["chetty2009salience"]["status"] == "unverified" and E["chetty2009salience"]["doi"] == "10.1257/aer.99.4.1145", "RIS: starts unverified, DOI kept")
+zh = [k for k, v in E.items() if v["type"] == "chinese"]
+check(len(zh) == 1 and zh[0].startswith("zh2024") and E[zh[0]]["status"] == "manual", "RIS: Chinese item -> type chinese, status manual")
+check("法规类条目" in o and len(E) == 2, "RIS: statute item skipped with instruction")
+note = os.path.join(VAULT, "03-Literature", "chetty2009salience.md")
+txt = open(note, encoding="utf-8").read() if os.path.exists(note) else ""
+check("cite_key: chetty2009salience" in txt and "verification: unverified" in txt and "We show that salience matters." in txt, "RIS: literature note created with abstract")
+srcpdf = os.path.join(VAULT, "03-Literature", "_sources", "chetty2009salience.pdf")
+check(os.path.isfile(srcpdf) and "sources: [03-Literature/_sources/chetty2009salience.pdf]" in txt and re.search(r'sha256: "[0-9a-f]{64}"', txt) is not None, "RIS: PDF found via --pdf-dir, copied to _sources, sha256 in note")
+check(open(pdf1, "rb").read() == open(srcpdf, "rb").read() and os.path.isfile(pdf1), "attachment copied, original left in place")
+c, o = pt(VAULT, "cite", "import", ris_path)
+check(c == 0 and "导入 0 条（跳过重复 2" in o, "re-import: duplicates skipped by DOI/title")
+c, o = pt(VAULT, "cite", "import", ris_path, "--replace", "--no-notes")
+check(c == 0 and "已覆盖" in o and len(cmap(VAULT)) == 2, "--replace overwrites without creating extra entries")
+
+print("[C] import Zotero BibTeX and CSL-JSON")
+c, o = pt(VAULT, "cite", "import", bib_path, "--attach")
+E = cmap(VAULT)
+check(c == 0 and "Autor2013" in E and "angrist2009" in E, "BibTeX: valid imported keys kept")
+check(E["Autor2013"]["title"].startswith("The China Syndrome:") and "{" not in E["Autor2013"]["title"], "BibTeX: braces removed from title")
+check(E["angrist2009"]["type"] == "book" and E["angrist2009"]["title"] == "Mostly Harmless Econometrics" and "Jörn-Steffen Pischke" in E["angrist2009"]["authors"], "BibTeX: @book, # concatenation, accents")
+check("重复" in o and "dupe" not in E, "BibTeX: duplicate of an EndNote record skipped")
+check(os.path.isfile(os.path.join(VAULT, "03-Literature", "_sources", "Autor2013.pdf")), "BibTeX: escaped Windows file path resolved and copied")
+c, o = pt(VAULT, "cite", "import", csl_path)
+E = cmap(VAULT)
+check(c == 0 and "card1994minimum" in E, "CSL: Zotero item key replaced by authorYEARword key")
+check(not any(k in ("ABCD1234", "EFGH5678") for k in E) and len(E) == 5, "CSL: DOI duplicate (URL form, upper case) skipped")
+
+print("[D] lint, index and bridge")
+lint = os.path.join(os.path.dirname(PT), "wiki_lint.py")
+idx = open(os.path.join(VAULT, "Meta", "index.md"), encoding="utf-8").read()
+check("[[chetty2009salience]]" in idx and "[[Autor2013]]" in idx and idx.count("[[chetty2009salience]]") == 1, "notes registered once in Meta/index.md (文献 table)")
+check("参考文献软件导入" in open(os.path.join(VAULT, "Meta", "log.md"), encoding="utf-8").read(), "Meta/log.md entry appended")
+subprocess.run([sys.executable, "-X", "utf8", lint, "map", "--vault", VAULT], capture_output=True)
+r = subprocess.run([sys.executable, "-X", "utf8", lint, "lint", "--vault", VAULT], capture_output=True, text=True, encoding="utf-8")
+check("0 error(s)" in r.stdout and "0 warning(s)" in r.stdout, "wiki_lint: imported notes, index and _sources links give 0 errors, 0 warnings")
+c, o = pt(VAULT, "cite", "from-note", os.path.join("03-Literature", "chetty2009salience.md"), "--replace")
+check(c == 0 and "chetty2009salience" in o, "imported note bridges back through cite from-note")
+
+print("[E] export")
+ris_out, csl_out, bib_out = (os.path.join(tmp, n) for n in ("out.ris", "out.json", "out.bib"))
+c1, _ = pt(VAULT, "cite", "ris", "-o", ris_out)
+c2, _ = pt(VAULT, "cite", "csl", "-o", csl_out)
+c3, _ = pt(VAULT, "cite", "bib", "-o", bib_out)
+rt = open(ris_out, "rb").read()
+check(c1 == 0 and rt.startswith(b"\xef\xbb\xbf") and b"TY  - JOUR" in rt and b"ER  - " in rt, "RIS export: BOM + TY/ER records")
+cj = json.load(open(csl_out, encoding="utf-8"))
+check(c2 == 0 and len(cj) == 5 and any(x.get("author", [{}])[0].get("literal") == "张三" for x in cj) and any(x["id"] == "card1994minimum" and x["author"][0]["family"] == "Card" for x in cj), "CSL export: names split, CJK literal")
+check(c3 == 0 and "abstract = {We show that salience matters.}" in open(bib_out, encoding="utf-8").read(), "BibTeX export carries abstract/keywords")
+v2 = os.path.join(tmp, "vault2")
+os.makedirs(os.path.join(v2, "Meta")); os.makedirs(os.path.join(v2, "01-Research-Projects"))
+c, o = pt(v2, "cite", "import", ris_out, "--no-notes")
+E1, E2 = cmap(VAULT), cmap(v2)
+check(c == 0 and len(E2) == 5 and {e["doi"] for e in E1.values() if e["doi"]} == {e["doi"] for e in E2.values() if e["doi"]}, "round trip: exported RIS re-imports with the same DOIs")
+check({e["title"] for e in E1.values()} == {e["title"] for e in E2.values()}, "round trip: titles identical (incl. Chinese)")
+gbk = os.path.join(tmp, "gbk.ris")
+open(gbk, "wb").write("TY  - JOUR\r\nTI  - 平台经济与税收治理\r\nAU  - 王五\r\nPY  - 2023\r\nER  - \r\n".encode("gb18030"))
+c, o = pt(v2, "cite", "import", gbk, "--no-notes")
+check(c == 0 and any("平台经济" in e["title"] for e in cmap(v2).values()), "GBK-encoded EndNote export imports correctly")
+
+print("[F] Zotero API")
+SERVED = []
+
+
+class H(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        SERVED.append((self.command, self.path, self.headers.get("Zotero-API-Key"), self.headers.get("Zotero-API-Version")))
+        body = json.dumps({"items": [{"id": "ZZZZ9999", "type": "article-journal", "title": "Tax Evasion and Inequality",
+                                      "author": [{"family": "Alstadsæter", "given": "Annette"}],
+                                      "issued": {"date-parts": [[2019]]}, "DOI": "10.1257/aer.20172043"}]
+                           if "start=0" in self.path else []}).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *a):
+        pass
+
+
+srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+threading.Thread(target=srv.serve_forever, daemon=True).start()
+base = "http://127.0.0.1:%d/api/users/0" % srv.server_port
+c, o = pt(v2, "cite", "zotero", "--base-url", base, env={"ZOTERO_API_KEY": "secret-test-key"})
+srv.shutdown()
+E2 = cmap(v2)
+check(c == 0 and any(e["doi"] == "10.1257/aer.20172043" for e in E2.values()), "zotero: items pulled and imported as unverified")
+check(SERVED and all(s[0] == "GET" for s in SERVED) and "/items/top?format=csljson" in SERVED[0][1] and SERVED[0][3] == "3", "zotero: read-only GET against /items/top (csljson, API v3)")
+check("secret-test-key" not in o, "zotero: API key never printed")
+c, o = pt(v2, "cite", "zotero", "--base-url", "http://example.com/api/users/1")
+check(c != 0 and "https" in o, "zotero: refuses plain http to a non-local host")
+c, o = pt(v2, "cite", "zotero", "--user", "1")
+check(c != 0 and "--offline" in o, "zotero: ERC_OFFLINE blocks the web API")
+
+print("selftest failures: %d" % fails)
+sys.exit(1 if fails else 0)

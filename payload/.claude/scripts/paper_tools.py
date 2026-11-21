@@ -12,6 +12,13 @@ cite keys that exist in a verified citation table, and every number must trace t
   cite confirm --key K --note TEXT            the researcher confirms a source by hand (asks for permission)
   cite check DRAFT.md...                      unknown keys (error), unverified keys (warning), unused entries
   cite bib [-o refs.bib]                      BibTeX of the table
+  cite ris [-o refs.ris] | cite csl [-o refs.json]   export for EndNote / Zotero / Word
+  cite import FILE... [--format auto|ris|bibtex|csl] [--no-notes] [--attach] [--pdf-dir DIR] [--verify] [--replace] [--dry-run]
+                                              import an EndNote/Zotero export (RIS, BibTeX, CSL-JSON): entries start
+                                              unverified, literature notes are created, PDFs copied to _sources with --attach
+  cite zotero [--user ID | --group ID | --base-url URL] [--collection KEY] [--limit N] [...]
+                                              pull from the local Zotero API (default) or the Zotero web API (GET only;
+                                              API key only from env ZOTERO_API_KEY)
   cite list
   results register --id ID --value V [--label L --se S --n N --source FILE --script FILE --no-source-reason T --note T]
   results import CSV --prefix P --source FILE [--script FILE]   register every cell as P.<row>.<col>
@@ -302,7 +309,10 @@ def cmd_cite_check(a):
 def bibtex(e):
     typ = {"book": "book", "legal": "misc"}.get(e.get("type"), "article")
     f = [("title", e["title"]), ("author", " and ".join(e.get("authors", []))), ("year", e.get("year")),
-         ("journal" if typ == "article" else "publisher", e.get("venue")), ("doi", e.get("doi"))]
+         ("journal" if typ == "article" else "publisher", e.get("venue")), ("doi", e.get("doi")),
+         ("url", e.get("url")), ("volume", e.get("volume")), ("number", e.get("issue")),
+         ("pages", (e.get("pages") or "").replace("-", "--") if e.get("pages") else None),
+         ("abstract", e.get("abstract")), ("keywords", ", ".join(e.get("keywords", [])))]
     if e.get("type") == "legal":
         f.append(("note", "%s，%s 生效" % (e.get("doc_no"), e.get("effective"))))
     f.append(("note" if e.get("type") != "legal" else "annote", "核验状态：%s" % e.get("status")))
@@ -379,6 +389,13 @@ def cmd_cite_from_note(a):
             if not (doc_no and eff):
                 sys.exit("%s 为法规条目，frontmatter 需包含 doc_no 与 effective。" % raw)
             e["doc_no"], e["effective"] = doc_no, eff
+        if str(fm.get("url") or "").strip():
+            e["url"] = str(fm["url"]).strip()
+        old = m["entries"].get(key)
+        if old:  # keep bibliographic extras that a note's frontmatter does not carry (e.g. imported abstract)
+            for fld in ("abstract", "keywords", "volume", "issue", "pages", "imported_from", "pdf", "sha256"):
+                if old.get(fld) and not e.get(fld):
+                    e[fld] = old[fld]
         st = verify_entry(e, offline(a))
         m["entries"][key] = e
         orc.ledger_append(vault, "cite_add", key=key, status=st, from_note=e["note_path"])
@@ -387,6 +404,187 @@ def cmd_cite_from_note(a):
     if added:
         save(path, m)
     print("共桥接登记 %d 条。" % added)
+
+
+# ------------------------------------------------------------------ reference managers (EndNote / Zotero)
+def _import_records(a, vault, path, m, recs, label, base_dir=None):
+    import refmgr  # same folder, standard library only
+    unverified_only = (not getattr(a, "verify", False)) or offline(a)
+    taken = set(m["entries"])
+    tpl_path = os.path.join(vault, "Templates", "literature-note.md")
+    template = read_text(tpl_path) if os.path.isfile(tpl_path) else ""
+    tag = "[dry-run] " if a.dry_run else ""
+    st_n = {"new": 0, "dup": 0, "skip": 0, "notes": 0, "pdf": 0}
+    new_notes = []
+    for rec in recs:
+        title = rec.get("title") or ""
+        if not title:
+            print("%s跳过：缺少标题" % tag)
+            st_n["skip"] += 1
+            continue
+        typ = refmgr.decide_type(rec)
+        if typ is None:
+            print("%s跳过《%s》：法规类条目需要文号与生效日期，请用 cite add --type legal 手动登记" % (tag, title[:30]))
+            st_n["skip"] += 1
+            continue
+        dup = refmgr.find_duplicate(rec, m["entries"])
+        if dup and not a.replace:
+            print("%s%s -> 跳过（与已有条目 %s 重复；要覆盖请加 --replace）" % (tag, title[:30], dup))
+            st_n["dup"] += 1
+            continue
+        key = dup or refmgr.make_key(rec, taken)
+        e = refmgr.to_entry(rec, key, typ, now(), label)
+        if dup:
+            old = m["entries"][dup]
+            e["added"] = old.get("added", e["added"])
+            if old.get("note_path"):
+                e["note_path"] = old["note_path"]
+        st = verify_entry(e, unverified_only)
+        src_rel = sha = None
+        if a.attach:
+            pdf = refmgr.resolve_pdf(rec.get("files", []), base_dir, a.pdf_dir)
+            if pdf and a.dry_run:
+                src_rel = "(将复制 %s)" % os.path.basename(pdf)
+            elif pdf:
+                src_rel, sha, how = refmgr.attach_pdf(vault, key, pdf)
+                if how == "conflict":
+                    print("警告  %s：03-Literature/_sources 里已有内容不同的同名 PDF，未复制" % key)
+                    src_rel = sha = None
+                else:
+                    e["pdf"], e["sha256"] = src_rel, sha
+                    st_n["pdf"] += 1
+            elif rec.get("files"):
+                print("提示  %s：找不到 PDF 文件（可用 --pdf-dir 指向 EndNote 的 .Data/PDF 或 Zotero 的 storage 目录）" % key)
+        if not a.no_notes and not e.get("note_path"):
+            rel = refmgr.note_rel(key)
+            np = os.path.join(vault, rel)
+            if os.path.exists(np):
+                print("提示  笔记已存在，未改动：%s" % rel)
+            else:
+                e["note_path"] = rel
+                if not a.dry_run:
+                    os.makedirs(os.path.dirname(np), exist_ok=True)
+                    with open(np, "w", encoding="utf-8", newline="\n") as fh:
+                        fh.write(refmgr.note_text(e, template, src_rel, sha, now()[:10]))
+                st_n["notes"] += 1
+                new_notes.append((key, title, 1 if (src_rel and sha) else 0))
+        m["entries"][key] = e
+        taken.add(key)
+        st_n["new"] += 1
+        if not a.dry_run:
+            orc.ledger_append(vault, "cite_add", key=key, status=st, from_import=label)
+        print("%s%s -> %s（%s%s）" % (tag, key, st, typ, "，已覆盖" if dup else ""))
+    if st_n["new"] and not a.dry_run:
+        save(path, m)
+        if new_notes:
+            _index_and_log(vault, label, new_notes, st_n)
+    print("%s导入 %d 条（跳过重复 %d、无效 %d）；新建文献笔记 %d 篇；复制 PDF %d 个。" % (
+        tag, st_n["new"], st_n["dup"], st_n["skip"], st_n["notes"], st_n["pdf"]))
+    if st_n["new"]:
+        print("  导入的条目一律为 unverified/manual；核对后用 cite verify 或由研究者 cite confirm，写稿前不要直接引用。")
+
+
+def _write_keep_eol(path, text):
+    crlf = b"\r\n" in open(path, "rb").read()
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(text.replace("\n", "\r\n") if crlf else text)
+
+
+def _index_and_log(vault, label, notes, st_n):
+    """Register new literature notes in Meta/index.md (文献 table) and append a Meta/log.md entry,
+    the same ledger bookkeeping /ingest-source does, so lint does not flag the imported notes."""
+    today = now()[:10]
+    ip = os.path.join(vault, "Meta", "index.md")
+    if os.path.isfile(ip):
+        text = read_text(ip)
+        lines = text.split("\n")
+        rows = ["| [[%s]] | %s（导入，未核实） | %s | %d | %s |" % (k, t.replace("|", "/")[:60], k, n, today)
+                for k, t, n in notes if "[[%s]]" % k not in text]
+        h = next((i for i, ln in enumerate(lines) if ln.startswith("### 文献")), None)
+        if rows and h is not None:
+            j = h + 1
+            while j < len(lines) and not lines[j].startswith(("|", "#")):
+                j += 1
+            if j < len(lines) and lines[j].startswith("|"):
+                while j < len(lines) and lines[j].startswith("|"):
+                    j += 1
+                lines[j:j] = rows
+                _write_keep_eol(ip, "\n".join(lines))
+            else:
+                print("提示  Meta/index.md 的“文献”表格不完整，未登记；请由 /ingest-source 或 /wiki-lint 补登。")
+    lp = os.path.join(vault, "Meta", "log.md")
+    if os.path.isfile(lp):
+        text = read_text(lp)
+        entry = ("\n## [%s] ingest | 参考文献软件导入（%s）\n- 项目 / 页面：03-Literature/（新建 %d 篇文献笔记，均为 unverified）\n"
+                 "- Agent / Skill：paper_tools.py cite import\n- 输入：%s\n- 输出：citation-map.json 新增 %d 条；复制 PDF %d 个\n"
+                 "- 核验：全部 unverified / manual；核对原文后运行 cite verify，或由研究者 cite confirm\n- 研究者决定：\n") % (
+            today, label, st_n["notes"], label, st_n["new"], st_n["pdf"])
+        _write_keep_eol(lp, text.rstrip("\n") + "\n" + entry)
+    print("  已登记到 Meta/index.md 与 Meta/log.md；建议运行 python .claude/scripts/wiki_lint.py map --vault . 刷新地图。")
+
+
+def cmd_cite_import(a):
+    import refmgr
+    vault = vault_of(a)
+    path, m = cmap(vault)
+    for raw in a.files:
+        fp = raw if os.path.isfile(raw) else in_vault(vault, raw)
+        if not os.path.isfile(fp):
+            sys.exit("找不到文件：%s" % raw)
+        with open(fp, "rb") as fh:
+            text = refmgr.decode_bytes(fh.read())
+        try:
+            fmt = refmgr.detect_format(fp, text) if a.format == "auto" else a.format
+            recs = refmgr.parse_text(fmt, text)
+        except (refmgr.RefError, ValueError) as ex:
+            sys.exit("%s 解析失败：%s" % (raw, ex))
+        print("%s：%s，%d 条记录" % (os.path.basename(fp), fmt, len(recs)))
+        _import_records(a, vault, path, m, recs, "%s:%s" % (fmt, os.path.basename(fp)), os.path.dirname(os.path.abspath(fp)))
+
+
+def cmd_cite_zotero(a):
+    import refmgr
+    vault = vault_of(a)
+    path, m = cmap(vault)
+    if a.base_url:
+        base, label = a.base_url, "zotero:custom"
+    elif a.user:
+        base, label = "https://api.zotero.org/users/%s" % a.user, "zotero:user/%s" % a.user
+    elif a.group:
+        base, label = "https://api.zotero.org/groups/%s" % a.group, "zotero:group/%s" % a.group
+    else:
+        base, label = "http://127.0.0.1:23119/api/users/0", "zotero:local"
+    try:
+        refmgr.check_base(base, offline(a))
+        items = refmgr.zotero_fetch(base, os.environ.get("ZOTERO_API_KEY"), a.collection, a.limit)
+        recs = refmgr.parse_csl(json.dumps(items))
+    except (refmgr.RefError, ValueError) as ex:
+        sys.exit(str(ex))
+    print("从 Zotero 取得 %d 条（只发出 GET 请求，未上传任何库内内容）；该方式只含元数据，PDF 请用 BibTeX/RIS 导出配合 --attach。" % len(items))
+    _import_records(a, vault, path, m, recs, label, None)
+
+
+def _export_table(a, render, enc="utf-8"):
+    vault = vault_of(a)
+    _, m = cmap(vault)
+    out = render(list(m["entries"].values()))
+    if a.output:
+        with open(a.output, "w", encoding=enc, newline="\n") as fh:
+            fh.write(out)
+        print("已写入 %s（%d 条）" % (a.output, len(m["entries"])))
+    else:
+        print(out)
+
+
+def cmd_cite_ris(a):
+    import refmgr
+    # BOM so that EndNote on Chinese Windows reads the file as Unicode
+    _export_table(a, lambda es: "\n".join(refmgr.to_ris(e) for e in es), "utf-8-sig")
+
+
+def cmd_cite_csl(a):
+    import refmgr
+    _export_table(a, lambda es: json.dumps([refmgr.to_csl(e) for e in es], ensure_ascii=False, indent=2) + "\n")
 
 
 # ------------------------------------------------------------------ results
@@ -1088,6 +1286,23 @@ def main(argv=None):
     p = c.add_parser("from-note"); p.add_argument("files", nargs="+")
     p.add_argument("--replace", action="store_true"); p.add_argument("--offline", action="store_true")
     p.set_defaults(f=cmd_cite_from_note)
+    p = c.add_parser("ris"); p.add_argument("-o", "--output"); p.set_defaults(f=cmd_cite_ris)
+    p = c.add_parser("csl"); p.add_argument("-o", "--output"); p.set_defaults(f=cmd_cite_csl)
+
+    def _imp(p):
+        p.add_argument("--no-notes", action="store_true", help="do not create 03-Literature notes")
+        p.add_argument("--verify", action="store_true", help="check each new entry against Crossref (network)")
+        p.add_argument("--replace", action="store_true", help="overwrite duplicates (status resets to unverified)")
+        p.add_argument("--dry-run", action="store_true"); p.add_argument("--offline", action="store_true")
+    p = c.add_parser("import"); p.add_argument("files", nargs="+")
+    p.add_argument("--format", default="auto", choices=["auto", "ris", "bibtex", "csl"])
+    p.add_argument("--attach", action="store_true", help="copy referenced PDFs into 03-Literature/_sources")
+    p.add_argument("--pdf-dir", help="folder to search PDFs by file name (EndNote .Data/PDF, Zotero storage)")
+    _imp(p); p.set_defaults(f=cmd_cite_import)
+    p = c.add_parser("zotero"); g = p.add_mutually_exclusive_group()
+    g.add_argument("--user"); g.add_argument("--group"); g.add_argument("--base-url")
+    p.add_argument("--collection"); p.add_argument("--limit", type=int)
+    _imp(p); p.set_defaults(f=cmd_cite_zotero, attach=False, pdf_dir=None)
 
     r = top.add_parser("results").add_subparsers(dest="cmd", required=True)
     p = r.add_parser("register")

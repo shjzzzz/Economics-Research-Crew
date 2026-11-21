@@ -117,6 +117,12 @@ claude
    - 从知识库文献卡直接桥接：`paper_tools.py cite from-note 03-Literature/<卡片>.md`；
    - 手动新增：`paper_tools.py cite add --key k --title "…" --year Y --locator "p.12, Table 2" --claim-scope "…" [--doi D | --type chinese | --type legal --doc-no … --effective …]`；
    - 人工确认：`paper_tools.py cite confirm --key k --note "…"`（触发权限提示）；导出 BibTeX：`cite bib -o paper/citations.bib`。
+   - **EndNote / Zotero 互通**（引文表仍是唯一依据，导入条目一律 `unverified`，中文条目为 `manual`）：
+     - 导入：EndNote 选 *Reference Manager (RIS)* 或 BibTeX 导出，Zotero 选 RIS / BibTeX / CSL JSON 导出，然后 `paper_tools.py cite import 文件 [--dry-run] [--attach] [--pdf-dir DIR]`；同一 DOI 或同标题同年份自动跳过重复，`--replace` 才覆盖；GBK 编码的导出文件自动识别。
+     - 每条新条目自动生成 `03-Literature/<key>.md` 文献笔记（含 `cite_key`、摘要、`verification: unverified`），并登记到 `Meta/index.md` 与 `Meta/log.md`；`--attach` 把 PDF **复制**到 `03-Literature/_sources/` 并写入 `sha256`（EndNote 的 PDF 在 `库名.Data/PDF`，用 `--pdf-dir` 指向它；Zotero 导出时勾选 *Export Files* 即可按相对路径找到）。
+     - 本机 Zotero 实时拉取：Zotero 7 勾选 *设置 → 高级 → 允许此计算机上的其他应用程序与 Zotero 通信*，运行 `paper_tools.py cite zotero [--collection KEY] [--limit N]`（只含元数据，仅发 GET 请求）；网络库用 `--user ID` 或 `--group ID`，API 密钥只放环境变量 `ZOTERO_API_KEY`，不写进笔记；`--offline` / `ERC_OFFLINE=1` 下只允许本机。
+     - 导出：`cite ris -o refs.ris`（EndNote / Zotero 导入，带 BOM 以保证中文）、`cite csl -o refs.json`（Zotero / Word / Pandoc）、`cite bib -o refs.bib`。
+     - 法规类条目需要文号与生效日期，导入时会跳过并提示改用 `cite add --type legal`。
 4. **成稿与主张审计（S10）**：`cite check`、`results check`、`claim check`（核对 `locator` 锚点、大纲主张覆盖度与因果动词越界）、`questions`、`report`。
 5. **精修、审稿复核与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `paper_tools.py review verify --review <报告> --manuscript <稿件>`（NFC 核对审稿原文引述 + Crossref 核验审稿推荐文献存在性）→ `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记全不变）。
 

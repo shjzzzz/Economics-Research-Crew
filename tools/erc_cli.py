@@ -286,7 +286,7 @@ def cmd_test(a):
     if has_claude:
         check_defs(".claude")
         req_files([".claude/ECONOMICS-RESEARCH.md", ".claude/scripts/wiki_lint.py",
-                   ".claude/scripts/orchestrator.py", ".claude/scripts/paper_tools.py",
+                   ".claude/scripts/orchestrator.py", ".claude/scripts/paper_tools.py", ".claude/scripts/refmgr.py",
                    ".claude/hooks/validate_paper.py", ".claude/pipeline-stages.json",
                    "Templates/handoff.md", "Templates/paper-outline.md", "Templates/rebuttal-matrix.md"])
         rc = os.path.join(vault, "CLAUDE.md")
@@ -303,7 +303,7 @@ def cmd_test(a):
     if has_agents:
         check_defs(".agents")
         req_files([".agents/scripts/wiki_lint.py", ".agents/scripts/orchestrator.py",
-                   ".agents/scripts/paper_tools.py", ".agents/pipeline-stages.json"])
+                   ".agents/scripts/paper_tools.py", ".agents/scripts/refmgr.py", ".agents/pipeline-stages.json"])
         am = os.path.join(vault, "AGENTS.md")
         if not os.path.isfile(am):
             errors.append("缺少根 AGENTS.md")

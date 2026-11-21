@@ -44,7 +44,7 @@ foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Pat
 
 if ($hasClaude) {
     Test-Defs ".claude"
-    Test-Files ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Templates\rebuttal-matrix.md"
+    Test-Files ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\scripts\refmgr.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Templates\rebuttal-matrix.md"
     $rc = Join-Path $VaultPath "CLAUDE.md"
     if (-not (Test-Path $rc) -or (Get-Content $rc -Raw) -notmatch [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md")) { $errors += "根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md" }
     $sj = Join-Path $VaultPath ".claude\settings.json"
