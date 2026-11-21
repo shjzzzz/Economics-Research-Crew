@@ -53,7 +53,7 @@
 | `/paper-refine` | S11 评审—修改—清单复核（≤3 轮，改进才接受）与 R&R 矩阵 | `paper-writer-agent` + `academic-reviewer` |
 | `/paper-polish` | S11b 表达与文风精修（不改数字/引文/标记，不用于过 AI 检测） | — |
 | `/research-pipeline` | S1–S12 总编排、状态机、关卡、质量闭环与结项知识回流 | 按阶段委派上述 Agent |
-| `/ingest-source` | 两步摄入 `_sources/`（分析→确认→写卡/更新概念页/双地图） | — |
+| `/ingest-source` | 两步摄入 `00-Inbox/`（分析→确认→写卡/更新概念页/双地图） | — |
 | `/query-wiki` | 沿 `index` + `link-map` 枢纽检索库内证据并区分推断 | — |
 | `/wiki-lint` | 确定性体检 + 语义矛盾/过时审计 + 刷新双地图 | — |
 | 绘图（2 个） | `/scientific-visualization`（Python 期刊图）、`/thu-digitizer`（图数据提取） | — |

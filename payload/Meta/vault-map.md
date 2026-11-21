@@ -22,7 +22,8 @@ moc: MOC
 
 ## 四层知识流
 1. **Tier 0 原始只读层（Immutable Sources）**
-   - `03-Literature/_sources/`：原始文献 PDF / 剪藏（只读，可新增、不得覆盖或修改）。
+   - `00-Inbox/`：`/ingest-source` 默认待摄入原始来源入口（如 `00-Inbox/文献/`；摄入时不原地修改、移动或删除原始文件）。
+   - `03-Literature/_sources/`：已归档原始文献 PDF / 剪藏（只读，可新增、不得覆盖或修改）。
    - `06-Data/raw/`：原始数据（只读，禁止任何原地清洗或覆盖）。
    - 库根目录既有税法笔记（`resources: .`）：保持原位、不移动/重命名/批量改写，仅作本地参考资料，不自动等同现行有效法规。
 2. **Tier 1 跨项目复利知识层（Compounding Wiki Graph）**
