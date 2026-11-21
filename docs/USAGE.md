@@ -8,7 +8,7 @@
 - **17 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 15 个 S1–S12 研究写作与知识库核心 Skill + 2 个 MIT 许可的绘图 Skill（`scientific-visualization`、`thu-digitizer`），用 `/名称` 触发。
 - **单源项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`，同步生成多平台 `AGENTS.md`）：定义路由、四层知识架构与论证脊柱。
 - **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板。
-- **确定性脚本与 6 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）；可选的原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
+- **确定性脚本与 7 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）；可选的会话/压缩状态恢复、原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
 
 它不包含计量软件，也不会擅自运行回归；它确保每项研究遵循“识别先行、数字与引文机械可追溯、研究者把关”的纪律。
 
@@ -59,7 +59,7 @@ claude
 | Research Director | `/research-pipeline` | 阶段状态机、关卡把控、质量闭环、知识回流 |
 | 01 文献研究 | `/literature-review`、`literature-agent`、`/ingest-source` | 读、搜、联网（`redacted`） |
 | 02 理论建模 | `/theory-modeling`、`theory-agent` | 读、写、编辑（`verified_only`） |
-| 03 数据工程 & 04 计量 & 06 复现 | `/econometric-analysis`、`econometrics-agent`；识别由 `/causal-inference-audit`、`causal-inference-agent` 负责 | 仅 `econometrics-agent` 具备 Bash 执行权限（`raw`） |
+| 03 数据工程 & 04 计量 & 06 复现 | `/econometric-analysis`、`econometrics-agent`；识别由 `/causal-inference-audit`、`causal-inference-agent` 负责 | 仅 `econometrics-agent` 具备 Bash/PowerShell 执行权限（`raw`） |
 | 05 税收研究 | `/tax-policy-analysis`、`tax-policy-agent` | 读、搜、联网（`redacted`），内置中国税法冲突处理协议 |
 | 07 学术写作 | `/paper-outline`、`/paper-draft`、`/paper-refine`、`/paper-polish`、`paper-writer-agent` | 读、写、编辑（`verified_only`），严格受限于大纲/引文表/结果登记簿 |
 | 08 学术审稿 | `/academic-review`、`academic-reviewer`（独立上下文） | 只读、联网（`verified_only`），绝不改稿 |
@@ -93,6 +93,7 @@ claude
 
 | Hook | 事件 | 作用 |
 |---|---|---|
+| `session_context.py` | SessionStart（含 startup / resume / compact） | 零 LLM 额度注入当前活跃项目阶段、缺口数与未填 `Meta/purpose.md` 提示（无活跃项目且已填时静默） |
 | `protect_raw.py` | PreToolUse（Write/Edit/Bash/PowerShell） | 阻止覆盖/修改 `06-Data/raw` 与 `03-Literature/_sources` 中已存在文件（允许 Write 新建导入） |
 | `orchestrator_guard.py` | PreToolUse（Agent/Task/Bash/PowerShell/Write/Edit） | 阻止跳阶段派 Agent、超重试/超并发、直接编辑机读账本；对 `gate` 与 `cite confirm` 强制弹权限确认 |
 | `validate_frontmatter.py` | PostToolUse（Write/Edit） | 检查写入 `.md` 的 YAML frontmatter 是否闭合、有无 Tab（反馈修正，不撤回） |

@@ -2,6 +2,8 @@
 name: tax-policy-agent
 description: "Analyze tax law, administration, compliance, incidence, legal conflict resolution and policy-shock identification elements from authoritative sources."
 tools: Read, Grep, Glob, WebSearch, WebFetch
+disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Bash, PowerShell
+effort: medium
 data_access_level: redacted
 task_type: open-ended
 ---

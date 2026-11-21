@@ -844,8 +844,48 @@ Remove-Item -LiteralPath (Join-Path $v16 ".agents\hooks\protect_raw.py") -Force
 & $py -X utf8 (Join-Path $pkg "tools\erc_cli.py") test --vault $v16 *> $null
 Ok ($LASTEXITCODE -ne 0) "erc_cli test catches missing hook referenced in .agents/hooks.json"
 
+# --- 17. Claude Code CLI 2.1.x adaptation ------------------------------------
+Write-Host "[17] Claude Code CLI 2.1.x adaptation"
+$v17 = New-Vault
+Ok ((Run-Install $v17 @("-Platform","claude","-WithHooks")) -eq 0) "v17 claude+hooks install exit 0"
+$sj17 = [IO.File]::ReadAllText((Join-Path $v17 ".claude\settings.json"), $enc) | ConvertFrom-Json
+Ok ($null -ne $sj17.hooks.SessionStart -and $sj17.hooks.SessionStart[0].hooks[0].timeout -eq 10 -and $sj17.hooks.PreToolUse[0].hooks[0].timeout -eq 10) "settings.json has SessionStart hook and timeout=10"
+# upgrade path backfills missing timeout on existing hook
+$oldNoTimeout = '{"hooks":{"PreToolUse":[{"matcher":"Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell","hooks":[{"type":"command","command":"python \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect_raw.py\""}]}]}}'
+[IO.File]::WriteAllText((Join-Path $v17 ".claude\settings.json"), $oldNoTimeout, $enc)
+& $py -X utf8 (Join-Path $pkg "tools\merge_hooks.py") (Join-Path $v17 ".claude\settings.json") (Join-Path $payload ".claude\settings.hooks.json") *> $null
+$sj17b = [IO.File]::ReadAllText((Join-Path $v17 ".claude\settings.json"), $enc) | ConvertFrom-Json
+Ok ($sj17b.hooks.PreToolUse[0].hooks[0].timeout -eq 10 -and $null -ne $sj17b.hooks.SessionStart) "merge_hooks backfills timeout=10 and adds SessionStart"
+# session_context.py: unfilled purpose.md -> warns; filled purpose + no active project -> silent; active project + compact -> restores stage
+function SC17([hashtable]$In) {
+    $ErrorActionPreference = "Continue"
+    $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+    try {
+        $json = $In | ConvertTo-Json -Depth 5 -Compress
+        return (($json | & $py (Join-Path $v17 ".claude\hooks\session_context.py") 2>$null) -join "`n")
+    } finally { [Console]::OutputEncoding = $prev }
+}
+$scInit = SC17 @{cwd=$v17; source="startup"}
+Ok ($scInit -match '"hookEventName":\s*"SessionStart"' -and $scInit -match 'purpose\.md') "session_context reports unfilled Meta/purpose.md on startup"
+[IO.File]::WriteAllText((Join-Path $v17 "Meta\purpose.md"), "---`ntype: purpose`n---`n# 研究方向`n税收征管数字化与企业遵从`n", $enc)
+Ok ((SC17 @{cwd=$v17; source="startup"}).Trim() -eq "") "session_context stays silent when purpose filled and no active project"
+& $py -X utf8 (Join-Path $v17 ".claude\scripts\orchestrator.py") --vault $v17 init 01-Research-Projects\demo17 *> $null
+$scComp = SC17 @{cwd=$v17; source="compact"}
+Ok ($scComp -match 'ERC 压缩后状态恢复' -and $scComp -match 'demo17' -and $scComp -match 'S1') "session_context restores active project stage after compaction"
+# subagent CLI 2.1.x metadata: econometrics PowerShell tool + read-only disallowedTools + effort levels
+$ecAg = [IO.File]::ReadAllText((Join-Path $v17 ".claude\agents\econometrics-agent.md"), $enc)
+$rvAg = [IO.File]::ReadAllText((Join-Path $v17 ".claude\agents\academic-reviewer.md"), $enc)
+Ok ($ecAg -match 'PowerShell' -and $ecAg -match '(?m)^effort:\s*medium' -and $rvAg -match '(?m)^disallowedTools:.*PowerShell' -and $rvAg -match '(?m)^effort:\s*high') "agents declare PowerShell tool, disallowedTools and effort levels"
+# native Claude Code CLI validator (strict mode) when claude is installed
+$claudeBin = Get-Command claude -ErrorAction SilentlyContinue
+if ($claudeBin) {
+    $ErrorActionPreference = "Continue"
+    & $claudeBin.Source plugin validate --strict (Join-Path $v17 ".claude") *> $null
+    Ok ($LASTEXITCODE -eq 0) "claude plugin validate --strict passes on installed .claude"
+}
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 
 LOGGER = r'''import json, os, sys
 try:
-    d = json.load(sys.stdin)
+    d = json.loads(sys.stdin.buffer.read().decode("utf-8-sig", "replace"))
 except Exception:
     sys.exit(0)
 log = os.environ.get("ERC_ROUTING_LOG") or os.path.join(d.get("cwd", "."), ".claude", "routing.log")
@@ -80,7 +80,7 @@ def routes_from_log(path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--vault", required=True)
-    ap.add_argument("--model", default="claude-opus-5-5")
+    ap.add_argument("--model", default="", help="Optional model override (defaults to user's Claude Code CLI default)")
     ap.add_argument("--cases", default=str(HERE / "routing_cases.json"))
     ap.add_argument("--only", default="")
     ap.add_argument("--max-turns", type=int, default=4)
@@ -126,8 +126,11 @@ def run_cases(a, vault):
             log.unlink()
         env = dict(os.environ, ERC_ROUTING_LOG=str(log))
         t0 = time.time()
-        cmd = [claude, "-p", c["prompt"], "--model", a.model, "--max-turns", str(a.max_turns),
-               "--output-format", "json", "--disallowedTools", "WebSearch,WebFetch"]
+        cmd = [claude, "-p", c["prompt"], "--max-turns", str(a.max_turns),
+               "--output-format", "json", "--no-session-persistence",
+               "--setting-sources", "project,local", "--disallowedTools", "WebSearch,WebFetch"]
+        if a.model:
+            cmd += ["--model", a.model]
         proc = subprocess.Popen(cmd, cwd=str(vault), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                 encoding="utf-8", errors="replace")
         timed_out = False

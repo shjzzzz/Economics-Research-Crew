@@ -50,9 +50,17 @@ if ($hasClaude) {
     $sj = Join-Path $VaultPath ".claude\settings.json"
     if (Test-Path $sj) {
         $st = [IO.File]::ReadAllText($sj)
-        foreach ($h in "protect_raw.py","validate_frontmatter.py","validate_paper.py","routing_hint.py","orchestrator_guard.py","orchestrator_record.py") {
+        foreach ($h in "session_context.py","protect_raw.py","validate_frontmatter.py","validate_paper.py","routing_hint.py","orchestrator_guard.py","orchestrator_record.py") {
             if ($st -match [regex]::Escape($h) -and -not (Test-Path (Join-Path $VaultPath ".claude\hooks\$h"))) { $errors += "settings.json 引用了 hook 但文件缺失: $h" }
         }
+    }
+    $claudeCli = Get-Command claude -ErrorAction SilentlyContinue
+    if ($claudeCli -and (Test-Path (Join-Path $VaultPath ".claude"))) {
+        $prevEap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+        $vOut = (& $claudeCli.Source plugin validate (Join-Path $VaultPath ".claude") 2>&1 | Out-String).Trim()
+        $vRc = $LASTEXITCODE
+        $ErrorActionPreference = $prevEap
+        if ($vRc -ne 0) { $errors += "claude plugin validate 未通过: $vOut" }
     }
 }
 if ($hasAgents) {

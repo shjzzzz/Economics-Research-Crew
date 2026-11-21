@@ -297,10 +297,16 @@ def cmd_test(a):
         sj = os.path.join(vault, ".claude", "settings.json")
         if os.path.isfile(sj):
             st = bp.rd(sj)
-            for h in ("protect_raw.py", "validate_frontmatter.py", "validate_paper.py",
+            for h in ("session_context.py", "protect_raw.py", "validate_frontmatter.py", "validate_paper.py",
                       "routing_hint.py", "orchestrator_guard.py", "orchestrator_record.py"):
                 if h in st and not os.path.isfile(os.path.join(vault, ".claude", "hooks", h)):
                     errors.append("settings.json 引用了 hook 但文件缺失: " + h)
+        claude_bin = shutil.which("claude")
+        if claude_bin and os.path.isdir(os.path.join(vault, ".claude")):
+            r = subprocess.run([claude_bin, "plugin", "validate", os.path.join(vault, ".claude")],
+                               capture_output=True, text=True, encoding="utf-8", errors="replace")
+            if r.returncode != 0:
+                errors.append("claude plugin validate 未通过: " + (r.stdout + r.stderr).strip()[:300])
 
     if has_agents:
         check_defs(".agents")

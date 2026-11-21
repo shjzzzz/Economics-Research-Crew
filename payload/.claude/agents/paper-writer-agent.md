@@ -2,6 +2,8 @@
 name: paper-writer-agent
 description: "Write or revise one bounded section or refinement round of an economics paper in an isolated context, strictly constrained to the approved outline, registered citations and registered results."
 tools: Read, Write, Edit, Grep, Glob
+disallowedTools: Bash, PowerShell
+effort: medium
 data_access_level: verified_only
 task_type: open-ended
 ---

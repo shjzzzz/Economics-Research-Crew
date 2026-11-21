@@ -2,6 +2,8 @@
 name: causal-inference-agent
 description: "Audit causal estimands, identification assumptions, threats to validity, modern diagnostics (DID/IV/RDD/Bunching/SCM), threat-to-test matrices and permissible causal wording."
 tools: Read, Grep, Glob, WebSearch, WebFetch, Write
+disallowedTools: Bash, PowerShell
+effort: high
 data_access_level: redacted
 task_type: open-ended
 ---

@@ -2,6 +2,8 @@
 name: academic-reviewer
 description: "Provide independent, adversarial peer review of economics research designs and manuscripts with numbered F1/M1/m1 issues, 5-dimension scores, Frame-Lock Check, Concession Threshold and 7-Mode AI Failure Gate."
 tools: Read, Grep, Glob, WebSearch, WebFetch
+disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Bash, PowerShell
+effort: high
 data_access_level: verified_only
 task_type: open-ended
 ---

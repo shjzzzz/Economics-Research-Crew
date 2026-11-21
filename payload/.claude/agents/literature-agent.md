@@ -2,6 +2,8 @@
 name: literature-agent
 description: "Find, screen, extract, compare and synthesize academic literature in tax and public economics into debate-structured matrices with three-layer locator anchors."
 tools: Read, Grep, Glob, WebSearch, WebFetch
+disallowedTools: Write, Edit, MultiEdit, NotebookEdit, Bash, PowerShell
+effort: medium
 data_access_level: redacted
 task_type: open-ended
 ---

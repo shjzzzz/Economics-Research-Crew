@@ -33,7 +33,8 @@ AGENTS_MD_LIMIT = 24000  # agy truncates rule files above 24,000 bytes
 TOOL_MAP = {
     "Read": ["read_file"], "Glob": ["read_file"], "Grep": ["read_file"],
     "Edit": ["edit_file"], "MultiEdit": ["edit_file"], "Write": ["write_file"],
-    "Bash": ["run_command", "manage_task"], "WebSearch": ["search_web"], "WebFetch": ["search_web"],
+    "Bash": ["run_command", "manage_task"], "PowerShell": ["run_command", "manage_task"],
+    "WebSearch": ["search_web"], "WebFetch": ["search_web"],
 }
 
 TEXT_REWRITES = [

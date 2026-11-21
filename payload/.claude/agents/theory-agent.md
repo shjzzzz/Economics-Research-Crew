@@ -2,6 +2,8 @@
 name: theory-agent
 description: "Develop and audit formal economic models, competing behavioral/institutional mechanisms, comparative statics, reduced-form mappings and testable hypotheses."
 tools: Read, Grep, Glob, Write, Edit
+disallowedTools: Bash, PowerShell
+effort: high
 data_access_level: verified_only
 task_type: open-ended
 ---
