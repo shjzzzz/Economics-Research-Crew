@@ -9,20 +9,25 @@ sys.path.insert(0, os.path.dirname(PT))
 import refmgr  # noqa: E402
 
 fails = 0
+LAST = ""
 
 
 def check(cond, name):
     global fails
     print(("  PASS " if cond else "  FAIL ") + name)
+    if not cond:
+        print("    last output: " + LAST[-600:].replace("\n", "\n    "))
     fails += 0 if cond else 1
 
 
 def pt(vault, *args, env=None):
+    global LAST
     e = dict(os.environ, ERC_OFFLINE="1", PYTHONIOENCODING="utf-8")
     e.update(env or {})
     r = subprocess.run([sys.executable, "-X", "utf8", PT, "--vault", vault] + list(args),
                        capture_output=True, text=True, encoding="utf-8", env=e)
-    return r.returncode, r.stdout + r.stderr
+    LAST = r.stdout + r.stderr
+    return r.returncode, LAST
 
 
 def cmap(vault):
@@ -160,17 +165,31 @@ print("[F] Zotero API")
 SERVED = []
 
 
+ITEM = {"id": "ZZZZ9999", "type": "article-journal", "title": "Tax Evasion and Inequality",
+        "author": [{"family": "Alstadsæter", "given": "Annette"}], "issued": {"date-parts": [[2019]]}, "DOI": "10.1257/aer.20172043"}
+POSTED = []
+
+
 class H(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        SERVED.append((self.command, self.path, self.headers.get("Zotero-API-Key"), self.headers.get("Zotero-API-Version")))
-        body = json.dumps({"items": [{"id": "ZZZZ9999", "type": "article-journal", "title": "Tax Evasion and Inequality",
-                                      "author": [{"family": "Alstadsæter", "given": "Annette"}],
-                                      "issued": {"date-parts": [[2019]]}, "DOI": "10.1257/aer.20172043"}]
-                           if "start=0" in self.path else []}).encode("utf-8")
+    def _send(self, obj):
+        body = json.dumps(obj).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(body)
+
+    def do_GET(self):
+        SERVED.append((self.command, self.path, self.headers.get("Zotero-API-Key"), self.headers.get("Zotero-API-Version")))
+        if "/children" in self.path:
+            return self._send([{"data": {"itemType": "note", "note": "<p>Key point: <b>salience</b> matters.</p>"}}])
+        if "/items/ZZZZ9999" in self.path and "/top" not in self.path:
+            return self._send({"items": [ITEM]})
+        self._send({"items": [ITEM] if "start=0" in self.path or "q=" in self.path else []})
+
+    def do_POST(self):
+        n = int(self.headers.get("Content-Length", "0"))
+        POSTED.append((self.path, self.headers.get("Zotero-API-Key"), self.headers.get("Zotero-Write-Token"), json.loads(self.rfile.read(n))))
+        self._send({"successful": {"0": {"key": "NOTE0001"}}, "failed": {}})
 
     def log_message(self, *a):
         pass
@@ -180,15 +199,38 @@ srv = http.server.HTTPServer(("127.0.0.1", 0), H)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 base = "http://127.0.0.1:%d/api/users/0" % srv.server_port
 c, o = pt(v2, "cite", "zotero", "--base-url", base, env={"ZOTERO_API_KEY": "secret-test-key"})
-srv.shutdown()
 E2 = cmap(v2)
 check(c == 0 and any(e["doi"] == "10.1257/aer.20172043" for e in E2.values()), "zotero: items pulled and imported as unverified")
 check(SERVED and all(s[0] == "GET" for s in SERVED) and "/items/top?format=csljson" in SERVED[0][1] and SERVED[0][3] == "3", "zotero: read-only GET against /items/top (csljson, API v3)")
 check("secret-test-key" not in o, "zotero: API key never printed")
+c, o = pt(v2, "cite", "zotero", "--base-url", base, "--query", "tax evasion", "--list")
+check(c == 0 and "ZZZZ9999" in o and any("q=tax%20evasion" in x[1] for x in SERVED), "zotero --query --list: searches without importing")
+c, o = pt(v2, "cite", "zotero", "--base-url", base, "--item", "ZZZZ9999", "--notes", "--replace")
+E2 = cmap(v2)
+zk = [k for k, e in E2.items() if e.get("zotero_key") == "ZZZZ9999"]
+note2 = os.path.join(v2, "03-Literature", zk[0] + ".md") if zk else ""
+check(c == 0 and zk, "zotero --item: single item pulled, Zotero item key recorded")
+check(note2 and "## Zotero 笔记" in open(note2, encoding="utf-8").read() and "salience matters" in open(note2, encoding="utf-8").read(), "zotero --notes: child notes appended as read-only quote")
+check(all(s_[0] == "GET" for s_ in SERVED), "zotero pulls still GET only")
+if zk:
+    with open(note2, "a", encoding="utf-8") as fh:
+        fh.write("\n# 一、研究问题与定位\n逃税与不平等的测度。\n")
+c, o = pt(v2, "cite", "zotero-note", zk[0], "--base-url", base)
+check(c == 0 and "[dry-run]" in o and not POSTED, "zotero-note: preview only without --yes")
+c, o = pt(v2, "cite", "zotero-note", zk[0], "--base-url", base, "--yes", env={"ZOTERO_API_KEY": "wkey"})
+check(c == 0 and len(POSTED) == 1 and POSTED[0][0].endswith("/items") and POSTED[0][3][0]["parentItem"] == "ZZZZ9999" and POSTED[0][3][0]["itemType"] == "note", "zotero-note --yes: one new child note POSTed")
+check(POSTED and "逃税与不平等" in POSTED[0][3][0]["note"] and "erc:cite_key=" in POSTED[0][3][0]["note"] and POSTED[0][1] == "wkey" and POSTED[0][2], "zotero-note: content, marker, key and write token sent")
+c, o = pt(v2, "cite", "zotero-note", zk[0], "--user", "1", "--yes", env={"ZOTERO_API_KEY": "wkey", "ERC_OFFLINE": "1"})
+check(c != 0 and len(POSTED) == 1, "zotero-note: blocked by ERC_OFFLINE for the web API")
+c, o = pt(v2, "cite", "open", "nokey", "--print")
+check(c != 0, "cite open: unknown key rejected")
+c, o = pt(VAULT, "cite", "open", "chetty2009salience", "--print")
+check(c == 0 and o.strip().endswith("chetty2009salience.pdf"), "cite open --print: resolves the PDF in _sources")
 c, o = pt(v2, "cite", "zotero", "--base-url", "http://example.com/api/users/1")
 check(c != 0 and "https" in o, "zotero: refuses plain http to a non-local host")
 c, o = pt(v2, "cite", "zotero", "--user", "1")
 check(c != 0 and "--offline" in o, "zotero: ERC_OFFLINE blocks the web API")
 
+srv.shutdown()
 print("selftest failures: %d" % fails)
 sys.exit(1 if fails else 0)

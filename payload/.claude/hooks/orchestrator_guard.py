@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
 
 GATE_CMD = re.compile(r"orchestrator\.py[\"']?\s+(?:--\S+\s+\S+\s+)*gate\b")
 PROTECTED_FILE = re.compile(r"(?:^|/)(?:STATE\.json|run-ledger\.jsonl|citation-map\.json|results-ledger\.json|reviews\.json)$", re.I)
+ZNOTE_CMD = re.compile(r"paper_tools\.py[\"']?\s+(?:--\S+\s+\S+\s+)*cite\s+zotero-note\b.*--yes\b")
 CONFIRM_CMD = re.compile(r"paper_tools\.py[\"']?\s+(?:--\S+\s+\S+\s+)*cite\s+confirm\b")
 
 
@@ -70,6 +71,8 @@ def main():
             cmd = ti.get("command", "") or ""
             if GATE_CMD.search(cmd):
                 ask("这是研究关卡决定：只有研究者表态后才应通过。请确认研究者已作出该决定（--decision / --note 与其一致）。")
+            if ZNOTE_CMD.search(cmd):
+                ask("这会向 Zotero 云端库写入一条新笔记（不可由本工具撤销）。请确认研究者同意回写，且已预览过内容。")
             if CONFIRM_CMD.search(cmd):
                 ask("这是研究者对引文来源的人工核验：只有研究者亲自核对原文后才应确认。请确认 --note 如实反映了核对方式。")
             return

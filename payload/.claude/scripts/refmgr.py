@@ -457,6 +457,8 @@ def to_entry(rec, key, typ, stamp, label):
     for fld in ("abstract", "keywords", "url", "volume", "issue", "pages"):
         if rec.get(fld):
             e[fld] = rec[fld]
+    if ZOTERO_ITEM_KEY.match(rec.get("id") or ""):
+        e["zotero_key"] = rec["id"]
     return e
 
 
@@ -585,3 +587,72 @@ def zotero_fetch(base, api_key=None, collection=None, limit=None, timeout=20):
             break
         start += page
     return items
+
+
+# ------------------------------------------------------------------ Zotero extras (inspired by jbaiter/zotero-cli, MIT; reimplemented with the standard library)
+def _http(url, hdrs, data=None, timeout=20):
+    try:
+        req = urllib.request.Request(url, headers=hdrs, data=data)
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8")
+            return json.loads(body) if body.strip() else {}
+    except urllib.error.HTTPError as ex:
+        hint = {403: "（Zotero 7：设置 → 高级 → 勾选“允许此计算机上的其他应用程序与 Zotero 通信”；网络库请检查 API 密钥权限）",
+                404: "（用户/群组 ID、集合或条目 key 不存在）"}.get(ex.code, "")
+        raise RefError("Zotero 返回 HTTP %d %s" % (ex.code, hint))
+    except (urllib.error.URLError, OSError, ValueError) as ex:
+        raise RefError("连接 Zotero 失败：%s（本机请先启动 Zotero 并开启本地 API）" % ex)
+
+
+def _hdrs(api_key):
+    h = {"Zotero-API-Version": "3", "User-Agent": "erc-paper-tools"}
+    if api_key:
+        h["Zotero-API-Key"] = api_key
+    return h
+
+
+def zotero_search(base, api_key, query, limit=None):
+    """Full-text style search (Zotero q=); returns CSL-JSON items."""
+    url = "%s/items/top?format=csljson&q=%s&limit=%d" % (base.rstrip("/"), urllib.parse.quote(query), limit or 50)
+    data = _http(url, _hdrs(api_key))
+    return data.get("items", []) if isinstance(data, dict) else data
+
+
+def zotero_one(base, api_key, item):
+    data = _http("%s/items/%s?format=csljson" % (base.rstrip("/"), urllib.parse.quote(item)), _hdrs(api_key))
+    items = data.get("items", [data]) if isinstance(data, dict) else data
+    return [x for x in items if isinstance(x, dict) and x.get("title") is not None]
+
+
+def zotero_notes(base, api_key, item):
+    """Raw HTML of the child notes of one item."""
+    url = "%s/items/%s/children?format=json&itemType=note&limit=100" % (base.rstrip("/"), urllib.parse.quote(item))
+    data = _http(url, _hdrs(api_key))
+    out = []
+    for x in data if isinstance(data, list) else []:
+        d = x.get("data", x)
+        if d.get("note"):
+            out.append(d["note"])
+    return out
+
+
+def html_to_text(h):
+    import html as _h
+    h = re.sub(r"<\s*(br|/p|/div|/h[1-6]|/li)\s*/?>", "\n", h, flags=re.I)
+    return re.sub(r"\n{3,}", "\n\n", _h.unescape(re.sub(r"<[^>]+>", "", h))).strip()
+
+
+def zotero_post_note(base, api_key, parent, html_note, tags=("erc-exported",)):
+    """Create one child note under 'parent' (web API write; never edits or deletes existing items)."""
+    import uuid
+    if not api_key:
+        raise RefError("写入 Zotero 需要有写权限的 API 密钥（环境变量 ZOTERO_API_KEY）。")
+    hdrs = _hdrs(api_key)
+    hdrs["Content-Type"] = "application/json"
+    hdrs["Zotero-Write-Token"] = uuid.uuid4().hex
+    body = json.dumps([{"itemType": "note", "parentItem": parent, "note": html_note,
+                        "tags": [{"tag": t} for t in tags]}]).encode("utf-8")
+    res = _http("%s/items" % base.rstrip("/"), hdrs, data=body)
+    if isinstance(res, dict) and res.get("failed"):
+        raise RefError("Zotero 拒绝写入：%s" % json.dumps(res["failed"], ensure_ascii=False)[:300])
+    return res

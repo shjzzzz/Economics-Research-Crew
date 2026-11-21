@@ -523,6 +523,8 @@ function G2([string]$Tool, [hashtable]$In) { $ErrorActionPreference = "Continue"
 Ok ((G2 "Write" @{file_path=(Join-Path $v12 "Meta\citation-map.json")}) -match "rc=2") "direct write of citation-map.json blocked"
 Ok ((G2 "Edit" @{file_path=(Join-Path $v12 "Meta\results-ledger.json")}) -match "rc=2") "direct edit of results-ledger.json blocked"
 Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite confirm --key a --note x"}) -match "permissionDecision.*ask") "cite confirm via Bash forces a permission prompt"
+Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite zotero-note k --user 1 --yes"}) -match "permissionDecision.*ask") "zotero-note --yes (write to Zotero) forces a permission prompt"
+Ok (-not ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite zotero-note k --user 1"}) -match "permissionDecision")) "zotero-note preview (no --yes) does not prompt"
 Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite list"}) -match "^\|rc=0") "cite list not prompted"
 function VP([string]$File) { $ErrorActionPreference = "Continue"
     $json = @{tool_name="Write"; tool_input=@{file_path=$File}; cwd=$v12} | ConvertTo-Json -Depth 5 -Compress

@@ -18,7 +18,12 @@ cite keys that exist in a verified citation table, and every number must trace t
                                               unverified, literature notes are created, PDFs copied to _sources with --attach
   cite zotero [--user ID | --group ID | --base-url URL] [--collection KEY] [--limit N] [...]
                                               pull from the local Zotero API (default) or the Zotero web API (GET only;
-                                              API key only from env ZOTERO_API_KEY)
+                                              API key only from env ZOTERO_API_KEY); --query Q [--list] searches, --item KEY pulls one,
+                                              --notes appends the item's Zotero notes to its literature note
+  cite open KEY [--print]                     open the PDF kept in 03-Literature/_sources with the system viewer
+  cite zotero-note KEY [--zotero-key K] [--user ID|--group ID] [--yes]
+                                              write the literature note back as a NEW child note in Zotero (preview unless --yes;
+                                              needs a write-enabled ZOTERO_API_KEY; never edits or deletes existing items)
   cite list
   results register --id ID --value V [--label L --se S --n N --source FILE --script FILE --no-source-reason T --note T]
   results import CSV --prefix P --source FILE [--script FILE]   register every cell as P.<row>.<col>
@@ -542,26 +547,129 @@ def cmd_cite_import(a):
         _import_records(a, vault, path, m, recs, "%s:%s" % (fmt, os.path.basename(fp)), os.path.dirname(os.path.abspath(fp)))
 
 
+def _znote_html(vault, e):
+    import html as _h
+    p = os.path.join(vault, "03-Literature", e["key"] + ".md")
+    if not os.path.isfile(p):
+        sys.exit("没有文献笔记 03-Literature/%s.md，无可回写内容。" % e["key"])
+    text = re.sub(r"<!--.*?-->", "", read_text(p), flags=re.S)
+    text = re.sub(r"^---\n.*?\n---\n", "", text.replace("\r\n", "\n"), count=1, flags=re.S)
+    parts, head, body = [], None, []
+    def flush():
+        t = "\n".join(body).strip()
+        if head and t and not t.startswith("导入信息"):
+            parts.append((head, t))
+    for ln in text.split("\n"):
+        if ln.startswith("#"):
+            flush(); head, body = ln.lstrip("# ").strip(), []
+        else:
+            body.append(ln)
+    flush()
+    parts = [(h, t) for h, t in parts if h != "导入信息"]
+    if not parts:
+        sys.exit("文献笔记还没有实质内容（各节为空），先填写再回写。")
+    out = ["<p><b>ERC 文献笔记</b> · cite_key: %s · 核验状态: %s</p>" % (_h.escape(e["key"]), _h.escape(e.get("status", "")))]
+    for h, t in parts:
+        out.append("<h2>%s</h2><p>%s</p>" % (_h.escape(h), _h.escape(t).replace("\n", "<br/>")))
+    out.append("<p><small>erc:cite_key=%s</small></p>" % _h.escape(e["key"]))
+    return "".join(out)[:20000]
+
+
+def _zotero_base(a):
+    if a.base_url:
+        return a.base_url, "zotero:custom"
+    if a.user:
+        return "https://api.zotero.org/users/%s" % a.user, "zotero:user/%s" % a.user
+    if a.group:
+        return "https://api.zotero.org/groups/%s" % a.group, "zotero:group/%s" % a.group
+    return "http://127.0.0.1:23119/api/users/0", "zotero:local"
+
+
 def cmd_cite_zotero(a):
     import refmgr
     vault = vault_of(a)
     path, m = cmap(vault)
-    if a.base_url:
-        base, label = a.base_url, "zotero:custom"
-    elif a.user:
-        base, label = "https://api.zotero.org/users/%s" % a.user, "zotero:user/%s" % a.user
-    elif a.group:
-        base, label = "https://api.zotero.org/groups/%s" % a.group, "zotero:group/%s" % a.group
-    else:
-        base, label = "http://127.0.0.1:23119/api/users/0", "zotero:local"
+    base, label = _zotero_base(a)
+    key = os.environ.get("ZOTERO_API_KEY")
     try:
         refmgr.check_base(base, offline(a))
-        items = refmgr.zotero_fetch(base, os.environ.get("ZOTERO_API_KEY"), a.collection, a.limit)
+        if a.item:
+            items = refmgr.zotero_one(base, key, a.item)
+        elif a.query:
+            items = refmgr.zotero_search(base, key, a.query, a.limit)
+        else:
+            items = refmgr.zotero_fetch(base, key, a.collection, a.limit)
         recs = refmgr.parse_csl(json.dumps(items))
     except (refmgr.RefError, ValueError) as ex:
         sys.exit(str(ex))
     print("从 Zotero 取得 %d 条（只发出 GET 请求，未上传任何库内内容）；该方式只含元数据，PDF 请用 BibTeX/RIS 导出配合 --attach。" % len(items))
+    for it in items[:20] if a.query and a.list else []:
+        print("  [%s] %s (%s)" % (it.get("id", ""), it.get("title", ""), ((it.get("issued") or {}).get("date-parts") or [[""]])[0][0]))
+    if a.query and a.list:
+        return
     _import_records(a, vault, path, m, recs, label, None)
+    if a.notes and not a.dry_run:
+        ids = {str(it.get("id")) for it in items}
+        _, m2 = cmap(vault)
+        added = 0
+        for e in m2["entries"].values():
+            zk = e.get("zotero_key")
+            if not zk or zk not in ids:
+                continue
+            np_ = os.path.join(vault, "03-Literature", e["key"] + ".md")
+            if not os.path.isfile(np_) or "## Zotero 笔记" in read_text(np_):
+                continue
+            try:
+                notes = [refmgr.html_to_text(h) for h in refmgr.zotero_notes(base, key, zk) if "erc:cite_key=" not in h]
+            except refmgr.RefError as ex:
+                print("提示  %s 的 Zotero 笔记未取得：%s" % (e["key"], ex)); continue
+            if notes:
+                body = "\n\n## Zotero 笔记（只读来源，导入于 %s）\n\n" % now()[:10] + "\n\n".join("> " + n.replace("\n", "\n> ") for n in notes) + "\n"
+                _write_keep_eol(np_, read_text(np_).rstrip("\n") + body)
+                added += 1
+        print("已把 %d 篇文献的 Zotero 笔记追加到对应文献笔记。" % added)
+
+
+def cmd_cite_open(a):
+    vault = vault_of(a)
+    _, m = cmap(vault)
+    if a.key not in m["entries"]:
+        sys.exit("引文表中没有 %s" % a.key)
+    pdf = os.path.join(vault, "03-Literature", "_sources", a.key + ".pdf")
+    if not os.path.isfile(pdf):
+        sys.exit("没有 %s；先用 cite import --attach（或 --pdf-dir）把 PDF 复制进 _sources。" % pdf)
+    print(pdf)
+    if a.print:
+        return
+    import subprocess
+    if hasattr(os, "startfile"):
+        os.startfile(pdf)
+    else:
+        subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", pdf])
+
+
+def cmd_cite_zotero_note(a):
+    import refmgr
+    vault = vault_of(a)
+    _, m = cmap(vault)
+    e = m["entries"].get(a.key) or sys.exit("引文表中没有 %s" % a.key)
+    zk = a.zotero_key or e.get("zotero_key") or sys.exit("缺少 Zotero 条目 key：用 --zotero-key 指定（从 Zotero 拉取导入的条目已自动记录）。")
+    html_note = _znote_html(vault, e)
+    base, _ = _zotero_base(a)
+    print("将在 Zotero 条目 %s 下新建一条子笔记（%d 字符，只新增，不改动或删除任何已有条目）：" % (zk, len(html_note)))
+    print(refmgr.html_to_text(html_note)[:600])
+    if not a.yes:
+        print("\n[dry-run] 未写入。确认无误后加 --yes（需 ZOTERO_API_KEY，且为有写权限的密钥）。")
+        return
+    try:
+        refmgr.check_base(base, offline(a))
+        key = os.environ.get("ZOTERO_API_KEY")
+        if any("erc:cite_key=%s" % a.key in h for h in refmgr.zotero_notes(base, key, zk)):
+            print("Zotero 中已有该文献的 ERC 笔记，跳过（避免重复）。"); return
+        refmgr.zotero_post_note(base, key, zk, html_note)
+    except refmgr.RefError as ex:
+        sys.exit(str(ex))
+    print("已写入 Zotero（标签 erc-exported）。")
 
 
 def _export_table(a, render, enc="utf-8"):
@@ -1302,7 +1410,14 @@ def main(argv=None):
     p = c.add_parser("zotero"); g = p.add_mutually_exclusive_group()
     g.add_argument("--user"); g.add_argument("--group"); g.add_argument("--base-url")
     p.add_argument("--collection"); p.add_argument("--limit", type=int)
+    p.add_argument("--query", help="search the library (Zotero q=)"); p.add_argument("--list", action="store_true", help="with --query: only list matches")
+    p.add_argument("--item", help="pull one item by Zotero item key"); p.add_argument("--notes", action="store_true", help="append Zotero child notes to literature notes")
     _imp(p); p.set_defaults(f=cmd_cite_zotero, attach=False, pdf_dir=None)
+    p = c.add_parser("open"); p.add_argument("key"); p.add_argument("--print", action="store_true"); p.set_defaults(f=cmd_cite_open)
+    p = c.add_parser("zotero-note"); p.add_argument("key"); p.add_argument("--zotero-key"); g = p.add_mutually_exclusive_group()
+    g.add_argument("--user"); g.add_argument("--group"); g.add_argument("--base-url")
+    p.add_argument("--yes", action="store_true", help="really write (default: preview only)"); p.add_argument("--offline", action="store_true")
+    p.set_defaults(f=cmd_cite_zotero_note)
 
     r = top.add_parser("results").add_subparsers(dest="cmd", required=True)
     p = r.add_parser("register")

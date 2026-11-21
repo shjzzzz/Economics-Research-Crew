@@ -50,7 +50,7 @@
 | 工具 / Hook | 核心命令或触发时机 | 解决的问题 |
 |---|---|---|
 | `orchestrator.py` | `init / status / next / artifact / verify / gate / fail / recover / enforce / log` | 机读项目状态机（`STATE.json`）与追加式运行账本（`Meta/run-ledger.jsonl`）；关卡仅由研究者决定 |
-| `paper_tools.py` | `cite (add/from-note/import/zotero/verify/confirm/check/bib/ris/csl)`、`results (register/import/render/check)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明 |
+| `paper_tools.py` | `cite (add/from-note/import/zotero/zotero-note/open/verify/confirm/check/bib/ris/csl)`、`results (register/import/render/check)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明 |
 | `wiki_lint.py` | `lint`、`map [--check]`、`hash` | 确定性体检、生成双地图并刷新 `ERC:MAP`；自动过滤 `paper/versions/` 与多项目 `PROJECT.md` 误报 |
 | `tools/check_ars_updates.py` | `check [--out FILE] [--json]`、`mark-audited --tag T --sha S` | **零 LLM 额度**检测 `Imbad0202/academic-research-skills` 新版本，按 `Meta/upstream-ars.json` 映射受影响模块并输出原生适配简报 |
 | `tools/erc_cli.py` + `install.sh` | `install / test / sync / check-ars` | Windows 11 与 macOS / Linux 跨平台安装、校验与同步，自动适配 `python` / `python3` hook 命令 |
@@ -62,7 +62,7 @@
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（289/289；本机放置 extras 时 292/292） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（301/301；本机放置 extras 时 304/304） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/` | `.claude/settings.json`（全 6 个 hooks） | 已测试 |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -123,6 +123,6 @@ chmod +x install.sh
 | 验证项 | 命令 | 说明 |
 |---|---|---|
 | 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、17 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 289 项测试（本机放置 extras 时 292 项），全在临时目录运行，不触碰真实知识库 |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 301 项测试（本机放置 extras 时 304 项），全在临时目录运行，不触碰真实知识库 |
 | 上游 ARS 更新检查 | `python tools/check_ars_updates.py check` | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报 |
 | 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | 消耗 Claude 额度；覆盖 `tests/routing_cases.json` 16 个路由用例 |

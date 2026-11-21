@@ -26,7 +26,7 @@ task_type: open-ended
 5. **识别真实缺口与竞争解释**：区分“没人写过”与“值得写且现有识别未解决”，并列出竞争性解释。
 6. **三层定位锚点与引文登记**：每条重要主张记录页码/表号/公式/条款（`--locator`）与主张适用边界（`--claim-scope`）。
    - 已有 `03-Literature/*.md` 文献卡：优先运行 `python .claude/scripts/paper_tools.py cite from-note <卡片路径>` 桥接入库。
-   - 已在 **Zotero / EndNote** 中管理的文献：先导出 RIS / BibTeX / CSL-JSON（本机 Zotero 也可用 `cite zotero` 直接拉取），先 `paper_tools.py cite import <文件> --dry-run` 预览，再正式导入（`--attach [--pdf-dir DIR]` 复制 PDF 到 `03-Literature/_sources/`）。条目一律 `unverified`（中文为 `manual`），自动建文献笔记并登记 `Meta/index.md`；**参考文献软件只是进出口，引文表才是写稿依据**，须对照原文核实或由研究者 `cite confirm` 后才能引用。定稿后用 `cite ris|csl|bib -o` 导回 EndNote / Zotero / Word。
+   - 已在 **Zotero / EndNote** 中管理的文献：先导出 RIS / BibTeX / CSL-JSON（本机 Zotero 也可用 `cite zotero` 直接拉取），先 `paper_tools.py cite import <文件> --dry-run` 预览，再正式导入（`--attach [--pdf-dir DIR]` 复制 PDF 到 `03-Literature/_sources/`）。条目一律 `unverified`（中文为 `manual`），自动建文献笔记并登记 `Meta/index.md`；**参考文献软件只是进出口，引文表才是写稿依据**，须对照原文核实或由研究者 `cite confirm` 后才能引用。Zotero 还可 `cite zotero --query 词 --list` 先搜、`--item KEY` 拉单条、`--notes` 带入其笔记；`cite open KEY` 打开 PDF；`cite zotero-note KEY --user ID` 预览后加 `--yes` 把文献笔记作为新子笔记写回 Zotero（需研究者同意）。定稿后用 `cite ris|csl|bib -o` 导回 EndNote / Zotero / Word。
    - 新增引文：运行 `python .claude/scripts/paper_tools.py cite add --key <k> --title "…" --year Y [--doi D] --locator "…" --claim-scope "…"`；中文文献加 `--type chinese`，法规加 `--type legal --doc-no "…" --effective YYYY-MM-DD`，均须由研究者核对原文后执行 `cite confirm`。
 
 ## 4. 产出与知识回流

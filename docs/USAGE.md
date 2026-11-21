@@ -121,6 +121,10 @@ claude
      - 导入：EndNote 选 *Reference Manager (RIS)* 或 BibTeX 导出，Zotero 选 RIS / BibTeX / CSL JSON 导出，然后 `paper_tools.py cite import 文件 [--dry-run] [--attach] [--pdf-dir DIR]`；同一 DOI 或同标题同年份自动跳过重复，`--replace` 才覆盖；GBK 编码的导出文件自动识别。
      - 每条新条目自动生成 `03-Literature/<key>.md` 文献笔记（含 `cite_key`、摘要、`verification: unverified`），并登记到 `Meta/index.md` 与 `Meta/log.md`；`--attach` 把 PDF **复制**到 `03-Literature/_sources/` 并写入 `sha256`（EndNote 的 PDF 在 `库名.Data/PDF`，用 `--pdf-dir` 指向它；Zotero 导出时勾选 *Export Files* 即可按相对路径找到）。
      - 本机 Zotero 实时拉取：Zotero 7 勾选 *设置 → 高级 → 允许此计算机上的其他应用程序与 Zotero 通信*，运行 `paper_tools.py cite zotero [--collection KEY] [--limit N]`（只含元数据，仅发 GET 请求）；网络库用 `--user ID` 或 `--group ID`，API 密钥只放环境变量 `ZOTERO_API_KEY`，不写进笔记；`--offline` / `ERC_OFFLINE=1` 下只允许本机。
+     - 搜索与单条：`cite zotero --query "关键词" --list` 只列出匹配项；`--query` 去掉 `--list` 即导入匹配项；`--item KEY` 拉取单条；加 `--notes` 把该条目在 Zotero 里的笔记以引用块追加到文献笔记（只读来源）。导入的条目会记录 `zotero_key`。
+     - 打开 PDF：`cite open KEY` 用系统阅读器打开 `_sources/KEY.pdf`（`--print` 只打印路径）。
+     - 回写笔记：`cite zotero-note KEY --user ID` 先预览，确认后加 `--yes`，把文献笔记里**已填写**的各节作为一条**新的子笔记**写进 Zotero（标签 `erc-exported`；需有写权限的 `ZOTERO_API_KEY`；只新增，不改、不删已有条目；同一文献已回写过则跳过；`--yes` 会触发权限确认）。
+     - 上述 Zotero 命令行思路参考 jbaiter/zotero-cli（MIT；query / read / add-note），本项目以标准库重写，未复制其代码，也不依赖 pyzotero 与 pandoc。
      - 导出：`cite ris -o refs.ris`（EndNote / Zotero 导入，带 BOM 以保证中文）、`cite csl -o refs.json`（Zotero / Word / Pandoc）、`cite bib -o refs.bib`。
      - 法规类条目需要文号与生效日期，导入时会跳过并提示改用 `cite add --type legal`。
 4. **成稿与主张审计（S10）**：`cite check`、`results check`、`claim check`（核对 `locator` 锚点、大纲主张覆盖度与因果动词越界）、`questions`、`report`。
