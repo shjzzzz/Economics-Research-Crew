@@ -71,13 +71,20 @@ def main(settings_path, snippet_path, python_cmd=None):
                 existing.append(g)
                 changed = True
                 continue
-            # already installed: widen matcher if the snippet covers more tools (upgrade path)
+            # already installed: widen matcher and sync python command prefix on upgrade
             want = set(filter(None, g.get("matcher", "").split("|")))
             have = set(filter(None, match.get("matcher", "").split("|")))
             if want - have:
                 order = [t for t in g.get("matcher", "").split("|") if t] + sorted(have - want)
                 match["matcher"] = "|".join(order)
                 changed = True
+            for h in match.get("hooks", []):
+                cmd = h.get("command", "")
+                if any(n in cmd for n in names):
+                    m = re.match(r"^(python3?)\s+(.*)$", cmd)
+                    if m and m.group(1) != python_cmd:
+                        h["command"] = python_cmd + " " + m.group(2)
+                        changed = True
     if changed or not os.path.exists(settings_path):
         os.makedirs(os.path.dirname(os.path.abspath(settings_path)), exist_ok=True)
         with open(settings_path, "w", encoding="utf-8", newline="\n") as fh:

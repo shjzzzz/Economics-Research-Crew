@@ -142,6 +142,40 @@ def similar(a, b):
     return difflib.SequenceMatcher(None, norm_title(a), norm_title(b)).ratio()
 
 
+def has_cjk(s):
+    return any("一" <= ch <= "鿿" for ch in (s or ""))
+
+
+def _year_int(v):
+    m = re.search(r"\b(\d{4})\b", str(v or ""))
+    return int(m.group(1)) if m else None
+
+
+def _safe_stem(key):
+    return re.sub(r"[^\w.\-]", "_", key)
+
+
+def _note_file(vault, e):
+    if e.get("note_path"):
+        return in_vault(vault, e["note_path"])
+    return os.path.join(vault, "03-Literature", _safe_stem(e["key"]) + ".md")
+
+
+def _pdf_file(vault, e):
+    if e.get("pdf"):
+        return in_vault(vault, e["pdf"])
+    return os.path.join(vault, "03-Literature", "_sources", _safe_stem(e["key"]) + ".pdf")
+
+
+def _strip_frontmatter(text):
+    lines = text.split("\n")
+    if lines and lines[0].strip() == "---":
+        for i in range(1, len(lines)):
+            if lines[i].strip() == "---":
+                return "\n".join([""] * (i + 1) + lines[i + 1:])
+    return text
+
+
 # ------------------------------------------------------------------ Crossref
 def offline(args=None):
     return bool(getattr(args, "offline", False)) or os.environ.get("ERC_OFFLINE") == "1"
@@ -190,7 +224,8 @@ def verify_entry(e, off):
         return e["status"]
 
     def year_ok_for(c):
-        return (not e.get("year")) or (not c.get("year")) or abs(int(e["year"]) - int(c["year"])) <= 1
+        y1, y2 = _year_int(e.get("year")), _year_int(c.get("year"))
+        return (y1 is None) or (y2 is None) or abs(y1 - y2) <= 1
 
     # the same title often has several records (working paper vs journal version): prefer one whose
     # title AND year both match; otherwise report the closest title
@@ -316,7 +351,7 @@ def bibtex(e):
     f = [("title", e["title"]), ("author", " and ".join(e.get("authors", []))), ("year", e.get("year")),
          ("journal" if typ == "article" else "publisher", e.get("venue")), ("doi", e.get("doi")),
          ("url", e.get("url")), ("volume", e.get("volume")), ("number", e.get("issue")),
-         ("pages", (e.get("pages") or "").replace("-", "--") if e.get("pages") else None),
+         ("pages", re.sub(r"-+", "--", e["pages"]) if e.get("pages") else None),
          ("abstract", e.get("abstract")), ("keywords", ", ".join(e.get("keywords", [])))]
     if e.get("type") == "legal":
         f.append(("note", "%s，%s 生效" % (e.get("doc_no"), e.get("effective"))))
@@ -381,7 +416,7 @@ def cmd_cite_from_note(a):
         venue = str(fm.get("journal") or fm.get("venue") or "").strip()
         ctype = str(fm.get("cite_type") or "").strip().lower()
         if ctype not in ("article", "book", "chinese", "legal"):
-            ctype = "chinese" if is_zh(title) else "article"
+            ctype = "chinese" if has_cjk(title) else "article"
         e = {"key": key, "title": title, "authors": authors, "year": year, "doi": doi, "venue": venue,
              "type": ctype, "status": "unverified", "note_path": relpath(np, vault), "added": now()}
         for fld in ("locator", "claim_scope"):
@@ -398,7 +433,7 @@ def cmd_cite_from_note(a):
             e["url"] = str(fm["url"]).strip()
         old = m["entries"].get(key)
         if old:  # keep bibliographic extras that a note's frontmatter does not carry (e.g. imported abstract)
-            for fld in ("abstract", "keywords", "volume", "issue", "pages", "imported_from", "pdf", "sha256"):
+            for fld in ("abstract", "keywords", "volume", "issue", "pages", "imported_from", "pdf", "sha256", "zotero_key"):
                 if old.get(fld) and not e.get(fld):
                     e[fld] = old[fld]
         st = verify_entry(e, offline(a))
@@ -442,8 +477,9 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
         if dup:
             old = m["entries"][dup]
             e["added"] = old.get("added", e["added"])
-            if old.get("note_path"):
-                e["note_path"] = old["note_path"]
+            for fld in ("note_path", "locator", "claim_scope", "pdf", "sha256", "zotero_key"):
+                if old.get(fld) and not e.get(fld):
+                    e[fld] = old[fld]
         st = verify_entry(e, unverified_only)
         src_rel = sha = None
         if a.attach:
@@ -472,7 +508,7 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
                     with open(np, "w", encoding="utf-8", newline="\n") as fh:
                         fh.write(refmgr.note_text(e, template, src_rel, sha, now()[:10]))
                 st_n["notes"] += 1
-                new_notes.append((key, title, 1 if (src_rel and sha) else 0))
+                new_notes.append((key, os.path.splitext(os.path.basename(rel))[0], title, 1 if (src_rel and sha) else 0))
         m["entries"][key] = e
         taken.add(key)
         st_n["new"] += 1
@@ -503,8 +539,8 @@ def _index_and_log(vault, label, notes, st_n):
     if os.path.isfile(ip):
         text = read_text(ip)
         lines = text.split("\n")
-        rows = ["| [[%s]] | %s（导入，未核实） | %s | %d | %s |" % (k, t.replace("|", "/")[:60], k, n, today)
-                for k, t, n in notes if "[[%s]]" % k not in text]
+        rows = ["| [[%s]] | %s（导入，未核实） | %s | %d | %s |" % (stem, t.replace("|", "/")[:60], k, n, today)
+                for k, stem, t, n in notes if "[[%s]]" % stem not in text]
         h = next((i for i, ln in enumerate(lines) if ln.startswith("### 文献")), None)
         if rows and h is not None:
             j = h + 1
@@ -549,9 +585,9 @@ def cmd_cite_import(a):
 
 def _znote_html(vault, e):
     import html as _h
-    p = os.path.join(vault, "03-Literature", e["key"] + ".md")
+    p = _note_file(vault, e)
     if not os.path.isfile(p):
-        sys.exit("没有文献笔记 03-Literature/%s.md，无可回写内容。" % e["key"])
+        sys.exit("没有文献笔记 %s，无可回写内容。" % relpath(p, vault))
     text = re.sub(r"<!--.*?-->", "", read_text(p), flags=re.S)
     text = re.sub(r"^---\n.*?\n---\n", "", text.replace("\r\n", "\n"), count=1, flags=re.S)
     parts, head, body = [], None, []
@@ -616,7 +652,7 @@ def cmd_cite_zotero(a):
             zk = e.get("zotero_key")
             if not zk or zk not in ids:
                 continue
-            np_ = os.path.join(vault, "03-Literature", e["key"] + ".md")
+            np_ = _note_file(vault, e)
             if not os.path.isfile(np_) or "## Zotero 笔记" in read_text(np_):
                 continue
             try:
@@ -633,9 +669,10 @@ def cmd_cite_zotero(a):
 def cmd_cite_open(a):
     vault = vault_of(a)
     _, m = cmap(vault)
-    if a.key not in m["entries"]:
+    e = m["entries"].get(a.key)
+    if e is None:
         sys.exit("引文表中没有 %s" % a.key)
-    pdf = os.path.join(vault, "03-Literature", "_sources", a.key + ".pdf")
+    pdf = _pdf_file(vault, e)
     if not os.path.isfile(pdf):
         sys.exit("没有 %s；先用 cite import --attach（或 --pdf-dir）把 PDF 复制进 _sources。" % pdf)
     print(pdf)
@@ -747,6 +784,13 @@ def cmd_results_register(a):
     print("%s = %s%s" % (a.id, e["value"], suffix))
 
 
+def _ascii_slug(s, fallback):
+    slug = re.sub(r"[^A-Za-z0-9\-]+", "_", (s or "").strip()).strip("_")
+    if slug:
+        return slug
+    return "%s_%s" % (fallback, hashlib.sha1((s or "").encode("utf-8")).hexdigest()[:6])
+
+
 def cmd_results_import(a):
     vault = vault_of(a)
     path, m = rmap(vault)
@@ -757,15 +801,21 @@ def cmd_results_import(a):
         rows = list(csv.reader(fh))
     if len(rows) < 2:
         sys.exit("CSV 至少需要表头和一行数据。")
-    header, count = rows[0], 0
-    for r in rows[1:]:
+    header, count, seen_ids = rows[0], 0, set()
+    for ri, r in enumerate(rows[1:], 1):
         if not r or not r[0].strip():
             continue
-        rowkey = re.sub(r"[^\w\-]+", "_", r[0].strip())
+        rowkey = _ascii_slug(r[0], "r%d" % ri)
         for j in range(1, min(len(header), len(r))):
             if r[j].strip() == "":
                 continue
-            rid = "%s.%s.%s" % (a.prefix, rowkey, re.sub(r"[^\w\-]+", "_", header[j].strip()))
+            colkey = _ascii_slug(header[j], "c%d" % j)
+            base_id = "%s.%s.%s" % (a.prefix, rowkey, colkey)
+            rid, suffix = base_id, 2
+            while rid in seen_ids:
+                rid = "%s_%d" % (base_id, suffix)
+                suffix += 1
+            seen_ids.add(rid)
             register(vault, m, rid, r[j].strip(), "%s / %s / %s" % (a.prefix, r[0].strip(), header[j].strip()),
                      source=a.source or os.path.relpath(csv_path, vault), script=a.script)
             count += 1
@@ -795,19 +845,22 @@ def cmd_results_render(a):
     out, missing = render_text(read_text(a.draft), m)
     if missing:
         sys.exit("以下 id 不在结果登记簿中，未渲染：" + ", ".join(sorted(set(missing))))
-    target = a.output or re.sub(r"\.md$", ".rendered.md", a.draft)
+    target = a.output or (re.sub(r"\.md$", ".rendered.md", a.draft, flags=re.I)
+                          if a.draft.lower().endswith(".md") else a.draft + ".rendered")
     with open(target, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(out)
     print("已写入 %s" % target)
 
 
 def bare_stats(text):
-    t = strip_code(text)
+    t = _strip_frontmatter(strip_code(text))
     t = PLACEHOLDER.sub(" ", t)
     t = CITE_GROUP.sub(" ", t)
     t = re.sub(r"https?://\S+|\b(?:19|20)\d{2}\b", " ", t)
     hits = []
     for i, line in enumerate(t.split("\n"), 1):
+        if line.lstrip().startswith("#"):
+            continue
         for mo in STAT_RE.finditer(line):
             if mo.group(1).replace(" ", "") not in SAFE_DECIMALS:
                 hits.append((i, mo.group(1)))
@@ -1001,7 +1054,7 @@ def cmd_refine_status(a):
 # ------------------------------------------------------------------ stage checks (used by orchestrator.verify)
 CLAIM_TAG_RE = re.compile(r"<!--\s*claim:\s*([A-Za-z0-9_-]+)\s*-->")
 OUTLINE_CLAIM_ROW_RE = re.compile(r"^\|\s*(C[A-Za-z0-9_-]+)\s*\|([^\n]+)", re.M)
-CAUSAL_VERB_RE = re.compile(r"(导致|致使|引起|显著提高|显著降低|显著促进|显著抑制|因果效应|\bcauses?\b|\binduces?\b|\bdrives?\b)")
+CAUSAL_VERB_RE = re.compile(r"(导致|致使|引起|显著提高|显著降低|显著促进|显著抑制|因果效应|\bcauses?\b|\binduces?\b|\bdrives?\b)", re.I)
 
 
 def claim_limited_to_association(rest):
@@ -1044,17 +1097,27 @@ def claim_problems(vault, files, strict=False, project=None):
             e = cm["entries"].get(k)
             if e is not None and not e.get("locator"):
                 (errors if strict else warns).append("%s：@%s 缺少定位锚点 locator（L3 anchorless 风险）" % (rel, k))
+        pending_claims = []
         for para in re.split(r"\r?\n\s*\r?\n", txt):
             cids = CLAIM_TAG_RE.findall(para)
-            seen_claims.update(cids)
-            if PLACEHOLDER.search(para) and not cids:
+            if cids and not CLAIM_TAG_RE.sub("", para).strip():
+                pending_claims.extend(cids)
+                seen_claims.update(cids)
+                continue
+            eff_cids = pending_claims + cids
+            pending_claims = []
+            seen_claims.update(eff_cids)
+            if PLACEHOLDER.search(para) and not eff_cids:
                 warns.append("%s：含 {{res:...}} 的段落缺少 <!-- claim: Cn --> 标注" % rel)
-            for cid in cids:
+            for cid in eff_cids:
                 if outline_claims and cid not in outline_claims:
                     errors.append("%s：主张 %s 未在 outline.md 主张清单中定义" % (rel, cid))
                 elif cid in outline_claims:
                     if claim_limited_to_association(outline_claims[cid]) and CAUSAL_VERB_RE.search(para):
                         (errors if strict else warns).append("%s：%s 在大纲中限定为相关/关联，但正文疑似使用强因果动词（OVERSTATED）" % (rel, cid))
+        for cid in pending_claims:
+            if outline_claims and cid not in outline_claims:
+                errors.append("%s：主张 %s 未在 outline.md 主张清单中定义" % (rel, cid))
     if outline_claims and checked_non_outline:
         for cid in sorted(outline_claims):
             if cid not in seen_claims:
@@ -1146,7 +1209,8 @@ def scan_text(text, cfg, rules):
             keys = sum(len(CITE_KEY.findall(g)) for g in CITE_GROUP.findall(s))
             if keys >= cfg.get("cite_dump_threshold", 4):
                 hits.append((line_no, "文献堆砌", "%d 个引用" % keys, "只留最相关的 1–2 篇并说明相关在哪里"))
-            n = len(s) if zh else len(s.split())
+            clean_s = CITE_GROUP.sub("", PLACEHOLDER.sub("0", s)).strip()
+            n = len(clean_s) if zh else len(clean_s.split())
             if n > (max_zh if zh else max_en):
                 hits.append((line_no, "超长句", "%d %s" % (n, "字" if zh else "词"), "拆成一句一个意思，删去不承载信息的从句"))
     return sorted(hits, key=lambda h: (h[0], h[1]))
@@ -1169,14 +1233,14 @@ def cmd_polish_scan(a):
 
 
 def polish_signature(text):
-    body = strip_code(text)
+    body = _strip_frontmatter(strip_code(text))
     prose = HTML_COMMENT.sub(" ", PLACEHOLDER.sub(" ", body))
     prose = CITE_GROUP.sub(" ", prose)
     return {
         "引文键": sorted(CITE_KEY.findall(" ".join(CITE_GROUP.findall(body)))),
         "结果占位符": sorted(m.group(0) for m in PLACEHOLDER.finditer(body)),
         "主张标注": sorted(CLAIM_TAG_RE.findall(body)),
-        "研究者问答标记": sorted(Q_RE.findall(body) + A_RE.findall(body)),
+        "研究者问答标记": sorted(["问:" + q for q in Q_RE.findall(body)] + ["答:" + a for a in A_RE.findall(body)]),
         "正文数字": sorted(NUM_RE.findall(prose)),
         "标题": HEADING_RE.findall(body),
     }
@@ -1202,7 +1266,7 @@ def cmd_polish_check(a):
     sys.exit(1 if errors else 0)
 
 
-def stage_check(vault, name, files):
+def stage_check(vault, name, files, project=None):
     """Error list for one named stage check (warnings are not stage blockers)."""
     md = [f for f in files if f.lower().endswith(".md") and os.path.isfile(f)]
     if name == "citations_resolved":
@@ -1212,7 +1276,7 @@ def stage_check(vault, name, files):
     if name == "results_linked":
         return results_problems(vault, md)[0]
     if name == "claims_aligned":
-        return claim_problems(vault, md, strict=True)[0]
+        return claim_problems(vault, md, strict=True, project=project)[0]
     if name == "no_open_questions":
         return ["%s：有未回答的 ⟦问：%s⟧" % (relpath(f, vault), q[:30])
                 for f in md for q in open_questions(read_text(f))]
@@ -1230,10 +1294,15 @@ def cmd_report(a):
         pd = paper_dir(a, vault)
     except SystemExit:
         pass
-    drafts = []
+    manuscript = None
     if pd and os.path.isdir(pd):
-        # only the live manuscript files: versions/ and worklogs quote keys and ids in prose
-        drafts = [os.path.join(pd, f) for f in ("outline.md", "draft.md", "polished.md", "final.md") if os.path.isfile(os.path.join(pd, f))]
+        # measure only the latest live manuscript so multi-stage copies do not double-count
+        for fname in ("final.md", "polished.md", "draft.md", "outline.md"):
+            cand = os.path.join(pd, fname)
+            if os.path.isfile(cand):
+                manuscript = cand
+                break
+    drafts = [manuscript] if manuscript else []
     cited = set()
     linked, bare, openq = 0, 0, 0
     seen_claims = set()
@@ -1251,7 +1320,8 @@ def cmd_report(a):
     unknown = len([k for k in cited if k not in cm["entries"]])
     ok = len([k for k in cited if cm["entries"].get(k, {}).get("status") in OK_STATUS])
     rv = load(os.path.join(pd, "reviews.json"), None) if pd else None
-    rep = {"citations_total": len(cm["entries"]), "citation_status": st_counts, "cited_keys": len(cited),
+    rep = {"manuscript": relpath(manuscript, vault) if manuscript else None,
+           "citations_total": len(cm["entries"]), "citation_status": st_counts, "cited_keys": len(cited),
            "cited_verified": ok, "cited_unknown": unknown,
            "cited_verified_rate": round(ok / len(cited), 3) if cited else None,
            "results_registered": len(rm["entries"]), "numbers_linked": linked, "bare_statistics": bare,
@@ -1347,7 +1417,7 @@ def cmd_review_verify(a):
     off = offline(a)
     for item in refs_raw:
         title = item.get("title", "")
-        ctype = item.get("type", "chinese" if is_zh(title) else "article")
+        ctype = item.get("type", "chinese" if has_cjk(title) else "article")
         e = {"title": title, "year": item.get("year"), "doi": item.get("doi"), "type": ctype, "status": "unverified"}
         st = verify_entry(e, off)
         refs_checked.append({"title": title, "year": e.get("year"), "doi": e.get("doi"),

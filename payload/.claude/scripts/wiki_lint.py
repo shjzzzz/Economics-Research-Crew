@@ -35,6 +35,23 @@ NEEDS_SOURCES = {"literature", "theory", "method", "synthesis", "query"}
 PATH_EXT = (".pdf", ".md", ".txt", ".csv", ".dta", ".xlsx", ".html", ".epub", ".docx")
 NON_PAGE_EXT = (".base", ".canvas", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".pdf", ".csv", ".dta", ".xlsx", ".docx")
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
+CODE_FENCE = re.compile(r"```.*?```", re.S)
+INLINE_CODE = re.compile(r"`[^`\n]+`")
+
+
+def _strip_code_spans(text):
+    return INLINE_CODE.sub("", CODE_FENCE.sub("", text))
+
+
+def _resolve_wikilink(raw, stems, vault):
+    cleaned = raw.strip().replace("\\", "/")
+    no_ext = cleaned[:-3].lower() if cleaned.lower().endswith(".md") else cleaned.lower()
+    hits = stems.get(_target(cleaned), [])
+    if "/" in no_ext:
+        return [h for h in hits
+                if h.relative_to(vault).as_posix()[:-3].lower() == no_ext
+                or h.relative_to(vault).as_posix()[:-3].lower().endswith("/" + no_ext)]
+    return hits
 
 
 def read(p):
@@ -188,16 +205,16 @@ def lint(vault, strict=False):
                     if looks_like_path(s):
                         if not ((vault / s).exists() or (p.parent / s).exists()):
                             add("error", rel, "sources", "source path not found: %s" % s)
-        for m in WIKILINK.finditer(text):
+        for m in WIKILINK.finditer(_strip_code_spans(text)):
             target = _target(m.group(1))
-            if not stems.get(target) and not target.endswith(NON_PAGE_EXT):
+            if not _resolve_wikilink(m.group(1), stems, vault) and not target.endswith(NON_PAGE_EXT):
                 add("error", rel, "link", "broken wikilink [[%s]]" % m.group(1).strip())
         if not subartifact:
             if index_text is not None:
                 if _is_project_entry(rel_path):
                     proj_name = rel_path.parts[1].lower()
                     in_idx = (proj_name in index_stems or (proj_name + "/project") in index_rels
-                              or rel[:-3].lower() in index_rels or "project" in index_stems)
+                              or rel[:-3].lower() in index_rels)
                 else:
                     in_idx = p.stem.lower() in index_stems
                 if not in_idx:
@@ -213,15 +230,9 @@ def lint(vault, strict=False):
             src_text = read(src)
         except OSError:
             continue
-        for m in WIKILINK.finditer(src_text):
-            raw = m.group(1).strip().replace("\\", "/")
-            raw_no_ext = raw[:-3].lower() if raw.lower().endswith(".md") else raw.lower()
-            for h in stems.get(_target(raw), []):
+        for m in WIKILINK.finditer(_strip_code_spans(src_text)):
+            for h in _resolve_wikilink(m.group(1), stems, vault):
                 if h in wiki_scope_set and h != src:
-                    if _is_project_entry(h.relative_to(vault)) and "/" in raw_no_ext:
-                        proj_name = h.relative_to(vault).parts[1].lower()
-                        if not (raw_no_ext.endswith(proj_name + "/project")):
-                            continue
                     inbound[h].add(src)
 
     for p, srcs in inbound.items():
@@ -308,11 +319,11 @@ def build_graph(vault):
         except OSError:
             continue
         in_graph = src in gset
-        for m in WIKILINK.finditer(text):
+        for m in WIKILINK.finditer(_strip_code_spans(text)):
             key = _target(m.group(1))
             if key.endswith(NON_PAGE_EXT):
                 continue
-            hits = stems.get(key, [])
+            hits = _resolve_wikilink(m.group(1), stems, vault)
             if not hits:
                 if in_graph:
                     broken.append((rel(src), m.group(1).strip()))
@@ -510,7 +521,7 @@ def cmd_map(vault, check=False, embed=True, quiet=False):
     say = (lambda *_a: None) if quiet else print
     for name, text in (("folder-map.md", render_folder_map(vault)), ("link-map.md", render_link_map(vault, g))):
         p = meta / name
-        cur = p.read_text(encoding="utf-8") if p.exists() else None
+        cur = p.read_text(encoding="utf-8-sig").replace("\r\n", "\n") if p.exists() else None
         if cur == text:
             say("%s: unchanged" % name)
         elif check:

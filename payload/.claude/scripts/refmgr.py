@@ -165,7 +165,16 @@ def to_ris(e):
         out.append("PY  - %s" % e["year"])
     if e.get("venue"):
         out.append(("T2  - " if typ == "BOOK" else "JO  - ") + e["venue"])
-    for tag, fld in (("VL", "volume"), ("IS", "issue"), ("SP", "pages"), ("DO", "doi"), ("UR", "url"), ("AB", "abstract")):
+    for tag, fld in (("VL", "volume"), ("IS", "issue")):
+        if e.get(fld):
+            out.append("%s  - %s" % (tag, e[fld]))
+    if e.get("pages"):
+        pg = re.split(r"\s*-+\s*", str(e["pages"]).strip(), maxsplit=1)
+        if pg[0]:
+            out.append("SP  - " + pg[0])
+        if len(pg) == 2 and pg[1]:
+            out.append("EP  - " + pg[1])
+    for tag, fld in (("DO", "doi"), ("UR", "url"), ("AB", "abstract")):
         if e.get(fld):
             out.append("%s  - %s" % (tag, e[fld]))
     out += ["KW  - " + k for k in e.get("keywords", [])]
@@ -177,21 +186,25 @@ def to_ris(e):
 
 
 # ------------------------------------------------------------------ BibTeX (Zotero, EndNote, JabRef)
-def _scan_braced(text, pos):
+def _scan_delim(text, pos, open_c="{", close_c="}"):
     depth, i, n = 0, pos, len(text)
     while i < n:
         c = text[i]
         if c == "\\":
             i += 2
             continue
-        if c == "{":
+        if c == open_c:
             depth += 1
-        elif c == "}":
+        elif c == close_c:
             depth -= 1
             if depth == 0:
                 return text[pos + 1:i], i + 1
         i += 1
     raise RefError("BibTeX 括号不匹配（文件可能被截断）")
+
+
+def _scan_braced(text, pos):
+    return _scan_delim(text, pos, "{", "}")
 
 
 def _scan_quoted(text, pos):
@@ -228,10 +241,7 @@ def parse_bibtex(text):
             continue
         etype, opener = m.group(1).lower(), m.group(2)
         if etype in ("comment", "preamble", "string"):
-            if opener == "{":
-                _, i = _scan_braced(text, m.end() - 1)
-            else:
-                i = m.end()
+            _, i = _scan_delim(text, m.end() - 1, opener, "}" if opener == "{" else ")")
             continue
         comma = text.find(",", m.end())
         if comma < 0:
@@ -568,22 +578,12 @@ def check_base(base, offline_flag):
 
 
 def zotero_fetch(base, api_key=None, collection=None, limit=None, timeout=20):
-    hdrs = {"Zotero-API-Version": "3", "User-Agent": "erc-paper-tools"}
-    if api_key:
-        hdrs["Zotero-API-Key"] = api_key
+    hdrs = _hdrs(api_key)
     path = ("/collections/%s/items/top" % urllib.parse.quote(collection)) if collection else "/items/top"
     items, start, page = [], 0, 100
     while True:
         url = "%s%s?format=csljson&limit=%d&start=%d" % (base.rstrip("/"), path, page, start)
-        try:
-            with _open(urllib.request.Request(url, headers=hdrs), timeout) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as ex:
-            hint = {403: "（Zotero 7：设置 → 高级 → 勾选“允许此计算机上的其他应用程序与 Zotero 通信”；网络库请检查 API 密钥权限）",
-                    404: "（用户/群组 ID 或集合 key 不存在）"}.get(ex.code, "")
-            raise RefError("Zotero 返回 HTTP %d %s" % (ex.code, hint))
-        except (urllib.error.URLError, OSError, ValueError) as ex:
-            raise RefError("连接 Zotero 失败：%s（本机请先启动 Zotero 并开启本地 API）" % ex)
+        data = _http(url, hdrs, timeout=timeout)
         batch = data.get("items", []) if isinstance(data, dict) else data
         if not batch:
             break
@@ -621,7 +621,8 @@ def _hdrs(api_key):
 
 def zotero_search(base, api_key, query, limit=None):
     """Full-text style search (Zotero q=); returns CSL-JSON items."""
-    url = "%s/items/top?format=csljson&q=%s&limit=%d" % (base.rstrip("/"), urllib.parse.quote(query), limit or 50)
+    qs = urllib.parse.urlencode({"format": "csljson", "q": query, "limit": limit or 50}, quote_via=urllib.parse.quote)
+    url = "%s/items/top?%s" % (base.rstrip("/"), qs)
     data = _http(url, _hdrs(api_key))
     return data.get("items", []) if isinstance(data, dict) else data
 

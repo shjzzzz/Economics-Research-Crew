@@ -151,8 +151,9 @@ def build(payload, stage, platforms, python_cmd=None):
         d = os.path.join(sk_src, name)
         if not os.path.isdir(d):
             continue
-        for root, _, files in os.walk(d):
-            for f in files:
+        for root, dirs, files in os.walk(d):
+            dirs[:] = [x for x in sorted(dirs) if x != "__pycache__"]
+            for f in sorted(files):
                 s = os.path.join(root, f)
                 t = os.path.join(agents_root, "skills", os.path.relpath(s, sk_src))
                 if f.endswith(".md"):
@@ -200,20 +201,23 @@ def merge_agents_md(target, block_file, update):
     if not os.path.exists(target):
         wr(target, block)
         print("created")
-        return
+        return "created"
     cur = rd(target)
     if BEGIN not in cur:
         wr(target, cur.rstrip() + "\n\n" + block)
         print("appended")
-        return
+        return "appended"
     i, end = block_span(cur)
     if cur[i:end] + "\n" == block:
         print("unchanged")
+        return "unchanged"
     elif update:
         wr(target + ".new", cur[:i] + block + cur[end:].lstrip("\n"))
         print("pending")
+        return "pending"
     else:
         print("stale")
+        return "stale"
 
 
 def sync_vault(vault, check):
@@ -226,9 +230,6 @@ def sync_vault(vault, check):
         return
     block = build_rules_block(claude_md=os.path.join(vault, "CLAUDE.md"),
                               rules_md=os.path.join(vault, ".claude", "ECONOMICS-RESEARCH.md"))
-    size = len(block.encode("utf-8"))
-    if size > AGENTS_MD_LIMIT:
-        sys.exit("generated block is %d bytes, above agy's %d-byte limit; shorten CLAUDE.md" % (size, AGENTS_MD_LIMIT))
     target = os.path.join(vault, "AGENTS.md")
     cur = rd(target) if os.path.exists(target) else ""
     if BEGIN in cur:
@@ -239,6 +240,9 @@ def sync_vault(vault, check):
         new = cur[:i] + block + cur[end:].lstrip("\n")
     else:
         new = (cur.rstrip() + "\n\n" if cur else "") + block
+    size = len(new.encode("utf-8"))
+    if size > AGENTS_MD_LIMIT:
+        sys.exit("resulting AGENTS.md would be %d bytes, above agy's %d-byte limit; shorten CLAUDE.md or custom AGENTS.md rules" % (size, AGENTS_MD_LIMIT))
     if check:
         print("out-of-sync")
         sys.exit(1)

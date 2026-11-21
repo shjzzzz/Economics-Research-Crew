@@ -19,8 +19,9 @@ def main():
     try:
         data = json.loads(sys.stdin.buffer.read().decode("utf-8-sig", "replace"))
         fp = ((data.get("tool_input") or {}).get("file_path") or "")
-        n = fp.replace("\\", "/")
-        if not n.lower().endswith(".md") or "/paper/" not in n or "01-Research-Projects/" not in n:
+        nl = fp.replace("\\", "/").lower()
+        if (not nl.endswith(".md") or "/paper/" not in nl or "01-research-projects/" not in nl
+                or "/paper/versions/" in nl or os.path.basename(nl).startswith("worklog-")):
             return
         import paper_tools as pt
         import orchestrator as orc

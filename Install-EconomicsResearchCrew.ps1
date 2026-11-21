@@ -64,6 +64,7 @@ if ($doAgents -and -not $hasPython) { throw "为 agy/Codex 生成文件需要 py
 # 1. 备份
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $backupDir = Join-Path $VaultPath "_erc-backups\$stamp"
+if (Test-Path $backupDir) { $backupDir = "${backupDir}-" + [guid]::NewGuid().ToString("N").Substring(0,6) }
 foreach ($rel in @("CLAUDE.md", ".mcp.json", ".claude\settings.json", "AGENTS.md", ".agents\hooks.json")) {
     $src = Join-Path $VaultPath $rel
     if (Test-Path $src -PathType Leaf) {
@@ -119,7 +120,7 @@ Copy-NoOverwrite (Join-Path $payload "Templates") (Join-Path $VaultPath "Templat
 # 3a. agy / Codex：由 payload/.claude 生成 .agents/ 与 AGENTS.md 区块（先生成到临时目录，再不覆盖地复制）
 if ($doAgents) {
     $builder = Join-Path $packageRoot "tools\build_platform.py"
-    $stage = Join-Path ([IO.Path]::GetTempPath()) ("erc-platform-" + $stamp)
+    $stage = Join-Path ([IO.Path]::GetTempPath()) ("erc-platform-$stamp-" + [guid]::NewGuid().ToString("N").Substring(0,6))
     $agentPlats = @($platforms | Where-Object { $_ -ne "claude" }) -join ","
     & python -X utf8 $builder build $payload $stage --platforms $agentPlats
     if ($LASTEXITCODE -ne 0) { throw "生成 agy/Codex 文件失败；知识库未被改动。" }

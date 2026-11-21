@@ -57,7 +57,7 @@ if ($hasClaude) {
 }
 if ($hasAgents) {
     Test-Defs ".agents"
-    Test-Files ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\scripts\paper_tools.py",".agents\pipeline-stages.json"
+    Test-Files ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\scripts\paper_tools.py",".agents\scripts\refmgr.py",".agents\pipeline-stages.json"
     $am = Join-Path $VaultPath "AGENTS.md"
     if (-not (Test-Path $am)) { $errors += "缺少根 AGENTS.md" }
     else {

@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PKG_ROOT = os.path.dirname(HERE)
@@ -131,6 +132,8 @@ def cmd_install(a):
 
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     backup_dir = os.path.join(vault, "_erc-backups", stamp)
+    if os.path.exists(backup_dir):
+        backup_dir = backup_dir + "-" + uuid.uuid4().hex[:6]
     pending = []
 
     # 1. Backup critical existing files
@@ -157,9 +160,8 @@ def cmd_install(a):
             copy_no_overwrite(os.path.join(stage, ".agents"), os.path.join(vault, ".agents"), a.update, a.dry_run, pending)
             agents_md = os.path.join(vault, "AGENTS.md")
             if not a.dry_run:
-                old_exists = os.path.exists(agents_md + ".new")
-                bp.merge_agents_md(agents_md, os.path.join(stage, "AGENTS.erc.md"), a.update)
-                if os.path.exists(agents_md + ".new") and not old_exists:
+                res = bp.merge_agents_md(agents_md, os.path.join(stage, "AGENTS.erc.md"), a.update)
+                if res == "pending":
                     pending.append(agents_md + ".new")
             if a.with_hooks and "agy" in platforms and not a.dry_run:
                 agy_hooks = os.path.join(vault, ".agents", "hooks.json")
@@ -315,10 +317,14 @@ def cmd_test(a):
                 errors.append("AGENTS.md 为 %d 字节，超过上限 %d" % (sz, bp.AGENTS_MD_LIMIT))
         hj = os.path.join(vault, ".agents", "hooks.json")
         if os.path.isfile(hj):
+            ht = bp.rd(hj)
             try:
-                json.loads(bp.rd(hj))
+                json.loads(ht)
             except ValueError:
                 errors.append(".agents/hooks.json 不是有效 JSON")
+            for h in ("protect_raw.py", "routing_hint.py"):
+                if h in ht and not os.path.isfile(os.path.join(vault, ".agents", "hooks", h)):
+                    errors.append("hooks.json 引用了 hook 但文件缺失: " + h)
 
     if errors:
         for e in errors:

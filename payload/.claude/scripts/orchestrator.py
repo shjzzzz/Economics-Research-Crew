@@ -236,7 +236,7 @@ def verify_stage(vault, cfg, st, sid):
             problems.append("缺少 paper_tools.py，无法执行检查项：%s" % ", ".join(checks))
         else:
             for chk in checks:
-                problems += paper_tools.stage_check(vault, chk, files)
+                problems += paper_tools.stage_check(vault, chk, files, project=st["project"])
     return problems
 
 
@@ -248,7 +248,7 @@ def cmd_init(a):
         sys.exit("找不到研究库根目录（需要同时有 Meta/ 和 %s/）。" % PROJECTS_DIR)
     pdir = os.path.abspath(a.project_dir if os.path.isabs(a.project_dir) else os.path.join(vault, a.project_dir))
     projects = os.path.join(vault, PROJECTS_DIR)
-    if os.path.commonpath([pdir, projects]) != projects or os.path.dirname(pdir) != projects:
+    if not inside(pdir, projects) or os.path.dirname(pdir) != os.path.abspath(projects):
         sys.exit("项目目录必须是 %s/<项目名>。" % PROJECTS_DIR)
     sp = os.path.join(pdir, "STATE.json")
     if os.path.exists(sp):
@@ -291,9 +291,10 @@ def cmd_next(a):
     s = cfg["stages"][stage_index(cfg, sid)]
     rec = st["stages"][sid]
     print("当前阶段 %s %s；负责：%s" % (sid, s["name"], s["owner"]))
-    if s.get("agents"):
+    agents = list(s.get("agents", [])) + [ag for ag in sorted(rec["attempts"]) if ag not in s.get("agents", [])]
+    if agents:
         budget = retry_budget(cfg)
-        for ag in s["agents"]:
+        for ag in agents:
             n = rec["attempts"].get(ag, 0)
             print("  Agent %s：已失败 %d 次，%s" % (ag, n, "可重试" if n < budget else "已达重试上限，停下并向研究者报告"))
     problems = verify_stage(vault, cfg, st, sid)
@@ -310,6 +311,18 @@ def cmd_artifact(a):
     sid = a.stage or st["stage"]
     if sid not in st["stages"]:
         sys.exit("未知阶段 %s" % sid)
+    if a.remove:
+        removed = []
+        for raw in a.paths:
+            p = os.path.abspath(raw if os.path.isabs(raw) else os.path.join(vault, raw))
+            rel = os.path.relpath(p, vault).replace("\\", "/") if inside(p, vault) else raw.replace("\\", "/")
+            if rel in st["stages"][sid]["artifacts"]:
+                st["stages"][sid]["artifacts"].remove(rel)
+                removed.append(rel)
+        save(vault, path, st)
+        ledger_append(vault, "artifact_remove", project=st["project"], stage=sid, artifacts=removed)
+        print("已从 %s 移除 %d 个产物。" % (sid, len(removed)))
+        return
     added = []
     for raw in a.paths:
         p = os.path.abspath(raw if os.path.isabs(raw) else os.path.join(vault, raw))
@@ -330,6 +343,8 @@ def cmd_verify(a):
     cfg = load_cfg()
     vault, path, st = project_ctx(a)
     sid = a.stage or st["stage"]
+    if sid not in st["stages"]:
+        sys.exit("未知阶段 %s" % sid)
     problems = verify_stage(vault, cfg, st, sid)
     ledger_append(vault, "verify", project=st["project"], stage=sid, ok=not problems, problems=problems or None)
     if problems:
@@ -438,7 +453,7 @@ def main(argv=None):
     p = sub.add_parser("init"); p.add_argument("project_dir"); p.add_argument("--title"); p.set_defaults(f=cmd_init)
     p = sub.add_parser("status"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_status)
     p = sub.add_parser("next"); p.set_defaults(f=cmd_next)
-    p = sub.add_parser("artifact"); p.add_argument("paths", nargs="+"); p.add_argument("--stage"); p.set_defaults(f=cmd_artifact)
+    p = sub.add_parser("artifact"); p.add_argument("paths", nargs="+"); p.add_argument("--stage"); p.add_argument("--remove", action="store_true"); p.set_defaults(f=cmd_artifact)
     p = sub.add_parser("verify"); p.add_argument("--stage"); p.set_defaults(f=cmd_verify)
     p = sub.add_parser("gate")
     p.add_argument("--decision", required=True, choices=["pass", "revise", "return", "stop"])

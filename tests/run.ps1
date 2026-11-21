@@ -734,8 +734,118 @@ foreach ($ln in $stOut) {
 }
 Ok ($LASTEXITCODE -eq 0) "refmgr selftest exit 0"
 
+# --- 16. logic hardening regressions -----------------------------------------
+Write-Host "[16] logic hardening regressions"
+$v16 = New-Vault
+Ok ((Run-Install $v16 @("-Platform","all","-WithHooks")) -eq 0) "v16 all-platform install exit 0"
+$orc16 = Join-Path $v16 ".claude\scripts\orchestrator.py"
+$pt16 = Join-Path $v16 ".claude\scripts\paper_tools.py"
+$lint16 = Join-Path $v16 ".claude\scripts\wiki_lint.py"
+function O16([string[]]$A) { $ErrorActionPreference = "Continue"; $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+    try { return ((& $py -X utf8 $orc16 --vault $v16 @A 2>&1) -join "`n") + "|rc=$LASTEXITCODE" } finally { [Console]::OutputEncoding = $prev } }
+function PT16([string[]]$A) { $ErrorActionPreference = "Continue"; $prev = [Console]::OutputEncoding; [Console]::OutputEncoding = $enc
+    try { return ((& $py -X utf8 $pt16 --vault $v16 @A 2>&1) -join "`n") + "|rc=$LASTEXITCODE" } finally { [Console]::OutputEncoding = $prev } }
+function G16([string]$Tool, [hashtable]$In) { $ErrorActionPreference = "Continue"
+    $json = @{tool_name=$Tool; tool_input=$In; cwd=$v16} | ConvertTo-Json -Depth 5 -Compress
+    $out = $json | & $py (Join-Path $v16 ".claude\hooks\orchestrator_guard.py") 2>$null; return "$(($out -join ' '))|rc=$LASTEXITCODE" }
+# 16a. protect_raw chained & named -Destination bypasses
+Ok ((Hook "protect_raw.py" @{tool_name="Bash"; cwd=$v16; tool_input=@{command="cp /tmp/x.csv 06-Data/raw/ && echo ok"}}) -eq 2) "protect_raw blocks chained cp into raw"
+Ok ((Hook "protect_raw.py" @{tool_name="PowerShell"; cwd=$v16; tool_input=@{command="Copy-Item -Destination 06-Data/raw/a.csv -Path x.csv"}}) -eq 2) "protect_raw blocks Copy-Item -Destination raw"
+Ok ((Hook "protect_raw.py" @{tool_name="PowerShell"; cwd=$v16; tool_input=@{command="Copy-Item -Path 06-Data/raw/a.csv -Destination 06-Data/processed/a.csv"}}) -eq 0) "protect_raw allows Copy-Item FROM raw to processed"
+# 16b. orchestrator_guard spaced --vault paths
+Ok ((G16 "Bash" @{command='python .claude/scripts/orchestrator.py --vault "D:\My Vault" gate --decision pass --note ok'}) -match "permissionDecision.*ask") "guard prompts for gate with spaced --vault"
+Ok ((G16 "Bash" @{command='python .claude/scripts/paper_tools.py --vault "D:\My Vault" cite confirm --key k1 --note ok'}) -match "permissionDecision.*ask") "guard prompts for cite confirm with spaced --vault"
+# 16c. validate_frontmatter & validate_paper boundaries
+$agBad = Join-Path $v16 ".agents\bad.md"; [IO.File]::WriteAllText($agBad, "---`nx: 1`n# unclosed`n", $enc)
+Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v16; tool_input=@{file_path=$agBad}}) -eq 0) "validate_frontmatter skips .agents/"
+Remove-Item -LiteralPath $agBad -Force
+$p16 = Join-Path $v16 "01-Research-Projects\p1\paper"
+New-Item -ItemType Directory -Force (Join-Path $p16 "versions") | Out-Null
+$vSnap = Join-Path $p16 "versions\v0.md"; [IO.File]::WriteAllText($vSnap, "引用 [@ghost] {{res:ghost}}`n", $enc)
+$wLog = Join-Path $p16 "worklog-v1.md"; [IO.File]::WriteAllText($wLog, "引用 [@ghost] {{res:ghost}}`n", $enc)
+$lcBad = Join-Path $p16 "bad.md"; [IO.File]::WriteAllText($lcBad, "引用 [@ghost]`n", $enc)
+function VP16([string]$File) { $ErrorActionPreference = "Continue"; $json = @{tool_name="Write"; tool_input=@{file_path=$File}; cwd=$v16} | ConvertTo-Json -Depth 5 -Compress
+    $null = $json | & $py (Join-Path $v16 ".claude\hooks\validate_paper.py") 2>$null; return $LASTEXITCODE }
+Ok ((VP16 $vSnap) -eq 0 -and (VP16 $wLog) -eq 0) "validate_paper skips versions/ and worklog- files"
+Ok ((VP16 ($lcBad.Replace("01-Research-Projects", "01-research-projects"))) -eq 2) "validate_paper matches project path case-insensitively"
+# 16d. orchestrator unknown --stage, artifact --remove, and cross-project verify
+$null = O16 @("init","01-Research-Projects\p1")
+Ok ((O16 @("verify","--stage","S99")) -match "未知阶段|rc=1") "orchestrator verify rejects unknown stage"
+$badArt = Join-Path $p16 "bad.md"; $goodArt = Join-Path $p16 "ok.md"; [IO.File]::WriteAllText($goodArt, "ok`n", $enc)
+$null = O16 @("artifact",$badArt); $null = O16 @("artifact",$badArt,"--remove"); $null = O16 @("artifact",$goodArt)
+Ok ((O16 @("verify")) -match "rc=0") "orchestrator artifact --remove clears mistakenly registered artifact"
+# cross-project claims_aligned: p2 is newest active, p1 verified explicitly at S12 uses p1's outline
+$null = O16 @("init","01-Research-Projects\p2")
+$p2dir = Join-Path $v16 "01-Research-Projects\p2\paper"; New-Item -ItemType Directory -Force $p2dir | Out-Null
+[IO.File]::WriteAllText((Join-Path $p16 "outline.md"), "| C1 | 关联 | 相关 | ATT | res:r1 | 仅相关性 | 局限 |`n", $enc)
+[IO.File]::WriteAllText((Join-Path $p2dir "outline.md"), "| C9 | 其他 | 因果 | ATT | res:r9 | 因果 | 局限 |`n", $enc)
+$null = PT16 @("cite","add","--key","k16","--title","Tax","--locator","p.1","--offline")
+$null = PT16 @("cite","confirm","--key","k16","--note","ok")
+$null = PT16 @("results","register","--id","r1","--value","0.5","--no-source-reason","test")
+$p1Final = Join-Path $p16 "final.md"
+[IO.File]::WriteAllText($p1Final, "<!-- claim: C1 -->`n`n结果 {{res:r1}} 与征管相关 [@k16]。`n", $enc)
+$null = O16 @("--project","p1","artifact",$p1Final,"--stage","S12")
+Ok ((O16 @("--project","p1","verify","--stage","S12")) -match "rc=0") "orchestrator cross-project verify S12 checks p1 outline (not active p2) and binds blank-line claim tag"
+# 16e. paper_tools edge cases: forthcoming year, short zh title, bibtex --, Chinese CSV, non-.md render, bare_stats heading, case-insensitive OVERSTATED, report latest manuscript, polish frontmatter
+$m16 = Join-Path $v16 "mock16.json"
+[IO.File]::WriteAllText($m16, (@{"title:forthcoming tax study"=@(@{doi="10.1/f";title="Forthcoming Tax Study";year=2026;venue="AER";authors=@("A")})} | ConvertTo-Json -Depth 5), $enc)
+$env:ERC_CROSSREF_MOCK = $m16
+Ok ((PT16 @("cite","add","--key","forth26","--title","Forthcoming Tax Study","--year","forthcoming")) -match "verified") "cite add handles non-integer year (forthcoming) without crashing"
+Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
+$zhShort = Join-Path $v16 "03-Literature\shui.md"
+[IO.File]::WriteAllText($zhShort, "---`ntype: literature`ncite_key: shui2024`ntitle: 税法学`nyear: 2024`n---`n", $enc)
+Ok ((PT16 @("cite","from-note",$zhShort,"--offline")) -match "shui2024 -> manual") "cite from-note classifies short 3-char Chinese title as manual"
+$zhCsv = Join-Path $v16 "06-Data\processed\zh.csv"
+New-Item -ItemType Directory -Force (Split-Path $zhCsv) | Out-Null
+[IO.File]::WriteAllText($zhCsv, "模型,系数,标准误`n基准回归,-0.12,0.03`n稳健性,-0.11,0.04`n", $enc)
+Ok ((PT16 @("results","import",$zhCsv,"--prefix","cn")) -match "已登记 4.*rc=0") "results import handles Chinese CSV row/column headers"
+$txtIn = Join-Path $p16 "raw.txt"; [IO.File]::WriteAllText($txtIn, "值 {{res:r1}}`n", $enc)
+Ok ((PT16 @("results","render",$txtIn)) -match "raw\.txt\.rendered.*rc=0" -and ([IO.File]::ReadAllText($txtIn, $enc) -match "\{\{res:r1\}\}")) "results render on non-.md writes .rendered without overwriting input"
+$hdFile = Join-Path $p16 "hd.md"; [IO.File]::WriteAllText($hdFile, "---`nversion: 1.2`n---`n## 3.1 识别策略`n正文无裸统计 {{res:r1}}。`n", $enc)
+Ok ((PT16 @("results","check",$hdFile)) -match "警告 0") "bare_stats ignores YAML frontmatter and markdown heading numbers"
+$enOver = Join-Path $p16 "en_over.md"; [IO.File]::WriteAllText($enOver, "<!-- claim: C1 -->`n`nEnforcement Causes higher compliance {{res:r1}} [@k16].`n", $enc)
+Ok ((PT16 @("--project","p1","claim","check",$enOver,"--strict")) -match "(?s)OVERSTATED.*rc=1") "claim check binds blank-line claim tag and catches capitalized Causes"
+[IO.File]::WriteAllText((Join-Path $p16 "draft.md"), "旧草稿 {{res:r1}} ⟦问：旧问题⟧`n", $enc)
+$rep16 = (PT16 @("--project","p1","report","--json")) -replace '\|rc=\d+$',''
+$rj16 = $rep16 | ConvertFrom-Json
+Ok ($rj16.open_questions -eq 0 -and $rj16.numbers_linked -eq 1 -and $rj16.manuscript -match "final\.md") "report measures only latest manuscript (final.md), no double-counting or stale draft questions"
+$pf0 = Join-Path $p16 "pf0.md"; $pf1 = Join-Path $p16 "pf1.md"
+[IO.File]::WriteAllText($pf0, "---`nupdated: 2026-11-20`n---`n结果 {{res:r1}} [@k16]。`n", $enc)
+[IO.File]::WriteAllText($pf1, "---`nupdated: 2026-11-21`n---`n估计结果 {{res:r1}} [@k16]。`n", $enc)
+Ok ((PT16 @("polish","check","--before",$pf0,"--after",$pf1)) -match "通过.*rc=0") "polish check ignores YAML frontmatter date changes"
+# 16f. wiki_lint code-block wikilink skip, multi-project index & link-map isolation
+foreach ($pn in "p1","p2") {
+    [IO.File]::WriteAllText((Join-Path $v16 "01-Research-Projects\$pn\PROJECT.md"), "---`ntype: research-project`n---`n# $pn`n示例 ``[[not_a_real_link]]```n", $enc)
+}
+[IO.File]::WriteAllText((Join-Path $v16 "Meta\index.md"), "---`ntype: index`n---`n- [[p1/PROJECT]]`n- [[shui]]`n", $enc)
+& $py -X utf8 $lint16 map --vault $v16 *> $null
+$l16Out = (& $py -X utf8 $lint16 lint --vault $v16 --json) -join "`n"
+$l16j = $l16Out | ConvertFrom-Json
+Ok (@($l16j.findings | Where-Object { $_.msg -match "not_a_real_link" }).Count -eq 0) "wiki_lint ignores wikilinks inside inline code"
+Ok (@($l16j.findings | Where-Object { $_.file -match "p2/PROJECT" -and $_.check -eq "index" }).Count -eq 1) "wiki_lint flags unindexed p2/PROJECT even when p1/PROJECT is indexed"
+$lm16 = [IO.File]::ReadAllText((Join-Path $v16 "Meta\link-map.md"), $enc)
+Ok ($lm16 -match "01-Research-Projects/p2/PROJECT\.md") "link-map correctly marks unlinked p2/PROJECT as orphan (no bleed from p1/PROJECT)"
+# 16g. check_ars_updates mixed release, merge_hooks python prefix upgrade, sync-vault total size cap, erc_cli missing agy hook
+$mockMix = Join-Path $v16 "ars_mix.json"
+$manObj16 = [IO.File]::ReadAllText((Join-Path $pkg "payload\Meta\upstream-ars.json"), $enc) | ConvertFrom-Json
+[IO.File]::WriteAllText($mockMix, (@{releases=@(@{tag="v3.99.0"; published_at="2026-12-09"; name="Reviewer & Zotero"; body="Improves reviewer panel and zotero adapter"}); commits=@()} | ConvertTo-Json -Depth 6), $enc)
+$mixOut = (& $py -X utf8 (Join-Path $pkg "tools\check_ars_updates.py") check --mock $mockMix --json 2>&1) -join "`n"
+Ok ($LASTEXITCODE -eq 2 -and ($mixOut | ConvertFrom-Json).relevant_count -eq 1) "check_ars_updates keeps mixed release with relevant keywords instead of excluding it"
+$mhPy = Join-Path $pkg "tools\merge_hooks.py"
+$sj16 = Join-Path $v16 ".claude\settings.json"
+& $py -X utf8 $mhPy $sj16 (Join-Path $payload ".claude\settings.hooks.json") --python-cmd python3 *> $null
+Ok (([IO.File]::ReadAllText($sj16, $enc)) -match 'python3 .*protect_raw\.py') "merge_hooks upgrades existing hook python prefix to python3"
+$origAg = [IO.File]::ReadAllText((Join-Path $v16 "AGENTS.md"), $enc)
+[IO.File]::WriteAllText((Join-Path $v16 "AGENTS.md"), ("x" * 10000) + "`n" + $origAg, $enc)
+[IO.File]::AppendAllText((Join-Path $v16 "CLAUDE.md"), "`n- trigger sync`n", $enc)
+& $py -X utf8 (Join-Path $pkg "tools\build_platform.py") sync-vault $v16 *> $null
+Ok ($LASTEXITCODE -ne 0) "sync-vault refuses when total AGENTS.md (custom + block) exceeds 24,000 bytes"
+Remove-Item -LiteralPath (Join-Path $v16 ".agents\hooks\protect_raw.py") -Force
+& $py -X utf8 (Join-Path $pkg "tools\erc_cli.py") test --vault $v16 *> $null
+Ok ($LASTEXITCODE -ne 0) "erc_cli test catches missing hook referenced in .agents/hooks.json"
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

@@ -10,7 +10,7 @@
 ## 验证（改动后必跑，两个宿主都要过）
 - `pwsh -NoProfile -File tests\run.ps1`
 - `powershell -NoProfile -File tests\run.ps1`
-- 预期 301 项通过；本机放置 extras 时为 304 项。
+- 预期 337 项通过；本机放置 extras 时为 340 项。
 
 ## 规则
 - 改 `payload/` 里 Skill / Agent 的数量或名称，须同步 README、docs/USAGE.md、两个 checker（`Test-EconomicsResearchCrew.ps1`、`tools/erc_cli.py`）、`tests/run.ps1` 和 PPT 的数字。

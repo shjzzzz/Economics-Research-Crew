@@ -28,10 +28,11 @@ import uuid
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
 
-GATE_CMD = re.compile(r"orchestrator\.py[\"']?\s+(?:--\S+\s+\S+\s+)*gate\b")
+_CLI_OPTS = r'''(?:--\S+(?:=\S+|\s+(?:"[^"]*"|'[^']*'|\S+))\s+)*'''
+GATE_CMD = re.compile(r"orchestrator\.py[\"']?\s+" + _CLI_OPTS + r"gate\b")
 PROTECTED_FILE = re.compile(r"(?:^|/)(?:STATE\.json|run-ledger\.jsonl|citation-map\.json|results-ledger\.json|reviews\.json)$", re.I)
-ZNOTE_CMD = re.compile(r"paper_tools\.py[\"']?\s+(?:--\S+\s+\S+\s+)*cite\s+zotero-note\b.*--yes\b")
-CONFIRM_CMD = re.compile(r"paper_tools\.py[\"']?\s+(?:--\S+\s+\S+\s+)*cite\s+confirm\b")
+ZNOTE_CMD = re.compile(r"paper_tools\.py[\"']?\s+" + _CLI_OPTS + r"cite\s+zotero-note\b.*--yes\b")
+CONFIRM_CMD = re.compile(r"paper_tools\.py[\"']?\s+" + _CLI_OPTS + r"cite\s+confirm\b")
 
 
 def block(msg):
@@ -97,7 +98,7 @@ def main():
         if ai > ci:
             block("%s 属于阶段 %s，而项目当前在 %s %s；前序关卡未通过，不能跳阶段。先用 orchestrator.py next 查看。"
                   % (agent, cfg["stages"][ai]["id"], sid, stage["name"]))
-        budget = 1 + cfg.get("max_retries", 2)
+        budget = orc.retry_budget(cfg)
         n = proj["stages"][sid]["attempts"].get(agent, 0)
         if n >= budget:
             block("%s 在阶段 %s 已失败 %d 次，达到重试上限。停下并向研究者报告；研究者决定 revise 后才可继续。" % (agent, sid, n))

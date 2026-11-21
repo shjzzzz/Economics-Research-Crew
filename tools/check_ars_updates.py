@@ -73,9 +73,6 @@ def new_since(items, key, stop_val, prefix=False):
 
 def classify_text(text, manifest):
     low = (text or "").lower()
-    for ex in manifest.get("explicitly_excluded", []):
-        if any(k.lower() in low for k in ex.get("keywords", [])):
-            return "excluded", [ex["id"]], []
     caps, files = [], []
     for cap in manifest.get("capability_map", []):
         if any(k.lower() in low for k in cap.get("keywords", [])):
@@ -85,6 +82,9 @@ def classify_text(text, manifest):
                     files.append(f)
     if caps:
         return "relevant", caps, files
+    for ex in manifest.get("explicitly_excluded", []):
+        if any(k.lower() in low for k in ex.get("keywords", [])):
+            return "excluded", [ex["id"]], []
     return "unclassified", [], []
 
 
