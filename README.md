@@ -75,21 +75,21 @@
 ### Windows 11（PowerShell 5.1 / 7）
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -WhatIf                   # 预演（零写入）
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -Platform all -WithHooks  # 全平台 + hooks
-.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki" -Update                   # 升级：差异写 .new，不覆盖
-.\Sync-AgentsMd.ps1 -VaultPath "D:\Economicresearchwiki"                                           # 同步 CLAUDE.md -> AGENTS.md
-.\Test-EconomicsResearchCrew.ps1 -VaultPath "D:\Economicresearchwiki"                              # 结构校验
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\MyVault" -WhatIf                   # 预演（零写入）
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\MyVault" -Platform all -WithHooks  # 全平台 + hooks（项目名默认取目录名，可加 -ProjectName "名称"）
+.\Install-EconomicsResearchCrew.ps1 -VaultPath "D:\MyVault" -Update                   # 升级：差异写 .new，不覆盖
+.\Sync-AgentsMd.ps1 -VaultPath "D:\MyVault"                                           # 同步 CLAUDE.md -> AGENTS.md
+.\Test-EconomicsResearchCrew.ps1 -VaultPath "D:\MyVault"                              # 结构校验
 ```
 
 ### macOS / Linux（及跨平台 Python CLI）
 ```bash
 chmod +x install.sh
-./install.sh --vault ~/Economicresearchwiki --dry-run                       # 预演（零写入）
-./install.sh --vault ~/Economicresearchwiki --platform all --with-hooks     # 全平台 + python3 hooks
-./install.sh --vault ~/Economicresearchwiki --update                        # 升级：差异写 .new，不覆盖
-./install.sh test --vault ~/Economicresearchwiki                            # 结构校验
-./install.sh sync --vault ~/Economicresearchwiki                            # 同步 CLAUDE.md -> AGENTS.md
+./install.sh --vault ~/MyVault --dry-run                       # 预演（零写入）
+./install.sh --vault ~/MyVault --platform all --with-hooks     # 全平台 + python3 hooks（--name "名称" 指定项目名，默认取目录名）
+./install.sh --vault ~/MyVault --update                        # 升级：差异写 .new，不覆盖
+./install.sh test --vault ~/MyVault                            # 结构校验
+./install.sh sync --vault ~/MyVault                            # 同步 CLAUDE.md -> AGENTS.md
 ./install.sh check-ars                                                      # 检测 ARS 上游更新
 ```
 

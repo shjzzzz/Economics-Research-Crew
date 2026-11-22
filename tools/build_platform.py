@@ -131,6 +131,7 @@ def build_rules_block(payload=None, claude_md=None, rules_md=None):
     tpl = rd(claude_md or os.path.join(payload, "CLAUDE.template.md"))
     rules = rd(rules_md or os.path.join(payload, ".claude", "ECONOMICS-RESEARCH.md"))
     tpl = "\n".join(l for l in tpl.split("\n") if l.strip() != "@.claude/ECONOMICS-RESEARCH.md").rstrip()
+    tpl = re.sub(r"(?m)^# .*Research Workspace[ \t]*$", "# Research Workspace", tpl, count=1)  # project name stays out of AGENTS.md
     body = rewrite(tpl, RULES_REWRITES) + "\n\n" + PLATFORM_NOTE + "\n" + rules.rstrip() + "\n"
     body = rewrite(body, TEXT_REWRITES)
     return BEGIN + "\n" + body + END + "\n"

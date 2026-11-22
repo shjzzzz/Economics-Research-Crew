@@ -1,6 +1,6 @@
 # 使用说明
 
-本说明面向已把 Economics Research Crew 安装到研究库（下称 Vault，例如 `D:\Economicresearchwiki`）的使用者。安装与升级命令见 [README](../README.md)。
+本说明面向已把 Economics Research Crew 安装到研究库（下称 Vault，例如 `D:\MyVault`）的使用者。安装与升级命令见 [README](../README.md)。
 
 ## 1. 它是什么
 一组面向税收经济学、公共经济学、计量经济学与因果推断的 AI 研究协作框架：
@@ -14,7 +14,7 @@
 
 ## 2. 开始一次会话
 ```powershell
-Set-Location D:\Economicresearchwiki
+Set-Location D:\MyVault
 claude
 ```
 首次使用先做只读检查：
@@ -132,7 +132,7 @@ claude
 5. **精修、审稿复核与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `paper_tools.py review verify --review <报告> --manuscript <稿件>`（NFC 核对审稿原文引述 + Crossref 核验审稿推荐文献存在性）→ `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记全不变）。
 
 ## 10. 多平台与跨系统支持（Windows 11 / macOS；Claude Code / Antigravity `agy` / Codex CLI）
-- **跨系统安装**：Windows 11 使用 `Install-EconomicsResearchCrew.ps1`（或 `python tools/erc_cli.py`）；macOS / Linux 使用 `./install.sh --vault ~/Economicresearchwiki [--platform all] [--with-hooks]`（自动将 hooks 里的命令适配为 `python3`，Windows 11 保持 `python`）。
+- **跨系统安装**：Windows 11 使用 `Install-EconomicsResearchCrew.ps1`（或 `python tools/erc_cli.py`）；macOS / Linux 使用 `./install.sh --vault ~/MyVault [--platform all] [--with-hooks]`（自动将 hooks 里的命令适配为 `python3`，Windows 11 保持 `python`）。
 - **多 CLI 自适应**：`-Platform auto` / `--platform auto` 自动检测本机 CLI，也可用 `claude` / `agy` / `codex` / `all` 指定；`payload/.claude/` 是唯一源。
 - **ARS 上游自适应追踪**：运行 `python tools/check_ars_updates.py check`（或 macOS `./install.sh check-ars`）按 `Meta/upstream-ars.json` 能力映射表检测 `Imbad0202/academic-research-skills` 新版本并输出原生适配简报（零 LLM 额度、不拷贝 CC-BY-NC 代码）；适配后用 `mark-audited --tag <tag> --sha <sha>` 推进基线。
 - agy 与 Codex 共用根目录 `AGENTS.md`（自包含 `ERC:BEGIN…ERC:END` 区块，压控在 ≤24,000 字节上限内）、`.agents/skills/`、`.agents/agents/`、`.agents/scripts/`。安装器在纯 agy/Codex 环境下也会自动调用 `.agents/scripts/wiki_lint.py map` 生成双地图。

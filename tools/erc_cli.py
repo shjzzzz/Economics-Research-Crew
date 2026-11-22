@@ -114,6 +114,7 @@ def cmd_install(a):
     vault = os.path.abspath(os.path.expanduser(a.vault))
     if not os.path.isdir(vault):
         sys.exit("知识库目录不存在：%s" % vault)
+    proj_name = " ".join((a.name or os.path.basename(vault.rstrip("/\\")) or "Research").split())
     if not os.path.isdir(PAYLOAD):
         sys.exit("未找到 payload 目录：%s" % PAYLOAD)
 
@@ -195,13 +196,18 @@ def cmd_install(a):
     root_claude = os.path.join(vault, "CLAUDE.md")
     tpl_path = os.path.join(PAYLOAD, "CLAUDE.template.md")
     if do_claude and not a.dry_run:
-        tpl_body = bp.rd(tpl_path).rstrip()
+        tpl_raw = bp.rd(tpl_path).rstrip()
+        tpl_body = tpl_raw.replace("{{PROJECT_NAME}}", proj_name)
         if not os.path.exists(root_claude):
             body = tpl_body if import_line in tpl_body else (tpl_body + "\n\n" + import_line)
             bp.wr(root_claude, body + "\n")
         else:
             cur = bp.rd(root_claude)
             if a.update:
+                if not a.name:  # keep the name already in the title, so upgrades do not always produce .new
+                    mt = re.search(r"(?m)^# (.+) Research Workspace\s*$", cur)
+                    if mt:
+                        tpl_body = tpl_raw.replace("{{PROJECT_NAME}}", mt.group(1))
                 if MAP_RE.sub("MAP", cur).rstrip() != MAP_RE.sub("MAP", tpl_body).rstrip():
                     bp.wr(root_claude + ".new", tpl_body + "\n")
                     pending.append(root_claude + ".new")
@@ -365,6 +371,7 @@ def main(argv=None):
     sub = ap.add_subparsers(dest="cmd", required=True)
     pi = sub.add_parser("install")
     pi.add_argument("--vault", required=True)
+    pi.add_argument("--name", default="", help="project name for the CLAUDE.md title (default: vault folder name)")
     pi.add_argument("--platform", default="auto", choices=["auto", "claude", "agy", "codex", "all"])
     pi.add_argument("--with-hooks", action="store_true")
     pi.add_argument("--with-extras", action="store_true")

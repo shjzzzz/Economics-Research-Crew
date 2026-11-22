@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 不要提交 `_erc-backups/`、`tasks/`；push 前需经用户确认。
 
 ## 常用命令
-- 安装到库（预演不写入）：`.\Install-EconomicsResearchCrew.ps1 -VaultPath <库> -WhatIf`；常用开关 `-Platform auto|claude|agy|codex|all`、`-WithHooks`、`-WithExtras`、`-Update`（差异写 `.new`，不覆盖）。
+- 安装到库（预演不写入）：`.\Install-EconomicsResearchCrew.ps1 -VaultPath <库> -WhatIf`；常用开关 `-ProjectName`（写入库 CLAUDE.md 标题，默认目录名；不带 `-VaultPath` 时交互询问）、`-Platform auto|claude|agy|codex|all`、`-WithHooks`、`-WithExtras`、`-Update`（差异写 `.new`，不覆盖）。
 - 跨平台等价入口：`./install.sh --vault <库> ...` 或 `python tools/erc_cli.py install|test|sync|check-ars`。
 - 校验已安装的库：`.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>`。
 - 同步 AGENTS.md 的 ERC 区块：`.\Sync-AgentsMd.ps1 -VaultPath <库> [-Check]`。

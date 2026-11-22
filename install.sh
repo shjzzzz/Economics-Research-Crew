@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Cross-platform launcher for macOS and Linux (Windows 11 users can use Install-EconomicsResearchCrew.ps1 or python tools/erc_cli.py).
 # Usage:
-#   ./install.sh --vault ~/Economicresearchwiki [--platform auto|claude|agy|codex|all] [--with-hooks] [--with-extras] [--update] [--dry-run]
-#   ./install.sh test --vault ~/Economicresearchwiki
-#   ./install.sh sync --vault ~/Economicresearchwiki [--check]
+#   ./install.sh --vault ~/MyVault [--platform auto|claude|agy|codex|all] [--with-hooks] [--with-extras] [--update] [--dry-run]
+#   ./install.sh test --vault ~/MyVault
+#   ./install.sh sync --vault ~/MyVault [--check]
 #   ./install.sh check-ars [--out report.md]
 set -euo pipefail
 

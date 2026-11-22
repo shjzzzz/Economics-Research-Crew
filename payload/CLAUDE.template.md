@@ -1,4 +1,4 @@
-# Economicresearchwiki Research Workspace
+# {{PROJECT_NAME}} Research Workspace
 
 税收经济学、公共经济学、计量经济学与因果推断的研究工作区。本目录同时是 Obsidian Vault 与 Claude Code 项目根目录。
 

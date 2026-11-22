@@ -1,6 +1,9 @@
 ﻿[CmdletBinding(SupportsShouldProcess)]
 param(
-    [string]$VaultPath = "D:\Economicresearchwiki",
+    # 未给出时：交互终端会提示输入；非交互环境必须显式提供
+    [string]$VaultPath = "",
+    # 项目名：写入根 CLAUDE.md 标题；默认取库目录名
+    [string]$ProjectName = "",
     [switch]$WithUpstream,
     [switch]$WithHooks,
     # 可选扩展：第三方数据获取/数据分析/可视化/CNKI Skills（payload-extras，未经审计，默认不装）
@@ -41,7 +44,19 @@ function Copy-NoOverwrite([string]$Source, [string]$Destination) {
     }
 }
 
+$askedInteractively = $false
+if (-not $VaultPath) {
+    if ([Console]::IsInputRedirected) { throw "请用 -VaultPath 指定知识库目录。" }
+    $VaultPath = (Read-Host "知识库目录").Trim('"')
+    if (-not $VaultPath) { throw "未提供知识库目录。" }
+    $askedInteractively = $true
+}
 $VaultPath = [System.IO.Path]::GetFullPath($VaultPath)
+if (-not $ProjectName -and $askedInteractively) {
+    $ProjectName = (Read-Host ("项目名（回车 = " + (Split-Path -Leaf $VaultPath) + "）")).Trim()
+}
+if (-not $ProjectName) { $ProjectName = Split-Path -Leaf $VaultPath }
+$ProjectName = ($ProjectName -replace '[\r\n]+',' ').Trim()
 if (-not (Test-Path $VaultPath -PathType Container)) { throw "知识库目录不存在：$VaultPath" }
 $packageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $payload = Join-Path $packageRoot "payload"
@@ -180,7 +195,7 @@ if (-not $doClaude) {
     # 未选择 Claude Code：不创建、不修改 CLAUDE.md
 } elseif (-not (Test-Path $rootClaude)) {
     if ($PSCmdlet.ShouldProcess($rootClaude, "新建")) {
-        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd() } else { "# Research Workspace" }
+        $body = if (Test-Path $tpl) { [IO.File]::ReadAllText($tpl, $enc).TrimEnd().Replace("{{PROJECT_NAME}}", $ProjectName) } else { "# $ProjectName Research Workspace" }
         $extra = @($importLines | Where-Object { $body -notmatch [regex]::Escape($_) })
         if ($extra.Count -gt 0) { $body += "`r`n`r`n" + ($extra -join "`r`n") }
         [IO.File]::WriteAllText($rootClaude, $body + "`r`n", $enc)
@@ -189,7 +204,10 @@ if (-not $doClaude) {
     $existing = [IO.File]::ReadAllText($rootClaude, $enc)
     # -Update：模板有新版且与现有 CLAUDE.md 不同 -> 生成 CLAUDE.md.new 供人工合并（不覆盖）
     if ($Update -and (Test-Path $tpl)) {
-        $tplBody = [IO.File]::ReadAllText($tpl, $enc).Replace("`r`n","`n").TrimEnd()
+        # 未显式给项目名时沿用现有标题里的名字，避免每次升级都产生 .new
+        $nm = $ProjectName
+        if (-not $PSBoundParameters.ContainsKey('ProjectName') -and $existing -match '(?m)^# (.+) Research Workspace\s*$') { $nm = $Matches[1] }
+        $tplBody = [IO.File]::ReadAllText($tpl, $enc).Replace("`r`n","`n").TrimEnd().Replace("{{PROJECT_NAME}}", $nm)
         # 带标记的地图区块由 wiki_lint.py map 生成，比较时忽略
         $mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
         if (($existing.Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd() -ne ($tplBody -replace $mapRe,"MAP")) {

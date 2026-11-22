@@ -63,7 +63,7 @@ Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (17 + 
 Ok (-not (Test-Path (Join-Path $vx ".mcp.json"))) "-WithExtras installs no MCP config"
 }
 $mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
-$tpl = ([IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
+$tpl = ([IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replace("`r`n","`n").Replace("{{PROJECT_NAME}}", (Split-Path -Leaf $v)) -replace $mapRe,"MAP").TrimEnd()
 $got = ([IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
 Ok ($got -eq $tpl) "root CLAUDE.md equals template (UTF-8, no mojibake)"
 Ok (Test-Path (Join-Path $v "03-Literature\_sources")) "_sources dir created"

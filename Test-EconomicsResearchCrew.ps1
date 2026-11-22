@@ -1,5 +1,5 @@
 ﻿[CmdletBinding()]
-param([string]$VaultPath = "D:\Economicresearchwiki")
+param([Parameter(Mandatory)][string]$VaultPath)
 $ErrorActionPreference = "Stop"
 $VaultPath = [System.IO.Path]::GetFullPath($VaultPath)
 $agents = "literature-agent","theory-agent","tax-policy-agent","econometrics-agent","causal-inference-agent","academic-reviewer","paper-writer-agent"
