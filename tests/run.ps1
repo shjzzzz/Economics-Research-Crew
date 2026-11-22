@@ -261,6 +261,7 @@ $lit = Join-Path $v "03-Literature"
 & $py -X utf8 $lint lint --vault $v *> $null
 Ok ($LASTEXITCODE -eq 0) "clean wiki exit 0"
 [IO.File]::WriteAllText((Join-Path $lit "broken.md"), "---`ntype: literature`nsources: [03-Literature/_sources/missing.pdf]`nverification: verified`n---`n[[nonexistent]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $lit "stale.md"), "---`ntype: literature`nsources: [https://doi.org/10.1/y]`nverification: unverified`nupdated: 2020-01-01`n---`n[[good]] [[other]]`n", $enc)
 [IO.File]::WriteAllText((Join-Path $lit "nofm.md"), "---`ntype: literature`n# no closing`n", $enc)
 $out = (& $py -X utf8 $lint lint --vault $v --json) -join "`n"
 Ok ($LASTEXITCODE -eq 1) "defects give exit 1"
@@ -268,7 +269,7 @@ $j = $out | ConvertFrom-Json
 Ok (@($j.findings | Where-Object { $_.check -eq "link" }).Count -ge 1) "broken wikilink found"
 Ok (@($j.findings | Where-Object { $_.check -eq "sources" -and $_.level -eq "error" }).Count -ge 1) "unresolvable source found"
 Ok (@($j.findings | Where-Object { $_.check -eq "frontmatter" -and $_.level -eq "error" }).Count -ge 1) "unclosed frontmatter found"
-Ok (@($j.findings | Where-Object { $_.check -eq "orphan" }).Count -ge 1) "orphan page found"
+Ok (@($j.findings | Where-Object { $_.check -eq "orphan" }).Count -ge 1 -and @($j.findings | Where-Object { $_.check -eq "freshness" -and $_.file -match "stale" }).Count -eq 1 -and @($j.findings | Where-Object { $_.check -eq "freshness" -and $_.file -match "good" }).Count -eq 0) "orphan page found; stale evidence page gets one freshness warning"
 Ok (@($j.findings | Where-Object { $_.check -eq "orphan" -and $_.file -match "good|other" }).Count -eq 0) "pages linked from index/notes are not orphans"
 Ok (@($j.findings | Where-Object { $_.file -match "nofm" -and $_.check -eq "frontmatter" -and $_.level -eq "warning" }).Count -eq 0) "no follow-on warnings after frontmatter error"
 $legacy = Join-Path $v "旧税法笔记.md"
@@ -745,9 +746,23 @@ $cSame = (& $py -X utf8 $cau check --manifest $manCopy --mock $mockSame 2>&1) -j
 $repOut = Join-Path $v13 "ars-brief.md"
 $cNew = (& $py -X utf8 $cau check --manifest $manCopy --mock $mockNew --out $repOut 2>&1) -join "`n"; $rcNew = $LASTEXITCODE
 $cMark = (& $py -X utf8 $cau mark-audited --manifest $manCopy --tag v3.25.0 --sha deadbeef 2>&1) -join "`n"; $rcMark = $LASTEXITCODE
+# multi-upstream entry point: commit-only repo (paper-orchestra), mixed relevant/excluded commits (obsidian-second-brain), list
+$upd = Join-Path $pkg "tools\check_upstreams.py"
+$poBase = ([IO.File]::ReadAllText((Join-Path $pkg "tools\upstreams\paper-orchestra.json"), $enc) | ConvertFrom-Json).last_audited_sha
+$obBase = ([IO.File]::ReadAllText((Join-Path $pkg "tools\upstreams\obsidian-second-brain.json"), $enc) | ConvertFrom-Json).last_audited_sha
+$mockPo = Join-Path $v13 "po_new.json"; $mockOb = Join-Path $v13 "ob_new.json"
+[IO.File]::WriteAllText($mockPo, (@{releases=@(); commits=@(@{sha="abc12345ff"; date="2026-12-01"; message="Add autorater citation F1 check"}, @{sha=$poBase + "0000"; date="2026-11-15"; message="baseline"})} | ConvertTo-Json -Depth 6), $enc)
+[IO.File]::WriteAllText($mockOb, (@{releases=@(); commits=@(@{sha="def67890ff"; date="2026-12-01"; message="Fix heal links in vault health"}, @{sha="0123456789"; date="2026-12-01"; message="Add scheduled background agent morning brief"}, @{sha=$obBase + "0000"; date="2026-11-22"; message="baseline"})} | ConvertTo-Json -Depth 6), $enc)
+$cPo = (& $py -X utf8 $upd check --repo paper-orchestra --mock $mockPo 2>&1) -join "`n"; $rcPo = $LASTEXITCODE
+$cOb = (& $py -X utf8 $upd check --repo obsidian-second-brain --mock $mockOb --json 2>&1) -join "`n"; $rcOb = $LASTEXITCODE
+$mockGap = Join-Path $v13 "po_gap.json"
+[IO.File]::WriteAllText($mockGap, (@{releases=@(); commits=@(@{sha="aaaa1111ff"; date="2026-12-02"; message="Add autorater check"}, @{sha="bbbb2222ff"; date="2026-12-01"; message="Add section writing stage"})} | ConvertTo-Json -Depth 6), $enc)
+$cGap = (& $py -X utf8 $upd check --repo paper-orchestra --mock $mockGap 2>&1) -join "`n"; $rcGap = $LASTEXITCODE
+$cList = (& $py -X utf8 $upd list 2>&1) -join "`n"; $rcList = $LASTEXITCODE
 [Console]::OutputEncoding = $prev
+$upOk = ($rcPo -eq 2 -and $cPo -match "autorater_evaluation" -and $rcOb -eq 2 -and $cOb -match "vault_health_and_freshness" -and $cOb -match "autonomous_and_scheduled" -and $rcGap -eq 2 -and $cGap -match "基线提交不在" -and $rcList -eq 0 -and $cList -match "paper-orchestra" -and $cList -match "obsidian-second-brain" -and $cList -match "ars")
 Ok ($rcSame -eq 0 -and $cSame -match "已是最新") "check_ars_updates: up-to-date returns exit 0"
-Ok ($rcNew -eq 2 -and (Test-Path $repOut) -and $cNew -match "reviewer_audit" -and $cNew -match "zotero_jsonschema_adapters") "check_ars_updates: new release returns exit 2, maps ERC modules and filters excluded items"
+Ok ($rcNew -eq 2 -and (Test-Path $repOut) -and $cNew -match "reviewer_audit" -and $cNew -match "zotero_jsonschema_adapters" -and $upOk) "check_ars_updates: new release returns exit 2, maps ERC modules and filters excluded items; check_upstreams handles commit-only and mixed upstreams"
 Ok ($rcMark -eq 0 -and ([IO.File]::ReadAllText($manCopy, $enc)) -match '"v3\.25\.0"') "check_ars_updates: mark-audited updates manifest baseline"
 # 14d. cross-platform Python CLI (tools/erc_cli.py): Win11 + simulated macOS (python3 hooks)
 $cli = Join-Path $pkg "tools\erc_cli.py"

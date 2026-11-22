@@ -1,0 +1,131 @@
+{
+  "_comment": "Upstream design-pattern tracker for google-research/paper-orchestra (Apache-2.0). ERC adopts design patterns only: no code is copied, because the pipeline needs external LLM/Semantic Scholar API keys and LaTeX, which conflicts with ERC's zero-dependency, keyless install. Adoption of any pattern is reviewed by the researcher and rewritten natively.",
+  "name": "paper-orchestra",
+  "label": "PaperOrchestra",
+  "repo": "google-research/paper-orchestra",
+  "url": "https://github.com/google-research/paper-orchestra",
+  "license": "Apache-2.0",
+  "policy": "design-pattern-only; no code copied (external API keys and LaTeX dependencies conflict with ERC's zero-dependency install)",
+  "last_audited_tag": "",
+  "last_audited_sha": "d9bae997",
+  "last_audited_date": "2026-11-22",
+  "last_audit_note": "Initial baseline after a structural audit of methods/, autoraters/, utils/ and templates/. Files were not read line by line.",
+  "adopted_patterns": [
+    {
+      "id": "autorater-checks",
+      "adopted": "2026-11-23",
+      "note": "native rewrite, report-first"
+    }
+  ],
+  "candidate_patterns": [
+    {
+      "id": "staged-writing-agents",
+      "idea": "Outline, literature review, section writing and refinement as separate stages with isolated inputs",
+      "erc_files": [
+        "payload/.claude/skills/paper-outline/SKILL.md",
+        "payload/.claude/skills/paper-draft/SKILL.md",
+        "payload/.claude/skills/paper-refine/SKILL.md"
+      ],
+      "status": "already covered by S8 to S11; review for gaps only"
+    }
+  ],
+  "capability_map": [
+    {
+      "id": "paper_writing_pipeline",
+      "label": "Staged paper writing: outline, section writing, refinement",
+      "keywords": [
+        "outline",
+        "section writ",
+        "paper_writer",
+        "refinement",
+        "refine",
+        "orchestrat",
+        "pipeline"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/paper-outline/SKILL.md",
+        "payload/.claude/skills/paper-draft/SKILL.md",
+        "payload/.claude/skills/paper-refine/SKILL.md"
+      ]
+    },
+    {
+      "id": "literature_synthesis",
+      "label": "Literature search, prioritization and citation integration",
+      "keywords": [
+        "literature",
+        "citation",
+        "scholar",
+        "lit review",
+        "bibtex",
+        "reference"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/literature-review/SKILL.md",
+        "payload/.claude/scripts/paper_tools.py"
+      ]
+    },
+    {
+      "id": "autorater_evaluation",
+      "label": "Automated paper and literature-review quality rating",
+      "keywords": [
+        "autorater",
+        "citation f1",
+        "side-by-side",
+        "sxs",
+        "rubric",
+        "agent_review",
+        "quality"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/academic-review/SKILL.md",
+        "payload/.claude/agents/academic-reviewer.md",
+        "payload/.claude/scripts/paper_tools.py"
+      ]
+    },
+    {
+      "id": "visuals_plotting",
+      "label": "Plots and conceptual diagrams",
+      "keywords": [
+        "plot",
+        "figure",
+        "diagram",
+        "visual",
+        "banana"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/scientific-visualization/SKILL.md"
+      ]
+    },
+    {
+      "id": "venue_templates",
+      "label": "Venue templates",
+      "keywords": [
+        "latex template",
+        "template",
+        "cvpr",
+        "iclr"
+      ],
+      "erc_files": [
+        "payload/Templates/venues/"
+      ]
+    }
+  ],
+  "explicitly_excluded": [
+    {
+      "id": "provider_and_env",
+      "keywords": [
+        "api key",
+        "provider",
+        "openai",
+        "gemini",
+        "vertex",
+        "requirements",
+        "smtp",
+        "email",
+        "conda",
+        "dependenc"
+      ],
+      "reason": "External LLM/API keys and runtime environment; ERC stays keyless and zero-dependency"
+    }
+  ]
+}

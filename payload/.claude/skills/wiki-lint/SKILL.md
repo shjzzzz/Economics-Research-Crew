@@ -17,7 +17,7 @@ task_type: open-ended
 ## 3. 核心体检流程
 1. **确定性结构检查**：运行 `python .claude/scripts/wiki_lint.py lint --vault .`。
    - 扫描范围：Tier 1 知识目录（`03-Literature`、`04-Theories`、`05-Methods`、`08-Research-Notes`）、`01-Research-Projects/<项目>/PROJECT.md` 入口页与 `09-Writing` 独立文稿；**不扫描**库内旧税法笔记、`paper/versions/` 快照，且不把项目内部草稿误报为全库孤立页或重名页。
-   - 核查项：frontmatter 完整性与语法、`sources[]` 路径可解析、断链、孤立页、`Meta/index.md` 覆盖、重名主干名、双地图是否漂移。
+   - 核查项：证据页超过 365 天未更新的 `freshness` 警告（只提示复核，不自动改）、frontmatter 完整性与语法、`sources[]` 路径可解析、断链、孤立页、`Meta/index.md` 覆盖、重名主干名、双地图是否漂移。
 2. **刷新两张地图**：运行 `python .claude/scripts/wiki_lint.py map --vault .`，同步更新 `Meta/folder-map.md`、`Meta/link-map.md` 以及 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 精简区块。
 3. **项目与论文健康联动检查**（若库内存在活跃或近期结项项目）：
    - 运行 `python .claude/scripts/paper_tools.py report` 查看引文核验率、结果链接率、主张覆盖度与未答 `⟦问⟧` 数；

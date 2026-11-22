@@ -19,6 +19,7 @@ hash  : print SHA256 of FILE and report whether Meta/source-registry.md
 Exit codes: 0 ok, 1 errors found (or warnings with --strict), 10 hash already registered.
 """
 import argparse
+import datetime
 import hashlib
 import json
 import os
@@ -32,6 +33,7 @@ SCOPE = ["01-Research-Projects", "03-Literature", "04-Theories",
 SKIP_PARTS = {"_sources", ".obsidian", ".claude", ".agents", ".codex", ".git", "node_modules",
               "_vendor", "_erc-staging", "_erc-backups", "Templates"}
 NEEDS_SOURCES = {"literature", "theory", "method", "synthesis", "query"}
+STALE_DAYS = 365  # freshness policy: evidence pages not updated for a year get a review warning (never auto-edited)
 PATH_EXT = (".pdf", ".md", ".txt", ".csv", ".dta", ".xlsx", ".html", ".epub", ".docx")
 NON_PAGE_EXT = (".base", ".canvas", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".pdf", ".csv", ".dta", ".xlsx", ".docx")
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
@@ -207,6 +209,14 @@ def lint(vault, strict=False):
                         add("warning", rel, "sources", "type '%s' requires a 'sources' field" % ptype)
                     if "verification" not in fm:
                         add("warning", rel, "verification", "missing 'verification' (verified|unverified)")
+                    mu = re.match(r"(\d{4})-(\d{2})-(\d{2})", str(fm.get("updated", "")))
+                    if mu:
+                        try:
+                            age = (datetime.date.today() - datetime.date(*map(int, mu.groups()))).days
+                        except ValueError:
+                            age = 0
+                        if age > STALE_DAYS:
+                            add("warning", rel, "freshness", "not updated for %d days; re-check against newer sources" % age)
                 srcs = fm.get("sources", [])
                 if isinstance(srcs, str):
                     srcs = [srcs]

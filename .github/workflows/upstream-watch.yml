@@ -1,0 +1,59 @@
+name: upstream-watch
+
+# Weekly, zero LLM quota. Detects updates in the tracked upstreams and opens (or updates)
+# one issue with a design-pattern adoption brief. It never changes the repository:
+# adopting a change is a reviewed, native rewrite that respects each upstream's license.
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"   # Mondays 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check upstreams
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          python tools/check_upstreams.py check --out upstream-brief.md
+          rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Open or update the review issue
+        if: steps.check.outputs.rc == '2'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create upstream-update --color 0E8A16 \
+            --description "Upstream changes to review for native adoption" 2>/dev/null || true
+          # GitHub issue bodies are capped at 65536 characters
+          head -c 60000 upstream-brief.md > body.md
+          printf '\n\n---\nAdoption is a reviewed native rewrite. After reviewing, run: python tools/check_upstreams.py mark-audited --repo NAME --sha SHA [--tag TAG]\n' >> body.md
+          existing=$(gh issue list --label upstream-update --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file body.md
+          else
+            gh issue create --title "Upstream updates to review ($(date -u +%F))" \
+              --label upstream-update --body-file body.md
+          fi
+
+      - name: Report fetch failures
+        if: steps.check.outputs.rc == '1'
+        run: |
+          echo "At least one upstream could not be fetched; no issue opened. Re-run later."
+          exit 1

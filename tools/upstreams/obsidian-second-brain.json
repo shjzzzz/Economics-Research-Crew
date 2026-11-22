@@ -1,0 +1,165 @@
+{
+  "_comment": "Upstream design-pattern tracker for eugeniughelbur/obsidian-second-brain (MIT). ERC adopts compatible patterns only (update existing pages instead of creating new ones, shared logbook, freshness and link health, retrieval evals). Autonomous note rewriting, scheduled self-editing agents and key-requiring research integrations are excluded because they conflict with ERC's read-only Tier 0, report-first wiki-lint, and the rule that constraints.md is never edited by the AI.",
+  "name": "obsidian-second-brain",
+  "label": "obsidian-second-brain",
+  "repo": "eugeniughelbur/obsidian-second-brain",
+  "url": "https://github.com/eugeniughelbur/obsidian-second-brain",
+  "license": "MIT",
+  "policy": "design-pattern-only; autonomous rewriting, scheduled self-editing and keyed research integrations are excluded",
+  "last_audited_tag": "v0.20.0",
+  "last_audited_sha": "7f4ddfda",
+  "last_audited_date": "2026-11-22",
+  "last_audit_note": "Initial baseline after a structural audit of commands/, hooks/, scripts/ and references/. Files were not read line by line. Coexistence rule: the user-level plugin may be installed beside ERC, and project skills take priority (see payload CLAUDE.template.md routing rule 5).",
+  "adopted_patterns": [
+    {
+      "id": "freshness-policy",
+      "adopted": "2026-11-23",
+      "note": "native rewrite, report-first"
+    },
+    {
+      "id": "retrieval-eval",
+      "adopted": "2026-11-23",
+      "note": "native rewrite, report-first"
+    }
+  ],
+  "candidate_patterns": [
+    {
+      "id": "shared-logbook",
+      "idea": "One shared logbook so different agents know what each other did",
+      "erc_files": [
+        "payload/Meta/log.md",
+        "payload/Meta/decisions.md"
+      ],
+      "status": "already covered by log.md and run-ledger"
+    }
+  ],
+  "capability_map": [
+    {
+      "id": "ingest_and_page_update",
+      "label": "Ingest and update existing pages instead of piling up new ones",
+      "keywords": [
+        "ingest",
+        "merge",
+        "reconcile",
+        "synthesize",
+        "distill",
+        "graduate",
+        "emerge"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/ingest-source/SKILL.md",
+        "payload/.claude/scripts/wiki_lint.py"
+      ]
+    },
+    {
+      "id": "retrieval_and_recall",
+      "label": "Search, recall and retrieval evaluation",
+      "keywords": [
+        "recall",
+        "retrieval",
+        "search",
+        "find",
+        "reindex",
+        "embedding",
+        "semantic"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/query-wiki/SKILL.md",
+        "payload/.claude/scripts/wiki_lint.py"
+      ]
+    },
+    {
+      "id": "vault_health_and_freshness",
+      "label": "Vault health, freshness, link and contradiction checks",
+      "keywords": [
+        "health",
+        "freshness",
+        "lint",
+        "heal",
+        "orphan",
+        "stale",
+        "contradiction",
+        "verify_quotes",
+        "check_notes",
+        "broken link"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/wiki-lint/SKILL.md",
+        "payload/.claude/scripts/wiki_lint.py"
+      ]
+    },
+    {
+      "id": "shared_log_and_decisions",
+      "label": "Shared log, decisions and session continuity",
+      "keywords": [
+        "crew",
+        "logbook",
+        "decision",
+        "checkin",
+        "session",
+        "handoff",
+        "postcompact"
+      ],
+      "erc_files": [
+        "payload/Meta/log.md",
+        "payload/Meta/decisions.md",
+        "payload/.claude/hooks/session_context.py"
+      ]
+    },
+    {
+      "id": "ai_first_rules",
+      "label": "AI-first write rules, schema and frontmatter",
+      "keywords": [
+        "ai-first",
+        "write-rules",
+        "schema",
+        "taxonomy",
+        "frontmatter",
+        "claude-md"
+      ],
+      "erc_files": [
+        "payload/CLAUDE.template.md",
+        "payload/Meta/vault-map.md",
+        "payload/.claude/hooks/validate_frontmatter.py"
+      ]
+    }
+  ],
+  "explicitly_excluded": [
+    {
+      "id": "autonomous_and_scheduled",
+      "keywords": [
+        "scheduled",
+        "schedule",
+        "cron",
+        "background agent",
+        "bg-agent",
+        "morning brief",
+        "autonomous",
+        "self-rewrit"
+      ],
+      "reason": "Autonomous or scheduled self-editing conflicts with ERC's read-only Tier 0 and researcher-approved changes"
+    },
+    {
+      "id": "non_research_integrations",
+      "keywords": [
+        "grok",
+        "x-pulse",
+        "x-read",
+        "youtube",
+        "podcast",
+        "notebooklm",
+        "perplexity",
+        "hermes",
+        "opencode",
+        "gemini",
+        "api key",
+        "newsletter",
+        "readme",
+        "badge",
+        "demo",
+        "star prompt"
+      ],
+      "reason": "Keyed or non-research integrations and marketing material"
+    }
+  ]
+}

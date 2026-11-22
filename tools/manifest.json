@@ -85,6 +85,7 @@
     ".claude/pipeline-stages.json",
     "Templates/handoff.md",
     "Templates/paper-outline.md",
+    "Templates/intro-model-blueprint.md",
     "Templates/rebuttal-matrix.md"
   ],
   "agents_required": [

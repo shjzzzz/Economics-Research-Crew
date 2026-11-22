@@ -11,6 +11,7 @@ Usage:
   python3 tools/erc_cli.py test --vault PATH
   python3 tools/erc_cli.py sync --vault PATH [--check]
   python3 tools/erc_cli.py check-ars [--out FILE] [--json] [--mock JSON]
+  python3 tools/erc_cli.py check-upstreams [--repo NAME] [--out FILE] [--json] [--mock JSON]
 """
 import argparse
 import datetime
@@ -350,6 +351,20 @@ def cmd_check_ars(a):
     return cau.main(argv)
 
 
+def cmd_check_upstreams(a):
+    import check_upstreams as cu
+    argv = ["check"]
+    if a.repo:
+        argv += ["--repo", a.repo]
+    if a.out:
+        argv += ["--out", a.out]
+    if a.json:
+        argv += ["--json"]
+    if a.mock:
+        argv += ["--mock", a.mock]
+    return cu.main(argv)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -379,6 +394,13 @@ def main(argv=None):
     pa.add_argument("--json", action="store_true")
     pa.add_argument("--mock")
     pa.set_defaults(f=cmd_check_ars)
+
+    pu = sub.add_parser("check-upstreams")
+    pu.add_argument("--repo")
+    pu.add_argument("--out")
+    pu.add_argument("--json", action="store_true")
+    pu.add_argument("--mock")
+    pu.set_defaults(f=cmd_check_upstreams)
 
     a = ap.parse_args(argv)
     return a.f(a)

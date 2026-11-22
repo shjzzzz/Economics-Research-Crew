@@ -7,7 +7,7 @@
 - **7 个专业 Subagent**（`.claude/agents/` / `.agents/agents/`）：各有职责、工具权限与 `data_access_level` 隔离。
 - **17 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 15 个 S1–S12 研究写作与知识库核心 Skill + 2 个 MIT 许可的绘图 Skill（`scientific-visualization`、`thu-digitizer`），用 `/名称` 触发。
 - **单源项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`，同步生成多平台 `AGENTS.md`）：定义路由、四层知识架构与论证脊柱。
-- **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板。
+- **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板，和引言八段与理论模型写作蓝图（`Templates/intro-model-blueprint.md`）。
 - **确定性脚本与 7 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）；可选的会话/压缩状态恢复、原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
 
 它不包含计量软件，也不会擅自运行回归；它确保每项研究遵循“识别先行、数字与引文机械可追溯、研究者把关”的纪律。
@@ -134,7 +134,7 @@ claude
 ## 10. 多平台与跨系统支持（Windows 11 / macOS；Claude Code / Antigravity `agy` / Codex CLI）
 - **跨系统安装**：Windows 11 使用 `Install-EconomicsResearchCrew.ps1`（或 `python tools/erc_cli.py`）；macOS / Linux 使用 `./install.sh --vault ~/MyVault [--platform all] [--with-hooks]`（自动将 hooks 里的命令适配为 `python3`，Windows 11 保持 `python`）。
 - **多 CLI 自适应**：`-Platform auto` / `--platform auto` 自动检测本机 CLI，也可用 `claude` / `agy` / `codex` / `all` 指定；`payload/.claude/` 是唯一源。
-- **ARS 上游自适应追踪**：运行 `python tools/check_ars_updates.py check`（或 macOS `./install.sh check-ars`）按 `Meta/upstream-ars.json` 能力映射表检测 `Imbad0202/academic-research-skills` 新版本并输出原生适配简报（零 LLM 额度、不拷贝 CC-BY-NC 代码）；适配后用 `mark-audited --tag <tag> --sha <sha>` 推进基线。
+- **上游自适应追踪**：运行 `python tools/check_upstreams.py check`（或 macOS `./install.sh check-upstreams`）按各上游的能力映射表检测 `academic-research-skills`、`paper-orchestra`、`obsidian-second-brain` 的新版本，输出原生适配简报（零 LLM 额度，只借设计模式，不拷贝代码）。GitHub Actions 每周一自动运行，有更新时开 issue。采纳始终由研究者审阅后原生重写；完成后用 `mark-audited --repo <名称> --sha <sha> [--tag <tag>]` 推进基线。
 - agy 与 Codex 共用根目录 `AGENTS.md`（自包含 `ERC:BEGIN…ERC:END` 区块，压控在 ≤24,000 字节上限内）、`.agents/skills/`、`.agents/agents/`、`.agents/scripts/`。安装器在纯 agy/Codex 环境下也会自动调用 `.agents/scripts/wiki_lint.py map` 生成双地图。
 - 修改库内 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md` 后，运行 `.\Sync-AgentsMd.ps1 -VaultPath <库>` 同步 `AGENTS.md` 区块（`-Check` 只查不写）。
 - agy 在 `-WithHooks` 下安装 `protect_raw.py`（放行时返回 `ask`，不自动批准）与 `routing_hint.py`；Codex 无 hook，原始材料只读靠规则约束。

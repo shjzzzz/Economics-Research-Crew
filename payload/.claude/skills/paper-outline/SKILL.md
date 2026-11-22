@@ -36,6 +36,7 @@ task_type: open-ended
 5. **图表叙事计划**：一表一问——每张表/图注明编号、它在论证链中回答的**唯一核心问题**、对应主张、来源 `res:id` 与注释要点。
 
 ## 4. 产出与停点（C1 检查点）
+- 写引言八段或理论模型一节的结构时参照 `Templates/intro-model-blueprint.md`（只给结构，不提供内容）。
 - 按 `Templates/paper-outline.md` 写入 `01-Research-Projects/<项目>/paper/outline.md`。
 - 在流程中运行 `python .claude/scripts/orchestrator.py artifact <路径>` 与 `verify`；向研究者汇报主张清单、无证据主张与未决 `⟦问⟧`。**C1 检查点：必须等研究者表态后再推进至 S9/S10。**
 

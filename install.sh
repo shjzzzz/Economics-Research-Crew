@@ -5,6 +5,7 @@
 #   ./install.sh test --vault ~/MyVault
 #   ./install.sh sync --vault ~/MyVault [--check]
 #   ./install.sh check-ars [--out report.md]
+#   ./install.sh check-upstreams [--repo NAME] [--out report.md]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,7 +19,7 @@ else
 fi
 
 case "${1:-}" in
-  install|test|sync|check-ars)
+  install|test|sync|check-ars|check-upstreams)
     exec "$PY" -X utf8 "$SCRIPT_DIR/tools/erc_cli.py" "$@"
     ;;
   *)

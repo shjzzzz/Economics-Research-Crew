@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Adaptive upstream update tracker for Imbad0202/academic-research-skills (ARS).
+"""Adaptive upstream update tracker (ARS by default; any manifest-driven upstream via --manifest).
 
 Pure standard library, zero LLM quota. Fetches ARS releases and commits since the
-last audited baseline in payload/Meta/upstream-ars.json, classifies relevant changes
+last audited baseline in a manifest (default payload/Meta/upstream-ars.json), classifies relevant changes
 onto Economics Research Crew (ERC) modules, filters explicitly excluded areas, and
-emits a structured native-adoption brief (never copies CC-BY-NC code).
+emits a structured native-adoption brief (design patterns only, never copies upstream code).
+See check_upstreams.py for the multi-upstream entry point.
 
 Usage:
   python tools/check_ars_updates.py check [--manifest PATH] [--mock JSON] [--out FILE] [--json]
@@ -39,7 +40,11 @@ def save_json(path, obj):
 
 
 def gh_get(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "EconomicsResearchCrew-UpstreamTracker/1.0"})
+    headers = {"User-Agent": "EconomicsResearchCrew-UpstreamTracker/1.0"}
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:  # higher rate limit on shared CI runners
+        headers["Authorization"] = "Bearer " + token
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.loads(r.read().decode("utf-8", "replace"))
 
@@ -51,7 +56,7 @@ def fetch_upstream(repo, mock_path=None):
     base = "https://api.github.com/repos/" + repo
     try:
         rels = gh_get(base + "/releases?per_page=10")
-        commits = gh_get(base + "/commits?per_page=25")
+        commits = gh_get(base + "/commits?per_page=100")
     except Exception as exc:
         sys.exit("无法获取上游 %s 更新（可检查网络或使用 --mock）：%s" % (repo, exc))
     norm_rels = [{"tag": r.get("tag_name", ""), "published_at": r.get("published_at", ""),
@@ -88,16 +93,18 @@ def classify_text(text, manifest):
     return "unclassified", [], []
 
 
-def render_markdown(manifest, latest_tag, latest_sha, new_rels, new_commits, mapped):
+def render_markdown(manifest, latest_tag, latest_sha, new_rels, new_commits, mapped, baseline_found=True):
     L = [
-        "# ARS 上游更新自适应适配简报",
+        "# %s 上游更新自适应适配简报" % manifest.get("label", "ARS"),
         "",
-        "- 上游仓库：`%s`（%s；**仅借鉴设计模式，原生重写，严禁拷贝 CC-BY-NC 代码**）" % (manifest["repo"], manifest["license"]),
+        "- 上游仓库：`%s`（%s；**仅借鉴设计模式，原生重写，严禁拷贝其代码或提示词**）" % (manifest["repo"], manifest["license"]),
         "- 已审计基线：`%s`（`%s`，%s）" % (manifest["last_audited_tag"], manifest["last_audited_sha"], manifest["last_audited_date"]),
         "- 上游最新：`%s`（`%s`）" % (latest_tag or "unknown", (latest_sha or "")[:8]),
         "- 新增发布：%d 个；新增提交：%d 条" % (len(new_rels), len(new_commits)),
         "",
     ]
+    if not baseline_found:
+        L[-1:-1] = ["- **警告：基线提交不在抓取到的最近提交窗口内，结果可能不完整，请到上游仓库核对更早的变更后再推进基线。**"]
     if new_rels:
         L.append("## 1. 新增 Release 摘要")
         for r in new_rels:
@@ -121,21 +128,24 @@ def render_markdown(manifest, latest_tag, latest_sha, new_rels, new_commits, map
         "",
         "## 5. 完成适配后的推进命令",
         "```powershell",
-        "python tools/check_ars_updates.py mark-audited --tag %s --sha %s" % (latest_tag or manifest["last_audited_tag"], (latest_sha or manifest["last_audited_sha"])[:8]),
+        ("python tools/check_upstreams.py mark-audited --repo %s --tag %s --sha %s" % (manifest["name"], latest_tag or manifest["last_audited_tag"], (latest_sha or manifest["last_audited_sha"])[:8]))
+        if manifest.get("name") else
+        ("python tools/check_ars_updates.py mark-audited --tag %s --sha %s" % (latest_tag or manifest["last_audited_tag"], (latest_sha or manifest["last_audited_sha"])[:8])),
         "```",
         "",
     ]
     return "\n".join(L)
 
 
-def cmd_check(a):
-    m = load_json(a.manifest)
-    rels, commits = fetch_upstream(m["repo"], a.mock)
+def evaluate(m, mock=None):
+    """Return (result dict, Markdown brief or None when up to date)."""
+    rels, commits = fetch_upstream(m["repo"], mock)
     latest_tag = rels[0]["tag"] if rels else m["last_audited_tag"]
     latest_sha = commits[0]["sha"] if commits else m["last_audited_sha"]
     new_rels = new_since(rels, "tag", m["last_audited_tag"], prefix=False)
     new_commits = new_since(commits, "sha", m["last_audited_sha"], prefix=True)
     has_updates = bool(new_rels or new_commits)
+    baseline_found = (not commits) or (not m["last_audited_sha"]) or any(str(c.get("sha", "")).startswith(m["last_audited_sha"]) for c in commits)
     mapped = []
     for r in new_rels:
         b, caps, files = classify_text((r.get("name") or "") + " " + (r.get("body") or ""), m)
@@ -151,15 +161,23 @@ def cmd_check(a):
         "latest_tag": latest_tag, "latest_sha": latest_sha[:8],
         "new_releases": len(new_rels), "new_commits": len(new_commits),
         "relevant_count": sum(1 for x in mapped if x["bucket"] == "relevant"),
+        "baseline_found": baseline_found,
         "items": mapped,
     }
     if not has_updates:
+        return result, None
+    return result, render_markdown(m, latest_tag, latest_sha, new_rels, new_commits, mapped, baseline_found)
+
+
+def cmd_check(a):
+    m = load_json(a.manifest)
+    result, md = evaluate(m, a.mock)
+    if md is None:
         if a.json:
             print(json.dumps(result, ensure_ascii=False, indent=2))
         else:
-            print("已是最新：ARS 基线 %s (%s) 与上游一致，无新增发布或提交。" % (m["last_audited_tag"], m["last_audited_sha"][:8]))
+            print("已是最新：%s 基线 %s (%s) 与上游一致，无新增发布或提交。" % (m.get("label", "ARS"), m["last_audited_tag"], m["last_audited_sha"][:8]))
         return 0
-    md = render_markdown(m, latest_tag, latest_sha, new_rels, new_commits, mapped)
     if a.out:
         os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
         with open(a.out, "w", encoding="utf-8", newline="\n") as fh:
@@ -173,13 +191,14 @@ def cmd_check(a):
 
 def cmd_mark(a):
     m = load_json(a.manifest)
-    m["last_audited_tag"] = a.tag.strip()
+    if a.tag is not None:
+        m["last_audited_tag"] = a.tag.strip()
     m["last_audited_sha"] = a.sha.strip()
     m["last_audited_date"] = datetime.date.today().isoformat()
     if a.note:
         m["last_audit_note"] = a.note.strip()
     save_json(a.manifest, m)
-    print("已更新 ARS 审计基线：%s (%s, %s)" % (m["last_audited_tag"], m["last_audited_sha"], m["last_audited_date"]))
+    print("已更新 %s 审计基线：%s (%s, %s)" % (m.get("label", "ARS"), m["last_audited_tag"], m["last_audited_sha"], m["last_audited_date"]))
     return 0
 
 
@@ -193,7 +212,7 @@ def main(argv=None):
     pc.add_argument("--json", action="store_true")
     pc.set_defaults(f=cmd_check)
     pm = sub.add_parser("mark-audited")
-    pm.add_argument("--tag", required=True)
+    pm.add_argument("--tag", default=None, help="release tag; omit for upstreams without releases")
     pm.add_argument("--sha", required=True)
     pm.add_argument("--manifest", default=DEFAULT_MANIFEST)
     pm.add_argument("--note")

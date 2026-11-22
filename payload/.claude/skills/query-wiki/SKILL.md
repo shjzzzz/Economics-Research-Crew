@@ -29,5 +29,8 @@ task_type: open-ended
   - 面向 `/paper-outline` 的跨文献证据综合 → `08-Research-Notes/`（`type: synthesis`，附 `[[双链]]` 与文献簇归纳）。
 - **经研究者同意才写入**；写入后更新 `Meta/index.md`、在 `Meta/log.md` 追加 `## [YYYY-MM-DD] query | 问题`（或 `synthesis`），并运行 `python .claude/scripts/wiki_lint.py map --vault .`。
 
+## 4b. 检索自测模式（研究者要求“测一下检索”时）
+从库内随机抽 5–10 页，各出一个只能由该页回答的问题，另出 2–3 个库内确无答案的问题；按本 Skill 流程作答，统计是否找到正确页、无答案题是否如实答“库内证据不足”。把漏检原因（页面缺双链、未入 `Meta/index.md`、标题不含关键词）列为建议，**只报告，不改页面**。
+
 ## 5. 硬性禁止
 禁止用模型常识填补库内缺口并包装为“库内已有证据”；禁止在未核对多页的情况下宣称“文献一致认为”；禁止未经同意擅自新建笔记。
