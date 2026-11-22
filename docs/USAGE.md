@@ -68,7 +68,7 @@ claude
 
 ## 5. 四层知识架构与论证脊柱（推荐工作流）
 目录按**四层知识流 + Meta 控制面**分工（详见 `Meta/vault-map.md`）：
-- **Tier 0 原始只读层**：`03-Literature/_sources/`、`06-Data/raw/`、库内既有旧税法笔记（不移动、不改写，不进双链图）。
+- **Tier 0 原始只读层**：`03-Literature/_sources/`、`06-Data/raw/`、库内既有笔记（文献库/知识库；不移动、不改写，不进双链图）。
 - **Tier 1 跨项目复利层**：`03-Literature/`（含 `cite_key` 与 `locator`）、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`（`synthesis`/`query`）、`MOC/`。
 - **Tier 2 项目执行与手稿层**：`01-Research-Projects/<项目>/`（`PROJECT.md` 为唯一进索引/双链图的项目入口；`STATE.json`、`analysis-plan.md`、`analysis-log.md` 与 `paper/` 子目录为项目工作产物，不污染全库双链图与多项目重名检查）、`06-Data/{processed,metadata}`、`07-Code/{stata,python,R}/<项目>/`。
 - **Tier 3 独立交付与归档层**：`09-Writing/`（仅放非完整研究项目的政策简报、书评、讲义与投稿导出包）、`10-Archive/`。
@@ -86,7 +86,7 @@ claude
 - **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界；研究者关键决定记入 `Meta/decisions.md`。
 - **两步摄入（`/ingest-source`）**：原始文件放 `03-Literature/_sources/`，先算 SHA256 去重并输出分析（含拟定 `cite_key` 与拟关联概念页），**等你确认后**才写卡、更新 `Meta/index.md`/`source-registry.md`/`log.md` 并刷新双地图；可一键用 `paper_tools.py cite from-note` 桥接入论文引文表。
 - **图谱检索（`/query-wiki`）**：先读 `Meta/index.md` 与 `Meta/link-map.md` 枢纽页，沿 `[[双链]]` 展开，回答区分“事实”与“推断”。
-- **体检与双地图（`/wiki-lint`）**：`python .claude/scripts/wiki_lint.py lint --vault .` 与 `map --vault .` 生成 `Meta/folder-map.md`、`Meta/link-map.md` 并刷新 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 区块；自动排除旧税法笔记、`paper/versions/` 与项目过程稿的孤立/重名噪音。
+- **体检与双地图（`/wiki-lint`）**：`python .claude/scripts/wiki_lint.py lint --vault .` 与 `map --vault .` 生成 `Meta/folder-map.md`、`Meta/link-map.md` 并刷新 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 区块；自动排除库根目录既有笔记、`paper/versions/` 与项目过程稿的孤立/重名噪音。
 
 ## 7. Hooks（可选，`-WithHooks` 启用）
 合并进 `.claude/settings.json`（合并前备份、幂等、非法 JSON 拒绝改动；需要 PATH 中有 `python`）：

@@ -279,7 +279,7 @@ Ok ($null -ne $hj2.mine -and $null -ne $hj2.'economics-research-crew') "existing
 Ok (-not (Test-Path (Join-Path $v10b "CLAUDE.md")) -and -not (Test-Path (Join-Path $v10b ".claude"))) "agy-only install leaves no Claude files"
 Ok (@(Get-ChildItem (Join-Path $v10b "_erc-backups") -Recurse -File -Filter AGENTS.md).Count -eq 1) "existing AGENTS.md backed up"
 # -Update with a stale block -> AGENTS.md.new, original untouched
-[IO.File]::WriteAllText((Join-Path $v10b "AGENTS.md"), $am2.Replace("## 路由规则", "## 路由规则（旧）"), $enc)
+[IO.File]::WriteAllText((Join-Path $v10b "AGENTS.md"), $am2.Replace("路由规则", "路由规则（旧）"), $enc)
 $shaOld = Get-Sha (Join-Path $v10b "AGENTS.md")
 Ok ((Run-Install $v10b @("-Platform","agy","-Update")) -eq 0) "agy -Update exit 0"
 Ok ((Get-Sha (Join-Path $v10b "AGENTS.md")) -eq $shaOld -and (Test-Path (Join-Path $v10b "AGENTS.md.new"))) "stale block -> AGENTS.md.new, original untouched"

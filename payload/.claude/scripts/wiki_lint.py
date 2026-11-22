@@ -258,7 +258,7 @@ MAP_HIDDEN = {".obsidian", ".claude", ".agents", ".codex", ".git", ".agentero", 
 GENERATED_MAPS = {"folder-map.md", "link-map.md"}
 ROOT_RULE_FILES = {"claude.md", "agents.md"}
 ROLES = {
-    "00-Inbox": "待整理（含旧税法资料）",
+    "00-Inbox": "待整理（含既有资料）",
     "01-Research-Projects": "研究项目（每项目一目录；PROJECT.md 为入口，论文在 paper/）",
     "03-Literature": "文献笔记与证据矩阵",
     "04-Theories": "理论与机制笔记",
@@ -404,8 +404,8 @@ def render_folder_map(vault):
         name = ("`%s/`" % rp) if depth == 1 else ("&nbsp;&nbsp;`%s/`" % rp)
         lines.append("| %s | %s | %d | %d | %s |" % (name, role, nm, na, "、".join(flags)))
     lines += ["", "## 检索约定",
-              "- `只读`：不得修改；`旧资料：目录级汇总`：旧税法笔记，不逐页进双链图，只在目录一级汇总，按文件夹检索。",
-              "- 检索税法笔记时排除 `06-Data`、`07-Code`、`.claude`、`.agents`、`_vendor`、`_erc-*`。",
+              "- `只读`：不得修改；`旧资料：目录级汇总`：库内既有笔记，不逐页进双链图，只在目录一级汇总，按文件夹检索。",
+              "- 检索既有笔记时排除 `06-Data`、`07-Code`、`.claude`、`.agents`、`_vendor`、`_erc-*`。",
               "- 论文工作在 `01-Research-Projects/<项目>/paper/`（outline.md、draft.md、versions/、reviews.json、final.md）；`Meta/citation-map.json` 与 `Meta/results-ledger.json` 只由 `paper_tools.py` 维护。", ""]
     return "\n".join(lines)
 
@@ -429,7 +429,7 @@ def render_link_map(vault, g=None):
     n_links = sum(len(v) for v in g["out"].values())
     lines = ["---", "type: map", "status: generated", "---", "",
              "# 双链地图（自动生成）", "",
-             "> 由 `python .claude/scripts/wiki_lint.py map` 生成，请勿手改。图只含研究库页面（研究文件夹、`MOC/`、`Meta/`）；旧税法笔记只在末尾做目录级汇总。页面名用反引号，避免这张图自己产生入链。", "",
+             "> 由 `python .claude/scripts/wiki_lint.py map` 生成，请勿手改。图只含研究库页面（研究文件夹、`MOC/`、`Meta/`）；既有笔记只在末尾做目录级汇总。页面名用反引号，避免这张图自己产生入链。", "",
              "## 概况",
              "- 图内页面 %d，页间链接 %d；断链 %d；无入链页 %d；重名主干名 %d。" % (len(g["graph"]), n_links, len(g["broken"]), len(g["orphans"]), len(g["dups"])),
              "- 用法：先读枢纽页，再沿“邻接表”展开；回答时注明来源页。", "",
@@ -473,7 +473,7 @@ def render_compact(vault, g=None):
     L += ["### 双链地图（研究库）",
           "- 规模：%d 页、%d 条页间链接；断链 %d、无入链 %d、重名 %d。" % (len(g["graph"]), n_links, len(g["broken"]), len(g["orphans"]), len(g["dups"])),
           "- 枢纽页（入链/出链）：" + ("、".join("`%s`（%d/%d）" % (_page_label(p, vault), len(g["in_res"][p]), len(g["out"][p])) for p in _hubs(g, COMPACT_HUBS)) or "暂无"),
-          "- 检索顺序：`Meta/index.md` 与枢纽页 → 沿 `[[链接]]` 展开（邻接表见 `Meta/link-map.md`）→ 回答注明来源页；旧税法笔记按文件夹检索，不进图。",
+          "- 检索顺序：`Meta/index.md` 与枢纽页 → 沿 `[[链接]]` 展开（邻接表见 `Meta/link-map.md`）→ 回答注明来源页；既有笔记按文件夹检索，不进图。",
           MAP_END]
     return "\n".join(L)
 

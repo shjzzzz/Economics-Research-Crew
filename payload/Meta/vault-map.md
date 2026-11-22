@@ -25,7 +25,7 @@ moc: MOC
    - `00-Inbox/`：`/ingest-source` 默认待摄入原始来源入口（如 `00-Inbox/文献/`；摄入时不原地修改、移动或删除原始文件）。
    - `03-Literature/_sources/`：已归档原始文献 PDF / 剪藏（只读，可新增、不得覆盖或修改）。
    - `06-Data/raw/`：原始数据（只读，禁止任何原地清洗或覆盖）。
-   - 库根目录既有税法笔记（`resources: .`）：保持原位、不移动/重命名/批量改写，仅作本地参考资料，不自动等同现行有效法规。
+   - 库根目录既有笔记（文献库/知识库，`resources: .`）：保持原位、不移动/重命名/批量改写，仅作本地参考资料，不自动视为已核实结论。
 2. **Tier 1 跨项目复利知识层（Compounding Wiki Graph）**
    - `03-Literature/`：结构化文献卡（含 `cite_key` 与三层证据定位，可桥接 `Meta/citation-map.json`）。
    - `04-Theories/`：理论模型、机制与竞争假说页。
@@ -50,5 +50,5 @@ moc: MOC
 - **脚本独占机读文件（禁止手改）**：`citation-map.json`、`results-ledger.json`（`paper_tools.py`）；`run-ledger.jsonl`（`orchestrator.py`）；`folder-map.md`、`link-map.md`（`wiki_lint.py map`，精简版嵌入 `CLAUDE.md`/`AGENTS.md` 的 `ERC:MAP` 区块）。
 
 ## 检索边界
-- 检索旧税法笔记时排除 `.claude`、`.agents`、`_vendor`、`_erc-staging`、`_erc-backups`、`06-Data`、`07-Code`。
+- 检索库根目录既有笔记时排除 `.claude`、`.agents`、`_vendor`、`_erc-staging`、`_erc-backups`、`06-Data`、`07-Code`。
 - 若本文件安装前已存在，安装器不会覆盖，请手动比对更新。
