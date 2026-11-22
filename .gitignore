@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 tasks/
+.archify/
 _erc-backups/
 payload-extras/*
 !payload-extras/README.md
