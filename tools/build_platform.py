@@ -51,9 +51,9 @@ RULES_REWRITES = [
 ]
 
 PLATFORM_NOTE = """## 平台说明（Antigravity / Codex）
-- 本节由 Economics Research Crew 安装器生成，与 Claude Code 的 `CLAUDE.md` 规则一致。
+- 本节由安装器生成，与 `CLAUDE.md` 规则一致。
 - Skills 位于 `.agents/skills/<名称>/SKILL.md`；文中的 `/名称`（如 `/literature-review`）指同名 Skill，按路由规则激活后照其步骤执行。
-- Agent 说明位于 `.agents/agents/<名称>.md`。当前工具支持子 Agent 时按 Skill 要求派出；不支持时，读该文件并在主会话按其职责完成，独立审查须只依据产物并说明独立性降低。
+- Agent 说明位于 `.agents/agents/<名称>.md`。工具支持子 Agent 时按 Skill 要求派出；不支持时，读该文件并在主会话按其职责完成，独立审查须只依据产物并说明独立性降低。
 - 确定性脚本在 `.agents/scripts/`（如 `python .agents/scripts/wiki_lint.py lint --vault .`；项目编排用 `python .agents/scripts/orchestrator.py`）。
 - 原始材料保护：Antigravity 由 `.agents/hooks.json` 的 hook 拦截；Codex 无此 hook，必须自觉遵守“`06-Data/raw` 与 `03-Literature/_sources` 只读”的规则。
 """
@@ -132,6 +132,14 @@ def build_rules_block(payload=None, claude_md=None, rules_md=None):
     rules = rd(rules_md or os.path.join(payload, ".claude", "ECONOMICS-RESEARCH.md"))
     tpl = "\n".join(l for l in tpl.split("\n") if l.strip() != "@.claude/ECONOMICS-RESEARCH.md").rstrip()
     tpl = re.sub(r"(?m)^# .*Research Workspace[ \t]*$", "# Research Workspace", tpl, count=1)  # project name stays out of AGENTS.md
+    # Obsidian pads table cells for alignment; that padding is dead weight under agy's 24,000-byte cap
+    def _compact(line):
+        if not line.lstrip().startswith("|"):
+            return line
+        if re.fullmatch(r"[\s|:\-]+", line):
+            return re.sub(r"-{3,}", "---", re.sub(r"[ \t]+", " ", line))
+        return re.sub(r"(?<=\S)[ \t]{2,}(?=\|)", " ", line)
+    tpl = "\n".join(_compact(l) for l in tpl.split("\n"))
     body = rewrite(tpl, RULES_REWRITES) + "\n\n" + PLATFORM_NOTE + "\n" + rules.rstrip() + "\n"
     body = rewrite(body, TEXT_REWRITES)
     return BEGIN + "\n" + body + END + "\n"
