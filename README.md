@@ -6,17 +6,13 @@
 
 ## 项目结构与意图路由全景图
 
-<a href="docs/architecture.html">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/architecture.png">
-    <img alt="Economics Research Crew — 项目结构与意图路由架构" src="docs/architecture.png">
-  </picture>
-</a>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="docs/architecture.svg">
+  <img alt="Economics Research Crew — 项目结构与意图路由架构" src="docs/architecture.svg">
+</picture>
 
-> **交互式动态版**（支持动态流动、4 个引导视图切换、深/浅色模式、点击节点直达源码行号及导出 PNG / SVG / WebM）：
-> - **在线交互预览**：[打开在线动态架构图（htmlpreview）](https://htmlpreview.github.io/?https://github.com/shjzzzz/Economics-Research-Crew/blob/main/docs/architecture.html)
-> - **本地打开**：克隆仓库后用浏览器打开 [docs/architecture.html](docs/architecture.html)
+> 上图为原生矢量动态图（直接自动播放数据流与路由脉冲，随深/浅色主题自动切换）；如需 4 视图聚焦、点击节点跳转源码行号与导出 PNG/SVG/WebM，可打开本地 [docs/architecture.html](docs/architecture.html)（或[在线交互版](https://htmlpreview.github.io/?https://github.com/shjzzzz/Economics-Research-Crew/blob/main/docs/architecture.html)）。
 
 ---
 
