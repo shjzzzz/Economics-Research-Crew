@@ -318,15 +318,17 @@ def draft_keys(text):
     return keys
 
 
-def cite_problems(vault, files, strict):
+def cite_problems(vault, files, strict, entries=None):
     """(errors, warnings, used_keys) for the given draft files."""
-    _, m = cmap(vault)
+    if entries is None:
+        _, m = cmap(vault)
+        entries = m["entries"]
     errors, warns, used = [], [], set()
     for f in files:
         rel = relpath(f, vault)
         for k in draft_keys(read_text(f)):
             used.add(k)
-            e = m["entries"].get(k)
+            e = entries.get(k)
             if e is None:
                 errors.append("%s：引用键 @%s 不在引文表中" % (rel, k))
             elif e.get("status") not in OK_STATUS:
@@ -336,8 +338,8 @@ def cite_problems(vault, files, strict):
 
 def cmd_cite_check(a):
     vault = vault_of(a)
-    errors, warns, used = cite_problems(vault, a.files, a.strict)
     _, m = cmap(vault)
+    errors, warns, used = cite_problems(vault, a.files, a.strict, m["entries"])
     print_findings(errors, warns)
     unused = sorted(set(m["entries"]) - used)
     if unused:
@@ -451,6 +453,8 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
     import refmgr  # same folder, standard library only
     unverified_only = (not getattr(a, "verify", False)) or offline(a)
     taken = set(m["entries"])
+    dup_index = refmgr.build_dup_index(m["entries"])
+    pdf_index = refmgr.build_pdf_index(a.pdf_dir) if (a.attach and a.pdf_dir) else None
     tpl_path = os.path.join(vault, "Templates", "literature-note.md")
     template = read_text(tpl_path) if os.path.isfile(tpl_path) else ""
     tag = "[dry-run] " if a.dry_run else ""
@@ -467,7 +471,7 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
             print("%s跳过《%s》：法规类条目需要文号与生效日期，请用 cite add --type legal 手动登记" % (tag, title[:30]))
             st_n["skip"] += 1
             continue
-        dup = refmgr.find_duplicate(rec, m["entries"])
+        dup = refmgr.find_duplicate(rec, m["entries"], dup_index)
         if dup and not a.replace:
             print("%s%s -> 跳过（与已有条目 %s 重复；要覆盖请加 --replace）" % (tag, title[:30], dup))
             st_n["dup"] += 1
@@ -483,7 +487,7 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
         st = verify_entry(e, unverified_only)
         src_rel = sha = None
         if a.attach:
-            pdf = refmgr.resolve_pdf(rec.get("files", []), base_dir, a.pdf_dir)
+            pdf = refmgr.resolve_pdf(rec.get("files", []), base_dir, a.pdf_dir, pdf_index)
             if pdf and a.dry_run:
                 src_rel = "(将复制 %s)" % os.path.basename(pdf)
             elif pdf:
@@ -511,6 +515,7 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
                 new_notes.append((key, os.path.splitext(os.path.basename(rel))[0], title, 1 if (src_rel and sha) else 0))
         m["entries"][key] = e
         taken.add(key)
+        refmgr.index_entry(dup_index, key, e)
         st_n["new"] += 1
         if not a.dry_run:
             orc.ledger_append(vault, "cite_add", key=key, status=st, from_import=label)
@@ -526,7 +531,8 @@ def _import_records(a, vault, path, m, recs, label, base_dir=None):
 
 
 def _write_keep_eol(path, text):
-    crlf = b"\r\n" in open(path, "rb").read()
+    with open(path, "rb") as fh:
+        crlf = b"\r\n" in fh.read()
     with open(path, "w", encoding="utf-8", newline="") as fh:
         fh.write(text.replace("\n", "\r\n") if crlf else text)
 
@@ -869,7 +875,7 @@ def bare_stats(text):
 
 def results_problems(vault, files):
     _, m = rmap(vault)
-    errors, warns = [], []
+    errors, warns, sha_cache = [], [], {}
     for f in files:
         text, rel = read_text(f), relpath(f, vault)
         for mo in PLACEHOLDER.finditer(strip_code(text)):
@@ -878,7 +884,9 @@ def results_problems(vault, files):
                 errors.append("%s：{{res:%s}} 不在结果登记簿中" % (rel, mo.group(1)))
             elif e.get("source"):
                 sp = os.path.join(vault, e["source"])
-                if not os.path.isfile(sp) or sha256(sp) != e.get("source_sha256"):
+                if sp not in sha_cache:
+                    sha_cache[sp] = sha256(sp) if os.path.isfile(sp) else None
+                if sha_cache[sp] != e.get("source_sha256"):
                     warns.append("%s：%s 的来源文件 %s 已变化或缺失，登记值可能过期" % (rel, mo.group(1), e["source"]))
         bs = bare_stats(text)
         if bs:

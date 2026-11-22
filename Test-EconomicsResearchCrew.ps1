@@ -2,8 +2,9 @@
 param([Parameter(Mandatory)][string]$VaultPath)
 $ErrorActionPreference = "Stop"
 $VaultPath = [System.IO.Path]::GetFullPath($VaultPath)
-$agents = "literature-agent","theory-agent","tax-policy-agent","econometrics-agent","causal-inference-agent","academic-reviewer","paper-writer-agent"
-$skills = "research-question","literature-review","theory-modeling","tax-policy-analysis","causal-inference-audit","econometric-analysis","academic-review","ingest-source","query-wiki","wiki-lint","research-pipeline","paper-outline","paper-draft","paper-refine","paper-polish","scientific-visualization","thu-digitizer"
+$manifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot "tools\manifest.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+$agents = @($manifest.agents)
+$skills = @($manifest.skills)
 $errors = @()
 function Get-Front([string]$Path) {
     $t = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
@@ -39,18 +40,18 @@ $hasClaude = (Test-Path (Join-Path $VaultPath ".claude\skills")) -or (Test-Path 
 $hasAgents = (Test-Path (Join-Path $VaultPath ".agents\skills")) -or (Test-Path (Join-Path $VaultPath "AGENTS.md"))
 if (-not ($hasClaude -or $hasAgents)) { $errors += "未发现任何平台的安装（.claude/ 或 .agents/）" }
 
-Test-Files "Meta\purpose.md","Meta\index.md","Meta\review-queue.md","Meta\vault-map.md","Meta\research-standards.md","Meta\source-registry.md","Meta\log.md","Meta\collaboration-protocol.md","Meta\style-guide.md","Meta\mechanism-library.md","Meta\decisions.md","Meta\ai-tells.json","Meta\upstream-ars.json","Meta\constraints.md","Meta\aliases.csv"
-foreach ($d in "06-Data\raw","06-Data\processed","07-Code") { if (-not (Test-Path (Join-Path $VaultPath $d))) { $errors += "缺少目录: $d" } }
+Test-Files @($manifest.meta_required | ForEach-Object { $_ -replace '/', '\' })
+foreach ($d in @($manifest.required_dirs | ForEach-Object { $_ -replace '/', '\' })) { if (-not (Test-Path (Join-Path $VaultPath $d))) { $errors += "缺少目录: $d" } }
 
 if ($hasClaude) {
     Test-Defs ".claude"
-    Test-Files ".claude\ECONOMICS-RESEARCH.md",".claude\scripts\wiki_lint.py",".claude\scripts\orchestrator.py",".claude\scripts\paper_tools.py",".claude\scripts\refmgr.py",".claude\hooks\validate_paper.py",".claude\pipeline-stages.json","Templates\handoff.md","Templates\paper-outline.md","Templates\rebuttal-matrix.md"
+    Test-Files @($manifest.claude_required | ForEach-Object { $_ -replace '/', '\' })
     $rc = Join-Path $VaultPath "CLAUDE.md"
     if (-not (Test-Path $rc) -or (Get-Content $rc -Raw) -notmatch [regex]::Escape("@.claude/ECONOMICS-RESEARCH.md")) { $errors += "根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md" }
     $sj = Join-Path $VaultPath ".claude\settings.json"
     if (Test-Path $sj) {
         $st = [IO.File]::ReadAllText($sj)
-        foreach ($h in "session_context.py","protect_raw.py","validate_frontmatter.py","validate_paper.py","routing_hint.py","orchestrator_guard.py","orchestrator_record.py") {
+        foreach ($h in @($manifest.hooks_claude)) {
             if ($st -match [regex]::Escape($h) -and -not (Test-Path (Join-Path $VaultPath ".claude\hooks\$h"))) { $errors += "settings.json 引用了 hook 但文件缺失: $h" }
         }
     }
@@ -65,7 +66,7 @@ if ($hasClaude) {
 }
 if ($hasAgents) {
     Test-Defs ".agents"
-    Test-Files ".agents\scripts\wiki_lint.py",".agents\scripts\orchestrator.py",".agents\scripts\paper_tools.py",".agents\scripts\refmgr.py",".agents\pipeline-stages.json"
+    Test-Files @($manifest.agents_required | ForEach-Object { $_ -replace '/', '\' })
     $am = Join-Path $VaultPath "AGENTS.md"
     if (-not (Test-Path $am)) { $errors += "缺少根 AGENTS.md" }
     else {
@@ -77,7 +78,7 @@ if ($hasAgents) {
     if (Test-Path $hj) {
         $ht = [IO.File]::ReadAllText($hj)
         try { $null = $ht | ConvertFrom-Json } catch { $errors += ".agents\hooks.json 不是有效 JSON" }
-        foreach ($h in "protect_raw.py","routing_hint.py") {
+        foreach ($h in @($manifest.hooks_agy)) {
             if ($ht -match [regex]::Escape($h) -and -not (Test-Path (Join-Path $VaultPath ".agents\hooks\$h"))) { $errors += "hooks.json 引用了 hook 但文件缺失: $h" }
         }
     }

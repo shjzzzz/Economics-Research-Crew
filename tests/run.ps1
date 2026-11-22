@@ -1,10 +1,41 @@
 ﻿[CmdletBinding()]
-param()
+param(
+    # 可选节号过滤（如 -Section 11,17,18）；省略时全量运行全部节
+    [string[]]$Section = @()
+)
 # Regression tests for the Economics Research Crew installer, hooks and lint.
 # Run under each host you care about:
 #   powershell -NoProfile -File tests\run.ps1   (Windows PowerShell 5.1)
 #   pwsh -NoProfile -File tests\run.ps1         (PowerShell 7)
 $ErrorActionPreference = "Stop"
+$script:TotalSw = [System.Diagnostics.Stopwatch]::StartNew()
+$script:SecSw = $null; $script:CurSec = $null
+$secFilter = @($Section | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim().ToLower() } | Where-Object { $_ })
+if ($secFilter.Count -gt 0) {
+    $deps = @{
+        "2"=@("1"); "5"=@("1"); "7"=@("1"); "8"=@("1"); "9"=@("1");
+        "13"=@("10","12"); "14"=@("10","12","13")
+    }
+    $expanded = [System.Collections.Generic.HashSet[string]]::new()
+    foreach ($s in $secFilter) {
+        [void]$expanded.Add($s)
+        if ($deps.ContainsKey($s)) { foreach ($d in $deps[$s]) { [void]$expanded.Add($d) } }
+    }
+    $secFilter = @($expanded)
+}
+function Begin-Sec([string]$Id, [string]$Title) {
+    if ($script:CurSec -and $script:SecSw) {
+        $script:SecSw.Stop()
+        Write-Host ("  [{0}] done in {1:N2}s" -f $script:CurSec, $script:SecSw.Elapsed.TotalSeconds) -ForegroundColor DarkGray
+    }
+    if ($secFilter.Count -gt 0 -and ($secFilter -notcontains $Id.ToLower())) {
+        $script:CurSec = $null; return $false
+    }
+    $script:CurSec = $Id
+    $script:SecSw = [System.Diagnostics.Stopwatch]::StartNew()
+    Write-Host "[$Id] $Title"
+    return $true
+}
 $pkg = Split-Path -Parent $PSScriptRoot
 $installer = Join-Path $pkg "Install-EconomicsResearchCrew.ps1"
 $checker = Join-Path $pkg "Test-EconomicsResearchCrew.ps1"
@@ -18,7 +49,7 @@ $script:pass = 0; $script:fail = 0
 
 function Get-Sha([string]$Path) {
     $sha = [System.Security.Cryptography.SHA256]::Create()
-    try { $fs = [IO.File]::OpenRead($Path); try { return [BitConverter]::ToString($sha.ComputeHash($fs)).Replace("-","") } finally { $fs.Dispose() } } finally { $sha.Dispose() }
+    try { $fs = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite); try { return [BitConverter]::ToString($sha.ComputeHash($fs)).Replace("-","") } finally { $fs.Dispose() } } finally { $sha.Dispose() }
 }
 function Ok([bool]$cond, [string]$name) {
     if ($cond) { $script:pass++; Write-Host "  PASS $name" -ForegroundColor Green }
@@ -46,7 +77,7 @@ function Hook([string]$Script, [hashtable]$Data) {
 Write-Host "Host: $($PSVersionTable.PSVersion)  python: $(& $py --version)"
 
 # --- 1. fresh install -------------------------------------------------------
-Write-Host "[1] fresh install"
+if (Begin-Sec "1" "fresh install") {
 $v = New-Vault
 Ok ((Run-Install $v) -eq 0) "install exit 0"
 Ok ((Run-Check $v) -eq 0) "checker exit 0"
@@ -69,14 +100,16 @@ Ok ($got -eq $tpl) "root CLAUDE.md equals template (UTF-8, no mojibake)"
 Ok (Test-Path (Join-Path $v "03-Literature\_sources")) "_sources dir created"
 
 # --- 2. idempotent ----------------------------------------------------------
-Write-Host "[2] idempotent"
+}
+if (Begin-Sec "2" "idempotent") {
 $before = Snapshot $v
 Ok ((Run-Install $v) -eq 0) "second install exit 0"
 $after = Snapshot $v
 Ok ((($before -join "`n") -eq ($after -join "`n"))) "no file changed on re-install"
 
 # --- 3. existing Chinese CLAUDE.md preserved ---------------------------------
-Write-Host "[3] existing CLAUDE.md preserved"
+}
+if (Begin-Sec "3" "existing CLAUDE.md preserved") {
 $v3 = New-Vault
 $orig = "# 我的 CLAUDE`n中文内容：税收遵从`n"
 [IO.File]::WriteAllText((Join-Path $v3 "CLAUDE.md"), $orig, $enc)
@@ -90,13 +123,15 @@ Ok ($c2 -eq $c) "re-run does not duplicate import"
 Ok ((Get-ChildItem (Join-Path $v3 "_erc-backups") -Recurse -Filter CLAUDE.md).Count -ge 1) "backup of CLAUDE.md written"
 
 # --- 4. -WhatIf writes nothing ------------------------------------------------
-Write-Host "[4] -WhatIf"
+}
+if (Begin-Sec "4" "-WhatIf") {
 $v4 = New-Vault
 Ok ((Run-Install $v4 @("-WhatIf")) -eq 0) "WhatIf exit 0"
 Ok ((Get-ChildItem -LiteralPath $v4 -Force).Count -eq 0) "WhatIf left vault empty"
 
 # --- 5. -Update writes .new, never overwrites -------------------------------
-Write-Host "[5] -Update"
+}
+if (Begin-Sec "5" "-Update") {
 $skill = Join-Path $v ".claude\skills\research-question\SKILL.md"
 [IO.File]::AppendAllText($skill, "`nLOCAL EDIT`n", $enc)
 $edited = (Get-Sha $skill)
@@ -112,7 +147,8 @@ Run-Install $v5 @("-Update") | Out-Null
 Ok ((Test-Path (Join-Path $v5 "CLAUDE.md.new")) -and ([IO.File]::ReadAllText((Join-Path $v5 "CLAUDE.md"), $enc)).StartsWith("# old")) "-Update writes CLAUDE.md.new, keeps CLAUDE.md"
 
 # --- 6. -WithHooks merge ------------------------------------------------------
-Write-Host "[6] -WithHooks"
+}
+if (Begin-Sec "6" "-WithHooks") {
 $v6 = New-Vault
 New-Item -ItemType Directory (Join-Path $v6 ".claude") | Out-Null
 $sj = Join-Path $v6 ".claude\settings.json"
@@ -149,7 +185,8 @@ $rc = Run-Install $v6c @("-WithHooks")
 Ok ($rc -ne 0 -and ([IO.File]::ReadAllText($sjc, $enc)) -eq '{not json') "invalid settings.json refused, untouched"
 
 # --- 7. protect_raw hook ------------------------------------------------------
-Write-Host "[7] protect_raw hook"
+}
+if (Begin-Sec "7" "protect_raw hook") {
 $rawDir = Join-Path $v "06-Data\raw"
 $existing = Join-Path $rawDir "a.csv"
 [IO.File]::WriteAllText($existing, "x,y`n1,2`n", $enc)
@@ -173,7 +210,8 @@ Ok ((Hook "protect_raw.py" @{tool_name="PowerShell"; cwd=$v; tool_input=@{comman
 Ok ($LASTEXITCODE -eq 0) "malformed input fails open"
 
 # --- 8. validate_frontmatter hook ---------------------------------------------
-Write-Host "[8] validate_frontmatter hook"
+}
+if (Begin-Sec "8" "validate_frontmatter hook") {
 $good = Join-Path $v "08-Research-Notes\good.md"
 $bad = Join-Path $v "08-Research-Notes\bad.md"
 $tab = Join-Path $v "08-Research-Notes\tab.md"
@@ -188,7 +226,8 @@ Ok ((Hook "validate_frontmatter.py" @{tool_name="Write"; cwd=$v; tool_input=@{fi
 Remove-Item -LiteralPath $good,$bad,$tab -Force
 
 # --- 8b. routing_hint hook (offline) ----------------------------------------
-Write-Host "[8b] routing_hint hook"
+}
+if (Begin-Sec "8b" "routing_hint hook") {
 function Hint([string]$Prompt) {
     $ErrorActionPreference = "Continue"
     $json = @{prompt=$Prompt} | ConvertTo-Json -Compress
@@ -211,7 +250,8 @@ Ok ((HintPlain (@{prompt="帮我梳理税收遵从的国内外文献"} | Convert
 Ok ((HintPlain (@{hookEventName="PreInvocation"; invocationNum=0; lastUserInput="我的 DID 平行趋势成立吗"} | ConvertTo-Json -Compress)) -match "causal-inference-audit") "Chinese prompt matches without -X utf8 (agy host)"
 
 # --- 9. wiki_lint ---------------------------------------------------------------
-Write-Host "[9] wiki_lint"
+}
+if (Begin-Sec "9" "wiki_lint") {
 $lint = Join-Path $v ".claude\scripts\wiki_lint.py"
 $lit = Join-Path $v "03-Literature"
 [IO.File]::WriteAllText((Join-Path $lit "_sources\a.pdf"), "pdf", $enc)
@@ -243,7 +283,8 @@ Add-Content -LiteralPath (Join-Path $v "Meta\source-registry.md") -Value "| SRC-
 Ok ($LASTEXITCODE -eq 10) "registered source detected (exit 10)"
 
 # --- 10. multi-platform (agy / Codex) -----------------------------------------
-Write-Host "[10] multi-platform"
+}
+if (Begin-Sec "10" "multi-platform") {
 $v10 = New-Vault
 Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform install exit 0"
 Ok ((Run-Check $v10) -eq 0) "checker passes for all platforms"
@@ -327,7 +368,8 @@ Ok ((AgyHook "routing_hint.py" $pi1) -match '^\{\}\|rc=0') "agy later invocation
 Ok ((AgyHook "routing_hint.py" $pi2) -match '^\{\}\|rc=0') "agy conceptual question -> {}"
 
 # --- 11. orchestration layer ------------------------------------------------------
-Write-Host "[11] orchestration layer"
+}
+if (Begin-Sec "11" "orchestration layer") {
 $v11 = New-Vault
 Ok ((Run-Install $v11 @("-Platform","claude","-WithHooks")) -eq 0) "install with hooks exit 0"
 Ok ((Run-Check $v11) -eq 0) "checker passes (orchestrator files + hook files present)"
@@ -435,7 +477,8 @@ $sk = [IO.File]::ReadAllText((Join-Path $v11b ".agents\skills\research-pipeline\
 Ok ($sk -match "\.agents/scripts/orchestrator\.py" -and $sk -notmatch "\.claude/scripts") "agy research-pipeline skill points to .agents/scripts"
 
 # --- 12. paper architecture (paper_tools, stages S8-S12, validate_paper) -------------
-Write-Host "[12] paper architecture"
+}
+if (Begin-Sec "12" "paper architecture") {
 $v12 = New-Vault
 Ok ((Run-Install $v12 @("-Platform","all","-WithHooks")) -eq 0 -and (Run-Check $v12) -eq 0) "install + checker pass with paper files"
 $pt = Join-Path $v12 ".claude\scripts\paper_tools.py"
@@ -609,7 +652,8 @@ Ok ((Hint "帮我检查DID识别是否成立") -notmatch "scientific-visualizati
 Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
 
 # --- 13. architecture, wiki isolation & argument spine upgrades ---------------
-Write-Host "[13] architecture & spine upgrades"
+}
+if (Begin-Sec "13" "architecture & spine upgrades") {
 # 13a. checker verifies all 17 skills (including paper-polish & 2 MIT plot skills)
 $chkText = ((& $shell -NoProfile -File $checker -VaultPath $v12 2>&1) -join "`n")
 Ok ($LASTEXITCODE -eq 0 -and $chkText -match "17 skills") "checker reports and validates all 17 skills"
@@ -666,7 +710,8 @@ $rep13 = PT13 @("--project","projA","report","--json")
 Ok ($rep13 -match '"claims_defined": 2' -and $rep13 -match '"claims_covered": 1') "report --json outputs claims_defined and claims_covered"
 
 # --- 14. ARS v3.24.4 patterns, upstream tracker & cross-platform installer ---
-Write-Host "[14] ARS v3.24.4 patterns, upstream tracker & cross-platform CLI"
+}
+if (Begin-Sec "14" "ARS v3.24.4 patterns, upstream tracker & cross-platform CLI") {
 # 14a. honest null for results register (--no-source-reason)
 $hn1 = PT13 @("results","register","--id","conf1","--value","0.15","--no-source-reason","税务保密机房脱敏汇总")
 Ok ($hn1 -match "诚实空值" -and $hn1 -match "rc=0") "results register accepts --no-source-reason honest null"
@@ -721,7 +766,8 @@ Ok ($sj14 -match 'python3 .*protect_raw\.py' -and $hj14 -match 'python3 hooks/pr
 Ok (Test-Path (Join-Path $pkg "install.sh")) "macOS/Linux install.sh launcher present"
 
 # --- 15. EndNote / Zotero exchange (cite import | ris | csl | zotero) --------------------
-Write-Host "[15] reference-manager exchange"
+}
+if (Begin-Sec "15" "reference-manager exchange") {
 $v15 = New-Vault
 Ok ((Run-Install $v15) -eq 0) "v15 fresh install exit 0"
 Ok (Test-Path (Join-Path $v15 ".claude\scripts\refmgr.py")) "refmgr.py installed with the scripts"
@@ -735,7 +781,8 @@ foreach ($ln in $stOut) {
 Ok ($LASTEXITCODE -eq 0) "refmgr selftest exit 0"
 
 # --- 16. logic hardening regressions -----------------------------------------
-Write-Host "[16] logic hardening regressions"
+}
+if (Begin-Sec "16" "logic hardening regressions") {
 $v16 = New-Vault
 Ok ((Run-Install $v16 @("-Platform","all","-WithHooks")) -eq 0) "v16 all-platform install exit 0"
 $orc16 = Join-Path $v16 ".claude\scripts\orchestrator.py"
@@ -845,7 +892,8 @@ Remove-Item -LiteralPath (Join-Path $v16 ".agents\hooks\protect_raw.py") -Force
 Ok ($LASTEXITCODE -ne 0) "erc_cli test catches missing hook referenced in .agents/hooks.json"
 
 # --- 17. Claude Code CLI 2.1.x adaptation ------------------------------------
-Write-Host "[17] Claude Code CLI 2.1.x adaptation"
+}
+if (Begin-Sec "17" "Claude Code CLI 2.1.x adaptation") {
 $v17 = New-Vault
 Ok ((Run-Install $v17 @("-Platform","claude","-WithHooks")) -eq 0) "v17 claude+hooks install exit 0"
 $sj17 = [IO.File]::ReadAllText((Join-Path $v17 ".claude\settings.json"), $enc) | ConvertFrom-Json
@@ -884,8 +932,79 @@ if ($claudeBin) {
     Ok ($LASTEXITCODE -eq 0) "claude plugin validate --strict passes on installed .claude"
 }
 
+}
+# --- 18. optimization, SSOT manifest & performance invariants -----------------
+if (Begin-Sec "18" "optimization & SSOT invariants") {
+$manPath = Join-Path $pkg "tools\manifest.json"
+Ok (Test-Path $manPath) "tools/manifest.json exists"
+$man = [IO.File]::ReadAllText($manPath, $enc) | ConvertFrom-Json
+$diskAgents = @(Get-ChildItem (Join-Path $payload ".claude\agents") -Filter *.md | ForEach-Object { $_.BaseName } | Sort-Object)
+$diskSkills = @(Get-ChildItem (Join-Path $payload ".claude\skills") -Directory | ForEach-Object { $_.Name } | Sort-Object)
+$diskHooks  = @(Get-ChildItem (Join-Path $payload ".claude\hooks") -Filter *.py | ForEach-Object { $_.Name } | Sort-Object)
+Ok ((($man.agents | Sort-Object) -join ",") -eq ($diskAgents -join ",")) "manifest.agents matches payload/.claude/agents"
+Ok ((($man.skills | Sort-Object) -join ",") -eq ($diskSkills -join ",")) "manifest.skills matches payload/.claude/skills"
+Ok ((($man.hooks_claude | Sort-Object) -join ",") -eq ($diskHooks -join ",")) "manifest.hooks_claude matches payload/.claude/hooks"
+$missingMeta = @($man.meta_required | Where-Object { -not (Test-Path (Join-Path $payload ($_ -replace '/', '\'))) })
+Ok ($missingMeta.Count -eq 0) "all manifest.meta_required files exist in payload"
+# context slimming: AGENTS.erc.md block stays well under 13,500 bytes (leaving >10 KB headroom below 24 KB limit)
+$blkBytes = [int](& $py -X utf8 -c "import sys; sys.path.insert(0, sys.argv[1]); import build_platform as bp; print(len(bp.build_rules_block(sys.argv[2]).encode('utf-8')))" (Join-Path $pkg "tools") $payload)
+Ok ($blkBytes -le 13500) "slimmed AGENTS.erc.md block <= 13,500 bytes (got $blkBytes)"
+# lightweight validate_paper catches both unknown [@key] and unknown {{res:id}}
+$v18 = New-Vault
+Ok ((Run-Install $v18 @("-Platform","claude")) -eq 0) "v18 install exit 0"
+$p18 = Join-Path $v18 "01-Research-Projects\demo18\paper"
+New-Item -ItemType Directory -Force $p18 | Out-Null
+$d18 = Join-Path $p18 "draft.md"
+[IO.File]::WriteAllText($d18, "测试引用 [@missing_k] 与缺失结果 {{res:missing_r}}。`n", $enc)
+$prevEap18 = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+$vp18Out = ((@{tool_name="Write"; tool_input=@{file_path=$d18}; cwd=$v18} | ConvertTo-Json -Depth 5 -Compress) | & $py (Join-Path $v18 ".claude\hooks\validate_paper.py") 2>&1) -join "`n"
+$vp18Rc = $LASTEXITCODE
+$ErrorActionPreference = $prevEap18
+Ok ($vp18Rc -eq 2 -and $vp18Out -match "missing_k" -and $vp18Out -match "missing_r") "lightweight validate_paper catches unknown citation and unknown result"
+# refmgr O(N) dup index & single-walk pdf index match unindexed semantics
+$rmCheck = & $py -X utf8 -c @"
+import os, sys, tempfile
+sys.path.insert(0, sys.argv[1])
+import refmgr
+entries = {
+    'a2020': {'title': 'Tax Compliance in China', 'year': '2020', 'doi': '10.1000/abc'},
+    'b2021': {'title': 'Platform Economy', 'year': '2021', 'doi': None},
+}
+idx = refmgr.build_dup_index(entries)
+r1 = {'title': 'Other', 'year': '2020', 'doi': 'https://doi.org/10.1000/ABC'}
+r2 = {'title': 'Platform Economy!', 'year': '2021', 'doi': None}
+r3 = {'title': 'Platform Economy!', 'year': '2022', 'doi': None}
+assert refmgr.find_duplicate(r1, entries, idx) == 'a2020'
+assert refmgr.find_duplicate(r2, entries, idx) == 'b2021'
+assert refmgr.find_duplicate(r3, entries, idx) is None
+with tempfile.TemporaryDirectory() as td:
+    sub = os.path.join(td, 'sub', 'deep')
+    os.makedirs(sub)
+    fp = os.path.join(sub, 'paper.pdf')
+    open(fp, 'wb').write(b'%PDF')
+    pidx = refmgr.build_pdf_index(td)
+    assert refmgr.resolve_pdf(['internal-pdf://x/paper.pdf'], td, td, pidx) == os.path.abspath(fp)
+print('OK')
+"@ (Join-Path $payload ".claude\scripts")
+Ok ($rmCheck -eq "OK") "refmgr indexed duplicate detection and PDF lookup match semantics"
+# protect_raw UTF-8 stderr on Windows
+$prChk = & $py -c @"
+import json, subprocess, sys
+inp = json.dumps({'tool_name': 'Edit', 'tool_input': {'file_path': '06-Data/raw/a.csv'}, 'cwd': sys.argv[2]}).encode('utf-8')
+p = subprocess.run([sys.executable, sys.argv[1]], input=inp, capture_output=True)
+print('OK' if p.returncode == 2 and 'BLOCKED by protect_raw' in p.stderr.decode('utf-8') else 'BAD')
+"@ (Join-Path $payload ".claude\hooks\protect_raw.py") $v18
+Ok ($prChk -eq "OK") "protect_raw writes readable UTF-8 stderr"
+}
+
+if ($script:CurSec -and $script:SecSw) {
+    $script:SecSw.Stop()
+    Write-Host ("  [{0}] done in {1:N2}s" -f $script:CurSec, $script:SecSw.Elapsed.TotalSeconds) -ForegroundColor DarkGray
+}
+$script:TotalSw.Stop()
+
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17,$v18) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
-Write-Host "passed: $script:pass  failed: $script:fail" -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
+Write-Host ("passed: {0}  failed: {1}  elapsed: {2:N2}s" -f $script:pass, $script:fail, $script:TotalSw.Elapsed.TotalSeconds) -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

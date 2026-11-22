@@ -163,6 +163,15 @@ def lint(vault, strict=False):
     def add(level, page, check, msg):
         findings.append({"level": level, "file": str(page), "check": check, "msg": msg})
 
+    text_cache = {}
+
+    def read_cached(p):
+        t = text_cache.get(p)
+        if t is None:
+            t = read(p)
+            text_cache[p] = t
+        return t
+
     scope_pages = sorted(md_files(vault, SCOPE))
     all_pages = list(md_files(vault))
     non_sub_pages = [p for p in all_pages if not _is_project_subartifact(p.relative_to(vault))]
@@ -170,7 +179,7 @@ def lint(vault, strict=False):
     wiki_stems = _stem_index(non_sub_pages)
 
     index = vault / "Meta" / "index.md"
-    index_text = read(index) if index.exists() else None
+    index_text = read_cached(index) if index.exists() else None
     if index_text is None:
         add("warning", "Meta/index.md", "index", "Meta/index.md not found; index coverage not checked")
 
@@ -182,7 +191,7 @@ def lint(vault, strict=False):
         rel_path = p.relative_to(vault)
         rel = rel_path.as_posix()
         subartifact = _is_project_subartifact(rel_path)
-        text = read(p)
+        text = read_cached(p)
         fm, err = parse_frontmatter(text)
         if err:
             add("error", rel, "frontmatter", err)
@@ -227,7 +236,7 @@ def lint(vault, strict=False):
     wiki_scope_set = set(wiki_scope_pages)
     for src in all_pages:
         try:
-            src_text = read(src)
+            src_text = read_cached(src)
         except OSError:
             continue
         for m in WIKILINK.finditer(_strip_code_spans(src_text)):
@@ -252,7 +261,7 @@ def lint(vault, strict=False):
             add("warning", p.relative_to(vault).as_posix(), "orphan", "no inbound links from any page (index, MOC or notes)")
 
     try:
-        if cmd_map(vault, check=True, embed=False, quiet=True):
+        if cmd_map(vault, check=True, embed=False, quiet=True, graph=build_graph(vault, text_cache=text_cache)):
             add("warning", "Meta/link-map.md", "map", "folder-map / link-map missing or out of date; run: wiki_lint.py map --vault .")
     except OSError:
         pass
@@ -315,7 +324,7 @@ def _map_pages(vault):
     return graph, legacy, allp
 
 
-def build_graph(vault):
+def build_graph(vault, text_cache=None):
     graph, legacy, allp = _map_pages(vault)
     stems = _stem_index(allp)
     gset = set(graph)
@@ -327,7 +336,7 @@ def build_graph(vault):
     legacy_stat = {}
     for src in allp:
         try:
-            text = read(src)
+            text = text_cache[src] if (text_cache is not None and src in text_cache) else read(src)
         except OSError:
             continue
         in_graph = src in gset
@@ -370,12 +379,13 @@ def _hubs(g, n):
     return [p for p in cand[:n] if g["in_res"][p] or g["out"][p]]
 
 
-def _count_files(path, vault):
+def _count_files(path, meta_dir_str):
     n_md = n_all = 0
     for root, dirs, files in os.walk(path):
         dirs[:] = sorted(d for d in dirs if d not in MAP_HIDDEN and not d.startswith("_erc"))
+        is_meta = os.path.normcase(root) == meta_dir_str
         for f in files:
-            if f in GENERATED_MAPS and Path(root) == vault / "Meta":
+            if is_meta and f in GENERATED_MAPS:
                 continue
             n_all += 1
             if f.lower().endswith(".md"):
@@ -384,30 +394,47 @@ def _count_files(path, vault):
 
 
 def folder_entries(vault):
-    """[(relpath, depth, n_md, n_all, role, flags)] for top-level dirs and their direct subdirs."""
+    """[(relpath, depth, n_md, n_all, role, flags)] for top-level dirs and their direct subdirs.
+    Walks each subdirectory once and aggregates counts bottom-up into its top-level parent."""
     rows = []
+    meta_dir_str = os.path.normcase(str(vault / "Meta"))
     tops = sorted(d for d in vault.iterdir()
                   if d.is_dir() and d.name not in MAP_HIDDEN and not d.name.startswith(".") and not d.name.startswith("_erc"))
     legacy_scope = set(SCOPE) | {"MOC", "Meta", "Templates"}
     for d in tops:
-        n_md, n_all = _count_files(d, vault)
+        is_meta = os.path.normcase(str(d)) == meta_dir_str
+        n_md = n_all = 0
+        subs = []
+        for entry in sorted(d.iterdir(), key=lambda x: x.name):
+            if entry.is_dir():
+                if entry.name not in MAP_HIDDEN and not entry.name.startswith("_erc"):
+                    subs.append(entry)
+            else:
+                if is_meta and entry.name in GENERATED_MAPS:
+                    continue
+                n_all += 1
+                if entry.name.lower().endswith(".md"):
+                    n_md += 1
+        sub_rows = []
+        for s in subs:
+            sm, sa = _count_files(s, meta_dir_str)
+            n_md += sm
+            n_all += sa
+            if not s.name.startswith("."):
+                rp = d.name + "/" + s.name
+                sub_rows.append((rp, 2, sm, sa, "", ["只读"] if rp in READ_ONLY else []))
         flags = []
         if d.name in READ_ONLY:
             flags.append("只读")
         if d.name not in legacy_scope and n_md:
             flags.append("旧资料：目录级汇总")
         rows.append((d.name, 1, n_md, n_all, ROLES.get(d.name, ""), flags))
-        subs = sorted(s for s in d.iterdir()
-                      if s.is_dir() and s.name not in MAP_HIDDEN and not s.name.startswith("_erc") and not s.name.startswith("."))
-        for s in subs:
-            rp = d.name + "/" + s.name
-            sm, sa = _count_files(s, vault)
-            rows.append((rp, 2, sm, sa, "", ["只读"] if rp in READ_ONLY else []))
+        rows.extend(sub_rows)
     return rows
 
 
-def render_folder_map(vault):
-    rows = folder_entries(vault)
+def render_folder_map(vault, entries=None):
+    rows = folder_entries(vault) if entries is None else entries
     lines = ["---", "type: map", "status: generated", "---", "",
              "# 文件夹地图（自动生成）", "",
              "> 由 `python .claude/scripts/wiki_lint.py map` 生成，请勿手改；目录变化后重新运行。只统计磁盘上的实际目录；隐藏目录、`_erc*`、`_vendor` 不列出。", "",
@@ -473,9 +500,9 @@ def render_link_map(vault, g=None):
     return "\n".join(lines)
 
 
-def render_compact(vault, g=None):
+def render_compact(vault, g=None, entries=None):
     g = g or build_graph(vault)
-    rows = [r for r in folder_entries(vault) if r[1] == 1]
+    rows = [r for r in (folder_entries(vault) if entries is None else entries) if r[1] == 1]
     n_links = sum(len(v) for v in g["out"].values())
     L = [MAP_BEGIN, "## 知识地图（自动生成；完整版：`Meta/folder-map.md`、`Meta/link-map.md`）",
          "### 文件夹地图（实际磁盘）"]
@@ -524,14 +551,15 @@ def embed_block(path, block, check, limit=None):
     return "updated"
 
 
-def cmd_map(vault, check=False, embed=True, quiet=False):
-    g = build_graph(vault)
+def cmd_map(vault, check=False, embed=True, quiet=False, graph=None):
+    g = graph if graph is not None else build_graph(vault)
+    entries = folder_entries(vault)
     meta = vault / "Meta"
     if not check:
         meta.mkdir(exist_ok=True)
     drift = False
     say = (lambda *_a: None) if quiet else print
-    for name, text in (("folder-map.md", render_folder_map(vault)), ("link-map.md", render_link_map(vault, g))):
+    for name, text in (("folder-map.md", render_folder_map(vault, entries)), ("link-map.md", render_link_map(vault, g))):
         p = meta / name
         cur = p.read_text(encoding="utf-8-sig").replace("\r\n", "\n") if p.exists() else None
         if cur == text:
@@ -543,7 +571,7 @@ def cmd_map(vault, check=False, embed=True, quiet=False):
             p.write_text(text, encoding="utf-8", newline="\n")
             say("%s: written" % name)
     if embed:
-        block = render_compact(vault, g)
+        block = render_compact(vault, g, entries)
         for fname, limit in (("CLAUDE.md", None), ("AGENTS.md", 24000)):
             r = embed_block(vault / fname, block, check, limit)
             say("%s: %s" % (fname, r))

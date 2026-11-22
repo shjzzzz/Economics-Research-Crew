@@ -226,6 +226,7 @@ def _scan_quoted(text, pos):
 
 _FIELD = re.compile(r"[\s,]*([A-Za-z][\w\-:]*)\s*=\s*")
 _HEAD = re.compile(r"@(\w+)\s*([{(])")
+_BARE_VAL = re.compile(r"[^,\s#}]+")
 
 
 def parse_bibtex(text):
@@ -265,7 +266,7 @@ def parse_bibtex(text):
                 elif text[pos] == '"':
                     part, pos = _scan_quoted(text, pos)
                 else:
-                    em = re.compile(r"[^,\s#}]+").match(text, pos)
+                    em = _BARE_VAL.match(text, pos)
                     part, pos = (em.group(0), em.end()) if em else ("", pos + 1)
                 val += part
                 while pos < n and text[pos] in " \t\r\n":
@@ -446,8 +447,34 @@ def make_key(rec, taken):
     return key
 
 
-def find_duplicate(rec, entries):
+def build_dup_index(entries):
+    """Build O(1) lookup index for duplicate detection across batch imports."""
+    idx = {"doi": {}, "title": {}}
+    for k, e in entries.items():
+        index_entry(idx, k, e)
+    return idx
+
+
+def index_entry(idx, key, e):
+    d = norm_doi(e.get("doi"))
+    if d and d not in idx["doi"]:
+        idx["doi"][d] = key
+    nt = norm_title(e.get("title"))
+    if nt:
+        idx["title"].setdefault(nt, []).append((key, str(e.get("year") or "")))
+
+
+def find_duplicate(rec, entries, index=None):
     d, nt = norm_doi(rec.get("doi")), norm_title(rec.get("title"))
+    if index is not None:
+        if d and d in index["doi"]:
+            return index["doi"][d]
+        if nt and nt in index["title"]:
+            ry = str(rec.get("year") or "")
+            for k, ey in index["title"][nt]:
+                if not ry or not ey or ry == ey:
+                    return k
+        return None
     if d:
         for k, e in entries.items():
             if norm_doi(e.get("doi")) == d:
@@ -482,7 +509,19 @@ def _as_path(p):
     return p
 
 
-def resolve_pdf(paths, base_dir, pdf_dir):
+def build_pdf_index(pdf_dir):
+    """Walk pdf_dir once and index filenames to absolute paths for O(1) attachment lookup."""
+    idx = {}
+    if not pdf_dir or not os.path.isdir(pdf_dir):
+        return idx
+    for root, _, files in os.walk(pdf_dir):
+        for fn in files:
+            if fn.lower().endswith(".pdf") and fn not in idx:
+                idx[fn] = os.path.abspath(os.path.join(root, fn))
+    return idx
+
+
+def resolve_pdf(paths, base_dir, pdf_dir, pdf_index=None):
     for raw in paths:
         p = _as_path(raw)
         if not p.lower().endswith(".pdf"):
@@ -491,7 +530,11 @@ def resolve_pdf(paths, base_dir, pdf_dir):
             cand = p if os.path.isabs(p) else os.path.join(base_dir or ".", p)
             if os.path.isfile(cand):
                 return os.path.abspath(cand)
-        if pdf_dir:
+        if pdf_index is not None:
+            hit = pdf_index.get(os.path.basename(p.replace("\\", "/")))
+            if hit:
+                return hit
+        elif pdf_dir:
             name = os.path.basename(p.replace("\\", "/"))
             for root, _, files in os.walk(pdf_dir):
                 if name in files:

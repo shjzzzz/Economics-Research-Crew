@@ -18,7 +18,7 @@ $ErrorActionPreference = "Stop"
 
 function Get-Sha([string]$Path) {
     $sha = [System.Security.Cryptography.SHA256]::Create()
-    try { $fs = [IO.File]::OpenRead($Path); try { return [BitConverter]::ToString($sha.ComputeHash($fs)).Replace("-","") } finally { $fs.Dispose() } } finally { $sha.Dispose() }
+    try { $fs = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite); try { return [BitConverter]::ToString($sha.ComputeHash($fs)).Replace("-","") } finally { $fs.Dispose() } } finally { $sha.Dispose() }
 }
 $script:Pending = @()
 function Copy-NoOverwrite([string]$Source, [string]$Destination) {
@@ -61,6 +61,9 @@ if (-not (Test-Path $VaultPath -PathType Container)) { throw "知识库目录不
 $packageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $payload = Join-Path $packageRoot "payload"
 if (-not (Test-Path $payload)) { throw "未找到 payload 目录，请完整解压安装包。" }
+$manifestPath = Join-Path $packageRoot "tools\manifest.json"
+if (-not (Test-Path $manifestPath)) { throw "未找到 tools\manifest.json，请完整解压安装包。" }
+$manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $claudeDir = Join-Path $VaultPath ".claude"
 $hasPython = [bool](Get-Command python -ErrorAction SilentlyContinue)
 
@@ -80,7 +83,7 @@ if ($doAgents -and -not $hasPython) { throw "为 agy/Codex 生成文件需要 py
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $backupDir = Join-Path $VaultPath "_erc-backups\$stamp"
 if (Test-Path $backupDir) { $backupDir = "${backupDir}-" + [guid]::NewGuid().ToString("N").Substring(0,6) }
-foreach ($rel in @("CLAUDE.md", ".mcp.json", ".claude\settings.json", "AGENTS.md", ".agents\hooks.json")) {
+foreach ($rel in @($manifest.backup_files | ForEach-Object { $_ -replace '/', '\' })) {
     $src = Join-Path $VaultPath $rel
     if (Test-Path $src -PathType Leaf) {
         $dst = Join-Path $backupDir $rel
@@ -223,9 +226,7 @@ if (-not $doClaude) {
 }
 
 # 5. 研究目录（仅新建，不移动现有内容）
-foreach ($d in "00-Inbox","01-Research-Projects","03-Literature","03-Literature\_sources","04-Theories","05-Methods",
-               "06-Data\raw","06-Data\processed","06-Data\metadata","07-Code\python","07-Code\R","07-Code\stata",
-               "08-Research-Notes","09-Writing","10-Archive","MOC") {
+foreach ($d in @($manifest.research_dirs | ForEach-Object { $_ -replace '/', '\' })) {
     $p = Join-Path $VaultPath $d
     if (-not (Test-Path $p) -and $PSCmdlet.ShouldProcess($p, "创建目录")) { New-Item -ItemType Directory -Force -Path $p | Out-Null }
 }

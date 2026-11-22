@@ -13,14 +13,17 @@ Usage: python merge_hooks.py SETTINGS_JSON SNIPPET_JSON
 import json
 import os
 import re
-import shutil
 import sys
 
+try:
+    from build_platform import default_python_cmd
+except ImportError:
+    import shutil
 
-def default_python_cmd():
-    if sys.platform == "win32":
-        return "python"
-    return "python3" if shutil.which("python3") else "python"
+    def default_python_cmd():
+        if sys.platform == "win32":
+            return "python"
+        return "python3" if shutil.which("python3") else "python"
 
 
 def adapt_group(group, python_cmd):

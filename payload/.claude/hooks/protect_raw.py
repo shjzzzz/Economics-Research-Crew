@@ -37,9 +37,8 @@ def norm(p):
 
 
 def is_protected(path):
-    n = norm(path)
-    return any(("/" + pr + "/") in ("/" + n + "/") or n.startswith(pr + "/") or n.endswith("/" + pr)
-               or ("/" + pr + "/") in n for pr in PROTECTED)
+    padded = "/" + norm(path).strip("/") + "/"
+    return any(("/" + pr + "/") in padded for pr in PROTECTED)
 
 
 AGY = False  # set when the input comes from Antigravity (agy) instead of Claude Code
@@ -59,7 +58,8 @@ def block(msg):
     if AGY:
         sys.stdout.write(json.dumps({"decision": "deny", "reason": "BLOCKED by protect_raw hook: " + msg}) + "\n")
         sys.exit(0)
-    sys.stderr.write("BLOCKED by protect_raw hook: " + msg + "\n")
+    sys.stderr.buffer.write(("BLOCKED by protect_raw hook: " + msg + "\n").encode("utf-8"))
+    sys.stderr.buffer.flush()
     sys.exit(2)
 
 

@@ -32,30 +32,19 @@ sys.path.insert(0, HERE)
 import build_platform as bp  # noqa: E402
 import merge_hooks as mh  # noqa: E402
 
-AGENTS = [
-    "literature-agent", "theory-agent", "tax-policy-agent", "econometrics-agent",
-    "causal-inference-agent", "academic-reviewer", "paper-writer-agent",
-]
-SKILLS = [
-    "research-question", "literature-review", "theory-modeling", "tax-policy-analysis",
-    "causal-inference-audit", "econometric-analysis", "academic-review",
-    "ingest-source", "query-wiki", "wiki-lint", "research-pipeline",
-    "paper-outline", "paper-draft", "paper-refine", "paper-polish",
-    "scientific-visualization", "thu-digitizer",
-]
-META_REQUIRED = [
-    "Meta/purpose.md", "Meta/index.md", "Meta/review-queue.md", "Meta/vault-map.md",
-    "Meta/research-standards.md", "Meta/source-registry.md", "Meta/log.md",
-    "Meta/collaboration-protocol.md", "Meta/style-guide.md", "Meta/mechanism-library.md",
-    "Meta/decisions.md", "Meta/ai-tells.json", "Meta/upstream-ars.json",
-    "Meta/constraints.md", "Meta/aliases.csv",
-]
-RESEARCH_DIRS = [
-    "00-Inbox", "01-Research-Projects", "03-Literature", "03-Literature/_sources",
-    "04-Theories", "05-Methods", "06-Data/raw", "06-Data/processed", "06-Data/metadata",
-    "07-Code/python", "07-Code/R", "07-Code/stata", "08-Research-Notes",
-    "09-Writing", "10-Archive", "MOC",
-]
+with open(os.path.join(HERE, "manifest.json"), encoding="utf-8-sig") as _mf:
+    MANIFEST = json.load(_mf)
+
+AGENTS = MANIFEST["agents"]
+SKILLS = MANIFEST["skills"]
+META_REQUIRED = MANIFEST["meta_required"]
+RESEARCH_DIRS = MANIFEST["research_dirs"]
+REQUIRED_DIRS = MANIFEST["required_dirs"]
+BACKUP_FILES = MANIFEST["backup_files"]
+CLAUDE_REQUIRED = MANIFEST["claude_required"]
+AGENTS_REQUIRED = MANIFEST["agents_required"]
+HOOKS_CLAUDE = MANIFEST["hooks_claude"]
+HOOKS_AGY = MANIFEST["hooks_agy"]
 MAP_RE = re.compile(r"<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->", re.S)
 
 
@@ -139,7 +128,7 @@ def cmd_install(a):
     pending = []
 
     # 1. Backup critical existing files
-    for rel in ("CLAUDE.md", ".mcp.json", ".claude/settings.json", "AGENTS.md", ".agents/hooks.json"):
+    for rel in BACKUP_FILES:
         src = os.path.join(vault, *rel.split("/"))
         if os.path.isfile(src) and not a.dry_run:
             dst = os.path.join(backup_dir, *rel.split("/"))
@@ -288,24 +277,20 @@ def cmd_test(a):
         errors.append("未发现任何平台的安装（.claude/ 或 .agents/）")
 
     req_files(META_REQUIRED)
-    for d in ("06-Data/raw", "06-Data/processed", "07-Code"):
+    for d in REQUIRED_DIRS:
         if not os.path.isdir(os.path.join(vault, *d.split("/"))):
             errors.append("缺少目录: " + d)
 
     if has_claude:
         check_defs(".claude")
-        req_files([".claude/ECONOMICS-RESEARCH.md", ".claude/scripts/wiki_lint.py",
-                   ".claude/scripts/orchestrator.py", ".claude/scripts/paper_tools.py", ".claude/scripts/refmgr.py",
-                   ".claude/hooks/validate_paper.py", ".claude/pipeline-stages.json",
-                   "Templates/handoff.md", "Templates/paper-outline.md", "Templates/rebuttal-matrix.md"])
+        req_files(CLAUDE_REQUIRED)
         rc = os.path.join(vault, "CLAUDE.md")
         if not os.path.isfile(rc) or "@.claude/ECONOMICS-RESEARCH.md" not in bp.rd(rc):
             errors.append("根 CLAUDE.md 未 import ECONOMICS-RESEARCH.md")
         sj = os.path.join(vault, ".claude", "settings.json")
         if os.path.isfile(sj):
             st = bp.rd(sj)
-            for h in ("session_context.py", "protect_raw.py", "validate_frontmatter.py", "validate_paper.py",
-                      "routing_hint.py", "orchestrator_guard.py", "orchestrator_record.py"):
+            for h in HOOKS_CLAUDE:
                 if h in st and not os.path.isfile(os.path.join(vault, ".claude", "hooks", h)):
                     errors.append("settings.json 引用了 hook 但文件缺失: " + h)
         claude_bin = shutil.which("claude")
@@ -317,8 +302,7 @@ def cmd_test(a):
 
     if has_agents:
         check_defs(".agents")
-        req_files([".agents/scripts/wiki_lint.py", ".agents/scripts/orchestrator.py",
-                   ".agents/scripts/paper_tools.py", ".agents/scripts/refmgr.py", ".agents/pipeline-stages.json"])
+        req_files(AGENTS_REQUIRED)
         am = os.path.join(vault, "AGENTS.md")
         if not os.path.isfile(am):
             errors.append("缺少根 AGENTS.md")
@@ -335,7 +319,7 @@ def cmd_test(a):
                 json.loads(ht)
             except ValueError:
                 errors.append(".agents/hooks.json 不是有效 JSON")
-            for h in ("protect_raw.py", "routing_hint.py"):
+            for h in HOOKS_AGY:
                 if h in ht and not os.path.isfile(os.path.join(vault, ".agents", "hooks", h)):
                     errors.append("hooks.json 引用了 hook 但文件缺失: " + h)
 

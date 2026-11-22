@@ -62,7 +62,7 @@
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（344/344；本机安装 `claude` CLI 时 345/345，同时放置 extras 时 348/348） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（354/354；本机安装 `claude` CLI 时 355/355，同时放置 extras 时 358/358） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/`（原生 `effort`/`disallowedTools`/`PowerShell`） | `.claude/settings.json`（全 7 个 hooks，含 `SessionStart` 状态恢复与 `timeout: 10`） | 已测试（含 `claude plugin validate --strict`） |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -123,6 +123,6 @@ chmod +x install.sh
 | 验证项 | 命令 | 说明 |
 |---|---|---|
 | 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、17 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 344 项测试（本机安装 `claude` CLI 时 345 项，同时放置 extras 时 348 项），全在临时目录运行，不触碰真实知识库 |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 354 项测试（本机安装 `claude` CLI 时 355 项，同时放置 extras 时 358 项；支持 `-Section` 按节调试），全在临时目录运行，不触碰真实知识库 |
 | 上游 ARS 更新检查 | `python tools/check_ars_updates.py check` | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报 |
 | 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | 消耗 Claude 额度；覆盖 `tests/routing_cases.json` 16 个路由用例 |

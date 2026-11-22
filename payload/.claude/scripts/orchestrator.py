@@ -138,24 +138,28 @@ def running_dispatches(vault, cfg):
     t_now = datetime.datetime.now().astimezone()
     open_ = {}
     for r in ledger_read(vault):
-        ev, key = r.get("event"), r.get("agent_id") or r.get("req_id")
+        ev = r.get("event")
+        if ev == "recover":
+            open_.clear()
+            continue
+        if ev == "stop":
+            open_.pop(r.get("agent_id") or r.get("req_id"), None)
+            continue
+        if ev not in ("dispatch_request", "start"):
+            continue
         try:
             ts = datetime.datetime.fromisoformat(r["ts"])
         except (KeyError, ValueError):
             continue
-        if ev == "recover":
-            open_.clear()
-        elif ev == "dispatch_request":
+        if ev == "dispatch_request":
             open_[r["req_id"]] = (ts, r.get("agent"), "req")
-        elif ev == "start":
+        else:
             # a start consumes the oldest pending request for the same agent
             for k, (t0, a, kind) in list(open_.items()):
                 if kind == "req" and a == r.get("agent"):
                     del open_[k]
                     break
-            open_[key] = (ts, r.get("agent"), "run")
-        elif ev == "stop":
-            open_.pop(key, None)
+            open_[r.get("agent_id") or r.get("req_id")] = (ts, r.get("agent"), "run")
     # A request normally becomes a start within seconds; one that never starts (permission denied,
     # tool error) must not hold a slot for the whole stale window.
     pending = datetime.timedelta(minutes=2)
