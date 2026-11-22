@@ -62,7 +62,7 @@
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（337/337；本机放置 extras 时 340/340） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（344/344；本机安装 `claude` CLI 时 345/345，同时放置 extras 时 348/348） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/`（原生 `effort`/`disallowedTools`/`PowerShell`） | `.claude/settings.json`（全 7 个 hooks，含 `SessionStart` 状态恢复与 `timeout: 10`） | 已测试（含 `claude plugin validate --strict`） |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |

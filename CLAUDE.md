@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 校验已安装的库：`.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>`。
 - 同步 AGENTS.md 的 ERC 区块：`.\Sync-AgentsMd.ps1 -VaultPath <库> [-Check]`。
 - 上游 ARS 更新检查（零 LLM 额度；无更新退出码 0，有更新 2）：`python tools/check_ars_updates.py check`。
-- `tests/run.ps1` 没有单测选择器，按编号分节（`[1]`…`[14]`）；要单独调试某节，直接读该节并手动运行对应安装/检查命令。
+- `tests/run.ps1` 没有单测选择器，按编号分节（`[1]`…`[17]`）；要单独调试某节，直接读该节并手动运行对应安装/检查命令。
 - `tests/refmgr_selftest.py <库>/.claude/scripts/paper_tools.py <库>`：离线测 EndNote/Zotero 交换。
 - `tests/routing_eval.py --vault <一次性库>`：**消耗 Claude Code 额度**，只在用户明确要求时运行；拒绝在已有 `settings.local.json` 的库上运行。
 
