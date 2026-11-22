@@ -24,4 +24,4 @@ task_type: open-ended
 - 严格区分原文事实（Fact）与综合评论（Synthesis）；无法核实项单列“未核实清单”。
 
 ## 输出格式
-检索记录；争论簇文献矩阵（引文、问题、数据、识别、核心结果与量级、局限假设、与本文桥接）；精确研究缺口与竞争解释；三层定位锚点建议；未核实清单。
+检索记录；争论簇文献矩阵（引文、问题、数据、识别、核心结果与量级、局限假设、与本文桥接）；研究缺口分类表（按 literature-review Skill §3a：表 A 八类缺口 Population / Concepts / Perspectives / Theory / Analysis / Implication / Methods / Methodology，表 B 张力表，表 C 概念框架到新理论框架的收口）与竞争解释；三层定位锚点建议；未核实清单。
