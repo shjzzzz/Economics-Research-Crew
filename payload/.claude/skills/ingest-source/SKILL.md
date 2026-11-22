@@ -12,7 +12,7 @@ task_type: open-ended
 一次只处理一个原始来源，严格分两步执行：**先分析并停下等研究者确认，确认后再写入**。不仅生成孤立文献卡，更推动跨文献概念页（`04-Theories/`、`05-Methods/`、`MOC/`）复利生长，并预置 `cite_key` 桥接论文引文表。
 
 ## 2. 前置检查
-1. 读取 `Meta/purpose.md`（未填则提醒并按“方向未定”处理）、`Meta/index.md`、`Meta/link-map.md`、`Meta/source-registry.md`。
+1. 读取 `Meta/purpose.md`（未填则提醒并按“方向未定”处理）、`Meta/index.md`、`Meta/link-map.md`、`Meta/source-registry.md`、`Meta/constraints.md`（研究者纠正，必须遵守）、`Meta/aliases.csv`（建概念页前先查别名，已有规范名则并入而非新建）。
 2. 核实待摄入来源位于默认入口 `00-Inbox/`（如 `00-Inbox/文献/`，亦兼容已归档的 `03-Literature/_sources/`）。若研究者仅提供文件名，优先在 `00-Inbox/` 下查找；若在别处，请研究者确认路径或自行移入；**不得移动、改名、修改或删除原始文件**。
 3. 计算哈希去重：`python .claude/scripts/wiki_lint.py hash <文件> --vault .`。若返回 `ALREADY REGISTERED`，停止并告知，除非研究者明确要求重新摄入。
 

@@ -294,9 +294,14 @@ def cmd_next(a):
     agents = list(s.get("agents", [])) + [ag for ag in sorted(rec["attempts"]) if ag not in s.get("agents", [])]
     if agents:
         budget = retry_budget(cfg)
+        fails = [e for e in ledger_read(vault) if e.get("event") == "fail"
+                 and e.get("project") == st["project"] and e.get("stage") == sid]
         for ag in agents:
             n = rec["attempts"].get(ag, 0)
             print("  Agent %s：已失败 %d 次，%s" % (ag, n, "可重试" if n < budget else "已达重试上限，停下并向研究者报告"))
+            last = [e for e in fails if e.get("agent") == ag]
+            if n and last:
+                print("    上次失败原因：%s（重试时必须把它附进任务简报）" % last[-1].get("reason", ""))
     problems = verify_stage(vault, cfg, st, sid)
     if problems:
         print_problems("通过关卡前还缺：", problems)

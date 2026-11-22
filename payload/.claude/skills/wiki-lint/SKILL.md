@@ -12,7 +12,7 @@ task_type: open-ended
 保障 Tier 1 跨项目知识库与项目入口页的结构健康、双链完整、溯源清晰与语义一致。**默认只报告不修改**，经研究者逐项批准后再执行修复。
 
 ## 2. 前置读取
-- 读取 `Meta/purpose.md`、`Meta/index.md`、`Meta/review-queue.md`、`Meta/decisions.md`。
+- 读取 `Meta/purpose.md`、`Meta/index.md`、`Meta/review-queue.md`、`Meta/decisions.md`、`Meta/constraints.md`。
 
 ## 3. 核心体检流程
 1. **确定性结构检查**：运行 `python .claude/scripts/wiki_lint.py lint --vault .`。
@@ -28,6 +28,9 @@ task_type: open-ended
    - **缺失概念页**：被多篇文献反复引用却尚未独立建页的核心机制（`04-Theories/`）或计量方法（`05-Methods/`）；
    - **缺失 `cite_key` / `locator`**：`03-Literature/` 中已核实但尚未补齐 `cite_key` 或三层锚点的文献卡；
    - **长期积压**：`Meta/review-queue.md` 中长期 `open` 的待决项。
+
+## 3b. 周期复盘模式（研究者要求“复盘”时）
+读最近 7 天的 `Meta/run-ledger.jsonl` 与 `Meta/log.md`，找出：重复出现的失败原因、被反复退回的阶段、多次转入 `review-queue.md` 的同类事项、lint 报出的别名冲突。据此**只提议**对 Skill、`Meta/constraints.md`、`Meta/aliases.csv` 的修改，输出为 diff；由研究者逐条批准，复盘本身绝不写这些文件。
 
 ## 4. 产出与知识回流
 - 输出结构化体检报告：**确定性错误 / 警告 / 项目与论文指标 / 语义问题 / 建议下一步**（含值得追问的新研究问题与待补来源）。

@@ -48,6 +48,7 @@ META_REQUIRED = [
     "Meta/research-standards.md", "Meta/source-registry.md", "Meta/log.md",
     "Meta/collaboration-protocol.md", "Meta/style-guide.md", "Meta/mechanism-library.md",
     "Meta/decisions.md", "Meta/ai-tells.json", "Meta/upstream-ars.json",
+    "Meta/constraints.md", "Meta/aliases.csv",
 ]
 RESEARCH_DIRS = [
     "00-Inbox", "01-Research-Projects", "03-Literature", "03-Literature/_sources",

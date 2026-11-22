@@ -13,7 +13,7 @@ task_type: open-ended
 
 ## 2. 前置读取与项目状态恢复
 编排命令统一写作 `ORC = python .claude/scripts/orchestrator.py`（库根目录运行）。`01-Research-Projects/<项目>/STATE.json` 与 `Meta/run-ledger.jsonl` **只能通过 `ORC` 修改，禁止手改**。
-1. 读取 `Meta/purpose.md`（未填则提醒，不代编方向）、`Meta/decisions.md`、`Meta/index.md` 及 `Meta/log.md` 近期记录（最近 10 条 `## [` 标题，并可辅以 `ORC log -n 10`）。
+1. 读取 `Meta/purpose.md`（未填则提醒，不代编方向）、`Meta/decisions.md`、`Meta/constraints.md`（研究者纠正，派发任何 Agent 前都要把相关条目带进简报）、`Meta/index.md` 及 `Meta/log.md` 近期记录（最近 10 条 `## [` 标题，并可辅以 `ORC log -n 10`）。
 2. **新项目**：先只输出 S1–S12 阶段计划（每阶段目标、负责 Skill/Agent、核心产物、关卡问题）并停下；研究者批准后，按 `Templates/research-project.md` 建 `01-Research-Projects/<项目名>/PROJECT.md`，运行 `ORC init 01-Research-Projects/<项目名>`，从 S1 起步。计划获批前不检索、不写文件。
 3. **恢复项目**：运行 `ORC status` 与 `ORC next`，对照 `PROJECT.md` 的待决事项，从 `STATE.json` 当前阶段续作；不重做已通过关卡的阶段，除非研究者决定退回（`return`）。
 

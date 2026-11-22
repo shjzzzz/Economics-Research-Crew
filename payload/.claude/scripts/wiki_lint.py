@@ -7,7 +7,7 @@ Usage:
     python wiki_lint.py hash FILE [--vault PATH]
 
 lint  : frontmatter, sources[] resolvability, broken wikilinks, orphan pages,
-        index coverage. Scope = new research folders only (legacy tax-law
+        index coverage, duplicate concept pages declared in Meta/aliases.csv. Scope = new research folders only (legacy tax-law
         notes are never scanned).
 map   : generate Meta/folder-map.md (real folders) and Meta/link-map.md (wikilink graph: hubs,
         adjacency, orphans, broken links, duplicate names; legacy notes summarised per folder
@@ -234,6 +234,18 @@ def lint(vault, strict=False):
             for h in _resolve_wikilink(m.group(1), stems, vault):
                 if h in wiki_scope_set and h != src:
                     inbound[h].add(src)
+
+    # aliases.csv (canonical,alias): silent when absent or empty
+    ali = vault / "Meta" / "aliases.csv"
+    if ali.exists():
+        for line in read(ali).splitlines()[1:]:
+            parts = [x.strip() for x in line.split(",")]
+            if len(parts) < 2 or not parts[0] or not parts[1]:
+                continue
+            canon, alias = parts[0].lower(), parts[1].lower()
+            if canon != alias and canon in wiki_stems and alias in wiki_stems:
+                add("warning", wiki_stems[alias][0].relative_to(vault).as_posix(), "alias",
+                    "page [[%s]] is an alias of [[%s]] (Meta/aliases.csv); merge or link them" % (parts[1], parts[0]))
 
     for p, srcs in inbound.items():
         if not srcs:

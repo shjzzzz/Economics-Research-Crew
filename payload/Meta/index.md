@@ -20,7 +20,7 @@ updated: YYYY-MM-DD
 | `06-Data/{processed,metadata}/` | Tier 2 | 清洗后的衍生数据与数据字典 | 衍生写入 |
 | `07-Code/{stata,python,R}/` | Tier 2 | 实证与绘图脚本 | 模块化可复现 |
 | `09-Writing/` & `10-Archive/` | Tier 3 | 独立文稿（简报/讲义）与结项归档 | 不放活跃项目过程稿 |
-| `Meta/` | 控制面 | 规范（`purpose`/`decisions`/`vault-map`）、账本（`index`/`log`/`source-registry`/`review-queue`）、地图（`folder-map`/`link-map`） | 机读 JSON/JSONL 由脚本独占 |
+| `Meta/` | 控制面 | 规范（`purpose`/`decisions`/`vault-map`）、账本（`index`/`log`/`source-registry`/`review-queue`/`constraints`/`aliases`）、地图（`folder-map`/`link-map`） | 机读 JSON/JSONL 由脚本独占 |
 
 ---
 

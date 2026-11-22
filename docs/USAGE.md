@@ -83,7 +83,7 @@ claude
 7. **S8–S12 论文写作与知识回流**：`/paper-outline`（C1）→ `paper_tools.py cite from-note/add`（C2）→ `/paper-draft`（C3）→ `/paper-refine`（C4）→ 可选 `/paper-polish` → S12 终检、`paper/ai-disclosure.md`（C5）并将综合结论回流至 `08-Research-Notes/` 刷新双地图。
 
 ## 6. 知识库维护（可积累的 Wiki）
-- **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界；研究者关键决定记入 `Meta/decisions.md`。
+- **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界；研究者关键决定记入 `Meta/decisions.md`；对 AI 的纠正（一条一行）记入 `Meta/constraints.md`，所有 Skill/Agent 开工前都会读；同一概念的不同叫法记入 `Meta/aliases.csv`（`canonical,alias`），摄入前先查、`wiki_lint.py lint` 会报疑似重复页。
 - **两步摄入（`/ingest-source`）**：原始文件放 `03-Literature/_sources/`，先算 SHA256 去重并输出分析（含拟定 `cite_key` 与拟关联概念页），**等你确认后**才写卡、更新 `Meta/index.md`/`source-registry.md`/`log.md` 并刷新双地图；可一键用 `paper_tools.py cite from-note` 桥接入论文引文表。
 - **图谱检索（`/query-wiki`）**：先读 `Meta/index.md` 与 `Meta/link-map.md` 枢纽页，沿 `[[双链]]` 展开，回答区分“事实”与“推断”。
 - **体检与双地图（`/wiki-lint`）**：`python .claude/scripts/wiki_lint.py lint --vault .` 与 `map --vault .` 生成 `Meta/folder-map.md`、`Meta/link-map.md` 并刷新 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 区块；自动排除库根目录既有笔记、`paper/versions/` 与项目过程稿的孤立/重名噪音。
@@ -106,7 +106,7 @@ claude
 ## 8. 编排层：状态、关卡、重试与恢复
 - 常用命令（库根目录）：
   - `python .claude/scripts/orchestrator.py status`（项目进度）
-  - `python .claude/scripts/orchestrator.py next`（当前阶段缺口与重试额度）
+  - `python .claude/scripts/orchestrator.py next`（当前阶段缺口、重试额度与上次失败原因）
   - `python .claude/scripts/orchestrator.py verify`（检查退出条件与机械检查项）
   - `python .claude/scripts/orchestrator.py log -n 20`（最近派出与关卡记录）
 - **关卡由研究者决定**：`gate --decision pass|revise|return|stop --note "…"` 会触发权限确认；Agent 失败每阶段最多重试 2 次（`revise` 清零）；残留运行记录用 `recover` 清理，临时关闭拦截用 `enforce off`。
