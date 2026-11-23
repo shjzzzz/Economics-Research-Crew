@@ -22,7 +22,7 @@ except ImportError:
 
     def default_python_cmd():
         if sys.platform == "win32":
-            return "python"
+            return "py -3" if shutil.which("py") else "python"
         return "python3" if shutil.which("python3") else "python"
 
 
@@ -85,8 +85,8 @@ def main(settings_path, snippet_path, python_cmd=None):
             for h in match.get("hooks", []):
                 cmd = h.get("command", "")
                 if any(n in cmd for n in names):
-                    m = re.match(r"^(python3?)\s+(.*)$", cmd)
-                    if m and m.group(1) != python_cmd:
+                    m = re.match(r"^(python3?|py\s+-3)\s+(.*)$", cmd)
+                    if m and re.sub(r"\s+", " ", m.group(1)) != python_cmd:
                         h["command"] = python_cmd + " " + m.group(2)
                         changed = True
                     if snippet_timeout is not None and "timeout" not in h:

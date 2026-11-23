@@ -2,7 +2,7 @@
 """Cross-platform adaptive installer, checker and syncer for Economics Research Crew.
 
 Supports macOS, Windows 11 and Linux using Python standard library only.
-Auto-detects OS (adapting hook commands to `python3` on macOS/Linux and `python` on Windows)
+Auto-detects OS (adapting hook commands to `python3` on macOS/Linux and `py -3` (fallback `python`) on Windows)
 and installed AI CLIs (`claude`, `agy`, `codex`). Never overwrites existing user files.
 
 Usage:
@@ -72,7 +72,7 @@ def resolve_python_cmd(os_label, explicit=None):
     if explicit:
         return explicit
     if os_label == "windows":
-        return "python"
+        return bp.windows_python_cmd()
     return "python3" if shutil.which("python3") else "python"
 
 
@@ -377,7 +377,7 @@ def main(argv=None):
     pi.add_argument("--update", action="store_true")
     pi.add_argument("--dry-run", action="store_true")
     pi.add_argument("--target-os", choices=["macos", "windows", "linux"], help="Override OS detection (for testing)")
-    pi.add_argument("--python-cmd", help="Override hook python command (e.g. python3 or python)")
+    pi.add_argument("--python-cmd", help="Override hook python command (e.g. python3, python or 'py -3')")
     pi.set_defaults(f=cmd_install)
 
     pt = sub.add_parser("test")

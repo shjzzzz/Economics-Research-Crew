@@ -145,9 +145,15 @@ def build_rules_block(payload=None, claude_md=None, rules_md=None):
     return BEGIN + "\n" + body + END + "\n"
 
 
+def windows_python_cmd():
+    """Windows hook interpreter. Prefer the `py` launcher: it lives in C:\\Windows and is never shadowed by
+    the Microsoft Store `python.exe` stub, which silently exits 9009 (hook "failed", no stderr) when it wins on PATH."""
+    return "py -3" if shutil.which("py") else "python"
+
+
 def default_python_cmd():
     if sys.platform == "win32":
-        return "python"
+        return windows_python_cmd()
     return "python3" if shutil.which("python3") else "python"
 
 

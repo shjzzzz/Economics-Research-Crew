@@ -163,6 +163,11 @@ Run-Install $v6 @("-WithHooks") | Out-Null
 Ok ((Get-Sha $sj) -eq $h1) "second merge is idempotent"
 Ok ((Run-Check $v6) -eq 0) "checker exit 0 with hooks"
 Ok ($st.hooks.PreToolUse[0].matcher -match "PowerShell") "PreToolUse matcher covers PowerShell tool"
+# Windows hosts must not depend on PATH order: prefer the py launcher over the Store python stub (silent exit 9009)
+if (($null -eq $IsWindows) -or $IsWindows) {
+    $expectPy = if (Get-Command py -ErrorAction SilentlyContinue) { "py -3" } else { "python" }
+    Ok ($st.hooks.PreToolUse[0].hooks[0].command.StartsWith("$expectPy ")) "Windows hook command uses '$expectPy' (py launcher preferred over Store python stub)"
+}
 # upgrade path: an old install whose matcher lacks PowerShell gets widened, not duplicated
 $old = '{"hooks":{"PreToolUse":[{"matcher":"Write|Edit|Bash","hooks":[{"type":"command","command":"python x/protect_raw.py"}]}]}}'
 [IO.File]::WriteAllText($sj, $old, $enc)
@@ -898,6 +903,12 @@ $mhPy = Join-Path $pkg "tools\merge_hooks.py"
 $sj16 = Join-Path $v16 ".claude\settings.json"
 & $py -X utf8 $mhPy $sj16 (Join-Path $payload ".claude\settings.hooks.json") --python-cmd python3 *> $null
 Ok (([IO.File]::ReadAllText($sj16, $enc)) -match 'python3 .*protect_raw\.py') "merge_hooks upgrades existing hook python prefix to python3"
+& $py -X utf8 $mhPy $sj16 (Join-Path $payload ".claude\settings.hooks.json") --python-cmd "py -3" *> $null
+$sj16Txt = [IO.File]::ReadAllText($sj16, $enc)
+Ok ($sj16Txt -match 'py -3 .*protect_raw\.py' -and ([regex]::Matches($sj16Txt, 'protect_raw\.py')).Count -eq 1) "merge_hooks upgrades python3 prefix to 'py -3' without duplicating the hook"
+$shaPy3 = Get-Sha $sj16
+& $py -X utf8 $mhPy $sj16 (Join-Path $payload ".claude\settings.hooks.json") --python-cmd "py -3" *> $null
+Ok ((Get-Sha $sj16) -eq $shaPy3) "merge_hooks 'py -3' prefix is idempotent"
 $origAg = [IO.File]::ReadAllText((Join-Path $v16 "AGENTS.md"), $enc)
 [IO.File]::WriteAllText((Join-Path $v16 "AGENTS.md"), ("x" * 10000) + "`n" + $origAg, $enc)
 [IO.File]::AppendAllText((Join-Path $v16 "CLAUDE.md"), "`n- trigger sync`n", $enc)
