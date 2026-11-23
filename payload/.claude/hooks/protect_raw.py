@@ -19,12 +19,14 @@ import re
 import sys
 
 PROTECTED = ["06-data/raw", "03-literature/_sources"]
+NO_DELETE_DIRS = ["01-research-projects", "03-literature", "04-theories", "05-methods", "08-research-notes", "meta"]
 FILE_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit"}
 DESTRUCTIVE = re.compile(
     r"(?i)(?:^|[\s;&|(])(rm|rmdir|mv|move|del|erase|ren|rename|truncate|shred|"
     r"remove-item|move-item|rename-item|set-content|add-content|clear-content|out-file|tee)\b"
     r"|sed\s+-[a-z]*i"
 )
+DELETE_ONLY = re.compile(r"(?i)(?:^|[\s;&|(])(rm|rmdir|del|erase|remove-item)\b")
 COPYLIKE = re.compile(r"(?i)(?:^|[\s;&|(])(cp|copy|xcopy|robocopy|copy-item)\b")
 DEST_ARG = re.compile(r'''(?i)(?:^|\s)-dest(?:ination)?\s+(?:"([^"]+)"|'([^']+)'|(\S+))''')
 SHELL_TOK = re.compile(r'''"([^"]*)"|'([^']*)'|(\S+)''')
@@ -39,6 +41,10 @@ def norm(p):
 def is_protected(path):
     padded = "/" + norm(path).strip("/") + "/"
     return any(("/" + pr + "/") in padded for pr in PROTECTED)
+
+
+def mentions_dir(norm_cmd, dirs):
+    return any(re.search(r'(?:^|[\s"\'/;(&|])' + re.escape(d) + r'(?:$|[\s"\'/;)|&])', norm_cmd) for d in dirs)
 
 
 AGY = False  # set when the input comes from Antigravity (agy) instead of Claude Code
@@ -102,27 +108,28 @@ def main():
     if tool in ("Bash", "PowerShell"):
         cmd = ti.get("command", "") or ""
         n = norm(cmd)
-        if not any(pr in n for pr in PROTECTED):
-            done()
-        if DESTRUCTIVE.search(cmd):
-            # only block when a protected path is part of the same command
-            block("command appears to modify/delete files and mentions a protected raw path.")
-        for m in REDIRECT.finditer(cmd):
-            if is_protected(m.group(1)):
-                block("shell redirect writes into a protected raw path.")
-        for seg in re.split(r"&&|\|\||[;|\n]", cmd):
-            if not COPYLIKE.search(seg):
-                continue
-            dm = DEST_ARG.search(seg)
-            if dm:
-                dest = next(g for g in dm.groups() if g is not None)
-                if is_protected(dest):
+        if any(pr in n for pr in PROTECTED):
+            if DESTRUCTIVE.search(cmd):
+                # only block when a protected path is part of the same command
+                block("command appears to modify/delete files and mentions a protected raw path.")
+            for m in REDIRECT.finditer(cmd):
+                if is_protected(m.group(1)):
+                    block("shell redirect writes into a protected raw path.")
+            for seg in re.split(r"&&|\|\||[;|\n]", cmd):
+                if not COPYLIKE.search(seg):
+                    continue
+                dm = DEST_ARG.search(seg)
+                if dm:
+                    dest = next(g for g in dm.groups() if g is not None)
+                    if is_protected(dest):
+                        block("copy destination is a protected raw path.")
+                    continue
+                toks = [next(g for g in m.groups() if g is not None) for m in SHELL_TOK.finditer(seg)]
+                pos = [t for t in toks[1:] if not t.startswith("-")]
+                if len(pos) >= 2 and is_protected(pos[-1]):
                     block("copy destination is a protected raw path.")
-                continue
-            toks = [next(g for g in m.groups() if g is not None) for m in SHELL_TOK.finditer(seg)]
-            pos = [t for t in toks[1:] if not t.startswith("-")]
-            if len(pos) >= 2 and is_protected(pos[-1]):
-                block("copy destination is a protected raw path.")
+        if DELETE_ONLY.search(cmd) and mentions_dir(n, NO_DELETE_DIRS):
+            block("command appears to delete files under a core research directory (01-Research-Projects/03-Literature/04-Theories/05-Methods/08-Research-Notes/Meta). Never delete research files without explicit researcher approval.")
     done()
 
 

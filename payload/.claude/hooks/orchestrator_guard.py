@@ -113,6 +113,11 @@ def main():
         n = proj["stages"][sid]["attempts"].get(agent, 0)
         if n >= budget:
             block("%s 在阶段 %s 已失败 %d 次，达到重试上限。停下并向研究者报告；研究者决定 revise 后才可继续。" % (agent, sid, n))
+        max_disp = cfg.get("max_stage_dispatches", 8)
+        disp_n = orc.stage_dispatch_count(vault, proj["project"], sid)
+        if disp_n >= max_disp:
+            block("阶段 %s 累计派发已达 %d/%d 次熔断上限。停下并按降级格式向研究者汇报阶段进展与阻塞原因；研究者决定 revise/return 后计数才清零。"
+                  % (sid, disp_n, max_disp))
         limit = min(stage.get("max_parallel", 1), cfg.get("max_parallel_cap", 3))
         running = orc.running_dispatches(vault, cfg)
         if len(running) >= limit:

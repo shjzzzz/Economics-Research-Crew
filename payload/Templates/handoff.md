@@ -25,6 +25,7 @@ created: YYYY-MM-DD
 ## 4. 期望输出
 - 形式（文件路径 / 表格 / 分级意见）：
 - 必须包含：来源与核实状态；不确定之处单列；未核实清单。
+- **摘要压缩与落盘（防上下文膨胀）**：大段文献摘录、回归日志或完整推导写入指定项目文件，返回主会话时**只回传产物路径 + ≤300 字结构化摘要**（核心结论、关键指标、未核实项与阻塞点），勿把原始长文本整段贴回主会话。
 
 ## 5. 完成后（Director 执行）
 （`ORC` = `orchestrator.py` 命令，路径与用法见 `/research-pipeline`：Claude Code 为 `.claude/scripts/`，agy / Codex 为 `.agents/scripts/`。）

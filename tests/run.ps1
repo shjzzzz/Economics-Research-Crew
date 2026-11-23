@@ -1052,6 +1052,46 @@ Ok ((Lint-Override 2 2) -eq 0) "wiki_lint needs at least 3 gate passes before ju
 $ingTxt = [IO.File]::ReadAllText((Join-Path $payload ".claude\skills\ingest-source\SKILL.md"), $enc)
 $litTpl = [IO.File]::ReadAllText((Join-Path $payload "Templates\literature-note.md"), $enc)
 Ok ($ingTxt -match "本次 focus" -and $ingTxt -match "换 focus 重新摄入" -and $litTpl -match "(?m)^focus:" -and $litTpl -match "Focus 视角") "ingest-source supports per-focus (re-)ingestion; literature note template has focus field and section"
+# production hardening: stage dispatch circuit-breaker, core-dir delete guard, duration_ms trace, summary compression & Pre-RAG
+$v18b = New-Vault
+Ok ((Run-Install $v18b @("-Platform","claude","-WithHooks")) -eq 0) "v18b install exit 0"
+$orc18b = Join-Path $v18b ".claude\scripts\orchestrator.py"
+$grd18b = Join-Path $v18b ".claude\hooks\orchestrator_guard.py"
+$rec18b = Join-Path $v18b ".claude\hooks\orchestrator_record.py"
+$pr18b  = Join-Path $v18b ".claude\hooks\protect_raw.py"
+$ErrorActionPreference = "Continue"
+& $py -X utf8 $orc18b --vault $v18b init 01-Research-Projects\demo-cb *> $null
+$s1Art = Join-Path $v18b "01-Research-Projects\demo-cb\PROJECT.md"
+[IO.File]::WriteAllText($s1Art, "# demo-cb`n", $enc)
+& $py -X utf8 $orc18b --vault $v18b artifact $s1Art *> $null
+& $py -X utf8 $orc18b --vault $v18b gate --decision pass --note "ok" *> $null
+# simulate 8 completed dispatches in S2 to hit max_stage_dispatches=8, then 9th is blocked; revise resets counter
+$cbLines = 1..8 | ForEach-Object { '{"ts":"2026-11-24T06:00:00+08:00","event":"dispatch_request","req_id":"r' + $_ + '","agent":"literature-agent","project":"demo-cb","stage":"S2"}' }
+[IO.File]::AppendAllLines((Join-Path $v18b "Meta\run-ledger.jsonl"), [string[]]$cbLines, $enc)
+& $py -X utf8 $orc18b --vault $v18b recover *> $null
+$g9Out = ((@{tool_name="Agent"; tool_input=@{subagent_type="literature-agent"}; cwd=$v18b} | ConvertTo-Json -Depth 5 -Compress) | & $py $grd18b 2>&1) -join "`n"
+$g9Rc = $LASTEXITCODE
+& $py -X utf8 $orc18b --vault $v18b gate --decision revise --note "reset circuit breaker" *> $null
+$g10Out = ((@{tool_name="Agent"; tool_input=@{subagent_type="literature-agent"}; cwd=$v18b} | ConvertTo-Json -Depth 5 -Compress) | & $py $grd18b 2>&1) -join "`n"
+$g10Rc = $LASTEXITCODE
+Ok ($g9Rc -eq 2 -and $g9Out -match "熔断上限" -and $g10Rc -eq 0) "orchestrator_guard triggers max_stage_dispatches circuit breaker and resets on revise"
+# protect_raw blocks shell delete on core dirs (Meta / 01-Research-Projects) while allowing normal Write and unrelated metadata delete
+$delMeta = & $py -c "import json,subprocess,sys; p=subprocess.run([sys.executable,sys.argv[1]],input=json.dumps({'tool_name':'Bash','tool_input':{'command':'rm -rf Meta/index.md'},'cwd':sys.argv[2]}).encode(),capture_output=True); print(p.returncode)" $pr18b $v18b
+$delMetaData = & $py -c "import json,subprocess,sys; p=subprocess.run([sys.executable,sys.argv[1]],input=json.dumps({'tool_name':'Bash','tool_input':{'command':'rm 06-Data/metadata/tmp.txt'},'cwd':sys.argv[2]}).encode(),capture_output=True); print(p.returncode)" $pr18b $v18b
+$wrProj = & $py -c "import json,subprocess,sys; p=subprocess.run([sys.executable,sys.argv[1]],input=json.dumps({'tool_name':'Write','tool_input':{'file_path':'01-Research-Projects/demo-cb/note.md'},'cwd':sys.argv[2]}).encode(),capture_output=True); print(p.returncode)" $pr18b $v18b
+Ok ($delMeta -eq "2" -and $delMetaData -eq "0" -and $wrProj -eq "0") "protect_raw blocks shell delete on core dirs without false-positive on metadata or Write"
+# orchestrator_record computes duration_ms on SubagentStop and orchestrator.py trace summarizes per-stage stats
+$null = (@{hook_event_name="SubagentStart"; agent_type="literature-agent"; agent_id="ag-trace-1"; cwd=$v18b} | ConvertTo-Json -Compress) | & $py $rec18b
+$null = (@{hook_event_name="SubagentStop"; agent_type="literature-agent"; agent_id="ag-trace-1"; last_assistant_message="summary text"; cwd=$v18b} | ConvertTo-Json -Compress) | & $py $rec18b
+$trJson = ((& $py -X utf8 $orc18b --vault $v18b trace --json) -join "`n") | ConvertFrom-Json
+$stopRec = ([IO.File]::ReadAllLines((Join-Path $v18b "Meta\run-ledger.jsonl"), $enc) | Where-Object { $_ -match '"agent_id": "ag-trace-1"' -and $_ -match '"event": "stop"' } | Select-Object -Last 1) | ConvertFrom-Json
+Ok ($null -ne $stopRec.duration_ms -and $stopRec.duration_ms -ge 0 -and $trJson.total_stops -ge 1 -and $trJson.total_dispatches -ge 9) "orchestrator_record writes duration_ms and orchestrator.py trace summarizes dispatches/stops"
+# handoff summary compression, ingest-source anti-injection, Pre-RAG in planning skills
+$hoTxt = [IO.File]::ReadAllText((Join-Path $payload "Templates\handoff.md"), $enc)
+$rqTxt = [IO.File]::ReadAllText((Join-Path $payload ".claude\skills\research-question\SKILL.md"), $enc)
+$tmTxt = [IO.File]::ReadAllText((Join-Path $payload ".claude\skills\theory-modeling\SKILL.md"), $enc)
+Ok ($hoTxt -match "≤300" -and $ingTxt -match "Prompt 注入" -and $rqTxt -match "link-map\.md" -and $tmTxt -match "link-map\.md") "handoff enforces summary compression, ingest-source isolates untrusted text, planning skills enforce Pre-RAG"
+Remove-Item -LiteralPath $v18b -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 if ($script:CurSec -and $script:SecSw) {

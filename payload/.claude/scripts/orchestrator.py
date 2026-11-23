@@ -17,6 +17,7 @@ Commands (run from the vault root, or pass --vault):
   recover                            mark stale "running" dispatches abandoned
   enforce on|off                     toggle hook enforcement for this project
   log [-n N]                         tail the run ledger
+  trace [--json]                     summarize per-stage dispatches, fails, duration and forced gates
 """
 import argparse
 import datetime
@@ -130,6 +131,24 @@ def agent_stage_index(cfg, agent):
         if agent in s.get("agents", []):
             return i
     return -1
+
+
+def stage_dispatch_count(vault, project, sid):
+    """Count dispatch_request events for project+stage since the last revise/return/init reset."""
+    n = 0
+    for r in ledger_read(vault):
+        if r.get("project") != project:
+            continue
+        ev = r.get("event")
+        if ev == "init":
+            n = 0
+        elif ev == "gate" and r.get("decision") == "return":
+            n = 0
+        elif ev == "gate" and r.get("decision") == "revise" and r.get("stage") == sid:
+            n = 0
+        elif ev == "dispatch_request" and r.get("stage") == sid:
+            n += 1
+    return n
 
 
 def running_dispatches(vault, cfg):
@@ -295,7 +314,12 @@ def cmd_next(a):
     s = cfg["stages"][stage_index(cfg, sid)]
     rec = st["stages"][sid]
     print("当前阶段 %s %s；负责：%s" % (sid, s["name"], s["owner"]))
+    max_disp = cfg.get("max_stage_dispatches", 8)
+    cur_disp = stage_dispatch_count(vault, st["project"], sid)
     agents = list(s.get("agents", [])) + [ag for ag in sorted(rec["attempts"]) if ag not in s.get("agents", [])]
+    if cur_disp or agents:
+        suffix = "（已触发熔断：停下并按降级格式汇报阶段进展与阻塞原因，等研究者决定 revise/return/stop）" if cur_disp >= max_disp else ""
+        print("  阶段派发步数：%d / %d%s" % (cur_disp, max_disp, suffix))
     if agents:
         budget = retry_budget(cfg)
         fails = [e for e in ledger_read(vault) if e.get("event") == "fail"
@@ -458,6 +482,60 @@ def cmd_log(a):
         print(json.dumps(r, ensure_ascii=False))
 
 
+def cmd_trace(a):
+    cfg = load_cfg()
+    vault, path, st = project_ctx(a, readonly=True)
+    proj = st["project"]
+    stages = {s["id"]: {"stage": s["id"], "name": s["name"], "dispatches": 0, "stops": 0,
+                        "fails": 0, "duration_ms": 0, "final_chars": 0, "forced_gates": 0}
+              for s in cfg["stages"]}
+    for r in ledger_read(vault):
+        if r.get("project") != proj:
+            continue
+        sid = r.get("stage")
+        if sid not in stages:
+            continue
+        rec = stages[sid]
+        ev = r.get("event")
+        if ev == "dispatch_request":
+            rec["dispatches"] += 1
+        elif ev == "stop":
+            rec["stops"] += 1
+            rec["duration_ms"] += int(r.get("duration_ms") or 0)
+            rec["final_chars"] += int(r.get("final_chars") or 0)
+        elif ev == "fail":
+            rec["fails"] += 1
+        elif ev == "gate" and r.get("forced") and r.get("unmet"):
+            rec["forced_gates"] += 1
+    rows = [v for v in stages.values() if any(v[k] for k in ("dispatches", "stops", "fails", "forced_gates"))]
+    summary = {
+        "project": proj,
+        "stage": st["stage"],
+        "status": st["status"],
+        "total_dispatches": sum(r["dispatches"] for r in rows),
+        "total_stops": sum(r["stops"] for r in rows),
+        "total_fails": sum(r["fails"] for r in rows),
+        "total_duration_ms": sum(r["duration_ms"] for r in rows),
+        "total_final_chars": sum(r["final_chars"] for r in rows),
+        "total_forced_gates": sum(r["forced_gates"] for r in rows),
+        "stages": rows,
+    }
+    if a.json:
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+        return
+    print("项目：%s  状态：%s  当前阶段：%s" % (proj, st["status"], st["stage"]))
+    if not rows:
+        print("  （暂无派发或关卡记录）")
+        return
+    for r in rows:
+        print("  %s %-6s 派发 %d  完成 %d  失败 %d  耗时 %.1fs  产出 %d字  强放 %d"
+              % (r["stage"], r["name"], r["dispatches"], r["stops"], r["fails"],
+                 r["duration_ms"] / 1000.0, r["final_chars"], r["forced_gates"]))
+    print("合计：派发 %d  完成 %d  失败 %d  耗时 %.1fs  产出 %d字  强放 %d"
+          % (summary["total_dispatches"], summary["total_stops"], summary["total_fails"],
+             summary["total_duration_ms"] / 1000.0, summary["total_final_chars"], summary["total_forced_gates"]))
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--vault")
@@ -479,6 +557,7 @@ def main(argv=None):
     p = sub.add_parser("recover"); p.set_defaults(f=cmd_recover)
     p = sub.add_parser("enforce"); p.add_argument("mode", choices=["on", "off"]); p.set_defaults(f=cmd_enforce)
     p = sub.add_parser("log"); p.add_argument("-n", type=int, default=20); p.set_defaults(f=cmd_log)
+    p = sub.add_parser("trace"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_trace)
     a = ap.parse_args(argv)
     a.f(a)
 

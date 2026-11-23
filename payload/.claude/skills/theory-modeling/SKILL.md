@@ -11,8 +11,8 @@ task_type: open-ended
 ## 1. 目标与边界
 把经济直觉与行为/制度机制转化为严谨的形式化模型，推导出**可区分竞争性机制的排他性可检验假说**，并明确理论比较静态如何映射到实证回归系数。**不写装饰性数学方程，不允许无推导的命题。**
 
-## 2. 前置读取
-- 读取 `Meta/purpose.md`、`Meta/mechanism-library.md`（公共经济学 × 行为经济学机制起点，注意参考文献均标“待核实”，不得直接引用）与 `04-Theories/` 既有笔记。
+## 2. 前置读取（规划前 Pre-RAG）
+- 读取 `Meta/purpose.md`、`Meta/constraints.md`（研究者纠正，必须遵守）、`Meta/link-map.md`（枢纽页）、`Meta/mechanism-library.md`（公共经济学 × 行为经济学机制起点，注意参考文献均标“待核实”，不得直接引用）与 `04-Theories/` 既有笔记。
 - 若属于项目 S3：读取 `01-Research-Projects/<项目>/PROJECT.md` 及 S2 文献缺口、S3 制度/税法事实。
 
 ## 3. 核心流程与苏格拉底防越位护栏

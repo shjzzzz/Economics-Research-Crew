@@ -3,6 +3,7 @@
   "max_retries": 2,
   "stale_minutes": 30,
   "max_parallel_cap": 3,
+  "max_stage_dispatches": 8,
   "stages": [
     {
       "id": "S1",

@@ -4,6 +4,7 @@
 Never blocks and never prints; fails open. The ledger stores ids, agent type, project/stage and the
 size of the final message, not its content.
 """
+import datetime
 import json
 import os
 import sys
@@ -26,6 +27,17 @@ def main():
         extra = {}
         if ev == "stop":
             extra["final_chars"] = len(data.get("last_assistant_message") or "")
+            aid = data.get("agent_id")
+            if aid:
+                for prev in reversed(orc.ledger_read(vault)):
+                    if prev.get("event") == "start" and prev.get("agent_id") == aid and prev.get("ts"):
+                        try:
+                            t0 = datetime.datetime.fromisoformat(prev["ts"])
+                            t1 = datetime.datetime.now().astimezone()
+                            extra["duration_ms"] = max(0, int((t1 - t0).total_seconds() * 1000))
+                        except ValueError:
+                            pass
+                        break
         orc.ledger_append(vault, ev, agent=data.get("agent_type"), agent_id=data.get("agent_id"),
                           project=ap[1]["project"] if ap else None, stage=ap[1]["stage"] if ap else None, **extra)
     except Exception:
