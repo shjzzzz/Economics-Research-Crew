@@ -28,7 +28,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-SCOPE = ["01-Research-Projects", "03-Literature", "04-Theories",
+SCOPE = ["01-Research-Projects", "02-Areas", "03-Literature", "04-Theories",
          "05-Methods", "08-Research-Notes", "09-Writing"]
 SKIP_PARTS = {"_sources", ".obsidian", ".claude", ".agents", ".codex", ".git", "node_modules",
               "_vendor", "_erc-staging", "_erc-backups", "Templates"}
@@ -291,6 +291,7 @@ ROOT_RULE_FILES = {"claude.md", "agents.md"}
 ROLES = {
     "00-Inbox": "待整理（含既有资料）",
     "01-Research-Projects": "研究项目（每项目一目录；PROJECT.md 为入口，论文在 paper/）",
+    "02-Areas": "长期职责与主题领域",
     "03-Literature": "文献笔记与证据矩阵",
     "04-Theories": "理论与机制笔记",
     "05-Methods": "计量与识别方法笔记",

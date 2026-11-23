@@ -48,6 +48,7 @@
   "research_dirs": [
     "00-Inbox",
     "01-Research-Projects",
+    "02-Areas",
     "03-Literature",
     "03-Literature/_sources",
     "04-Theories",

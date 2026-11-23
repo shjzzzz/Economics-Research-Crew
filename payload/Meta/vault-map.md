@@ -1,6 +1,7 @@
 ---
 inbox: 00-Inbox
 projects: 01-Research-Projects
+areas: 02-Areas
 resources: .
 literature: 03-Literature
 literature_raw: 03-Literature/_sources
@@ -27,6 +28,7 @@ moc: MOC
    - `06-Data/raw/`：原始数据（只读，禁止任何原地清洗或覆盖）。
    - 库根目录既有笔记（文献库/知识库，`resources: .`）：保持原位、不移动/重命名/批量改写，仅作本地参考资料，不自动视为已核实结论。
 2. **Tier 1 跨项目复利知识层（Compounding Wiki Graph）**
+   - `02-Areas/`：长期职责与主题领域页（如税收政策、财政分权等持续关注方向；跨项目复用，可链接文献、理论与项目）。
    - `03-Literature/`：结构化文献卡（含 `cite_key` 与三层证据定位，可桥接 `Meta/citation-map.json`）。
    - `04-Theories/`：理论模型、机制与竞争假说页。
    - `05-Methods/`：识别策略、现代估计量与诊断方法页。

@@ -21,7 +21,7 @@
 | 层级 | 目录 | 职责与隔离边界 |
 |---|---|---|
 | **Tier 0 原始只读层** | `03-Literature/_sources/`、`06-Data/raw/`、库内既有笔记（文献库/知识库） | **不可变**（hook 拦写）；保持原位、按目录检索、不自动视为已核实结论 |
-| **Tier 1 跨项目复利层** | `03-Literature/`、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`、`MOC/` | 跨项目复用的结构化文献卡（含 `cite_key` 与三层定位锚点）、机制页、方法页、综合页与枢纽页 |
+| **Tier 1 跨项目复利层** | `02-Areas/`、`03-Literature/`、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`、`MOC/` | 跨项目复用的结构化文献卡（含 `cite_key` 与三层定位锚点）、机制页、方法页、综合页与枢纽页 |
 | **Tier 2 项目执行层** | `01-Research-Projects/<项目>/`、`06-Data/{processed,metadata}/`、`07-Code/{stata,python,R}/` | 仅 `PROJECT.md` 进索引与双链图；`STATE.json`、`analysis-plan.md` 与 `paper/` 过程稿/版本快照不污染全库图谱 |
 | **Tier 3 交付与归档层** | `09-Writing/`、`10-Archive/` | `09-Writing/` 仅放**非完整研究项目的独立文稿**（政策简报/评论/讲义）；`10-Archive/` 结项归档 |
 | **Meta 控制面** | `Meta/` | **静态规范**（`purpose` / `research-standards` / `collaboration-protocol` / `style-guide` / `mechanism-library` / `ai-tells.json` / `upstream-ars.json`）、**协作账本**（`index` / `log` / `review-queue` / `decisions` / `constraints` / `source-registry`；另有 `aliases.csv` 术语别名表）、**脚本独占机读文件**（`citation-map.json` / `results-ledger.json` / `run-ledger.jsonl` / `folder-map.md` / `link-map.md`） |

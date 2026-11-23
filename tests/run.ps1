@@ -98,6 +98,7 @@ $tpl = ([IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md")).Replac
 $got = ([IO.File]::ReadAllText((Join-Path $v "CLAUDE.md")).Replace("`r`n","`n") -replace $mapRe,"MAP").TrimEnd()
 Ok ($got -eq $tpl) "root CLAUDE.md equals template (UTF-8, no mojibake)"
 Ok (Test-Path (Join-Path $v "03-Literature\_sources")) "_sources dir created"
+Ok (Test-Path (Join-Path $v "02-Areas") -PathType Container) "02-Areas dir created"
 
 # --- 2. idempotent ----------------------------------------------------------
 }

@@ -21,7 +21,7 @@
 | 层级 | 路径 | 职责与边界 |
 |---|---|---|
 | Tier 0 原始只读 | `03-Literature/_sources`、`06-Data/raw`、根目录既有笔记 | **不可变**；保持原位、按目录检索、不自动视为已核实结论 |
-| Tier 1 复利知识 | `03-Literature`、`04-Theories`、`05-Methods`、`08-Research-Notes`、`MOC` | 跨项目复用的文献卡（含 `cite_key`）、理论机制、识别方法、综合页与主题枢纽 |
+| Tier 1 复利知识 | `02-Areas`、`03-Literature`、`04-Theories`、`05-Methods`、`08-Research-Notes`、`MOC` | 跨项目复用的文献卡（含 `cite_key`）、理论机制、识别方法、综合页与主题枢纽 |
 | Tier 2 项目执行 | `01-Research-Projects/<项目>/`、`06-Data/{processed,metadata}`、`07-Code/{python,R,stata}` | 仅 `PROJECT.md` 进索引与双链图；`paper/` 过程稿与版本快照不进全库双链图 |
 | Tier 3 交付归档 | `09-Writing`、`10-Archive` | `09-Writing` 仅放**非完整项目的独立文稿**（简报/讲义/评论）；`10-Archive` 结项归档 |
 | Meta 控制面 | `Meta/` | 规范（`purpose`/`research-standards`/`style-guide`/`mechanism-library`/`ai-tells`）、账本（`index`/`log`/`review-queue`/`decisions`/`constraints`/`source-registry`/`aliases.csv`）、脚本独占机读文件（`citation-map`/`results-ledger`/`run-ledger`/`folder-map`/`link-map`） |

@@ -15,6 +15,7 @@ updated: YYYY-MM-DD
 | `03-Literature/_sources/` | Tier 0 | 论文 PDF、法规原文、OCR 稿等原始来源 | **只读不可变**（hook 保护） |
 | `06-Data/raw/` | Tier 0 | 原始数据集 | **只读不可变**（hook 保护） |
 | 根目录既有笔记 | Tier 0 | 既有文献库/知识库笔记，按目录检索 | **保持原位**，不进双链图 |
+| `02-Areas/` | Tier 1 | 长期职责与主题领域页 | 跨项目复用，进知识路由与 lint |
 | `00-Inbox/` | 暂存 | 待整理或待评估的临时材料 | 整理后分流或留存 |
 | `01-Research-Projects/<项目>/` | Tier 2 | `PROJECT.md`、`STATE.json`、`analysis-plan.md`、`paper/` | 仅 `PROJECT.md` 进下方知识路由 |
 | `06-Data/{processed,metadata}/` | Tier 2 | 清洗后的衍生数据与数据字典 | 衍生写入 |
