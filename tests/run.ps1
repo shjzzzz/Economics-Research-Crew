@@ -973,9 +973,15 @@ Ok ((($man.skills | Sort-Object) -join ",") -eq ($diskSkills -join ",")) "manife
 Ok ((($man.hooks_claude | Sort-Object) -join ",") -eq ($diskHooks -join ",")) "manifest.hooks_claude matches payload/.claude/hooks"
 $missingMeta = @($man.meta_required | Where-Object { -not (Test-Path (Join-Path $payload ($_ -replace '/', '\'))) })
 Ok ($missingMeta.Count -eq 0) "all manifest.meta_required files exist in payload"
-# context slimming: AGENTS.erc.md block stays well under 13,500 bytes (leaving >10 KB headroom below 24 KB limit)
+# context slimming: AGENTS.erc.md block stays within 14,000 bytes (leaving >=10 KB headroom below the 24 KB limit)
 $blkBytes = [int](& $py -X utf8 -c "import sys; sys.path.insert(0, sys.argv[1]); import build_platform as bp; print(len(bp.build_rules_block(sys.argv[2]).encode('utf-8')))" (Join-Path $pkg "tools") $payload)
-Ok ($blkBytes -le 13500) "slimmed AGENTS.erc.md block <= 13,500 bytes (got $blkBytes)"
+Ok ($blkBytes -le 14000) "slimmed AGENTS.erc.md block <= 14,000 bytes (got $blkBytes)"
+# new-political-economy writing requirement: compact pointer in the template, full eight items in the style guide
+$tplTxt18 = [IO.File]::ReadAllText((Join-Path $payload "CLAUDE.template.md"), $enc)
+$sgTxt18 = [IO.File]::ReadAllText((Join-Path $payload "Meta\style-guide.md"), $enc)
+Ok ($tplTxt18 -match "新政治经济学视角" -and $tplTxt18 -match 'Meta/style-guide\.md') "CLAUDE template routes paper writing to the new-political-economy requirement in style-guide"
+$npeMissing18 = @(@("行为者与激励","政策内生性","规则与执行","竞争性解释","机制落到渠道","实证与规范分开","制度背景与外部效度","来源纪律") | Where-Object { $sgTxt18 -notmatch $_ })
+Ok ($npeMissing18.Count -eq 0) "style-guide lists all eight new-political-economy requirements"
 # lightweight validate_paper catches both unknown [@key] and unknown {{res:id}}
 $v18 = New-Vault
 Ok ((Run-Install $v18 @("-Platform","claude")) -eq 0) "v18 install exit 0"

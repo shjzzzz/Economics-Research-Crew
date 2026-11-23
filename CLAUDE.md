@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pwsh -NoProfile -File tests\run.ps1`
 - `powershell -NoProfile -File tests\run.ps1`
 - 支持按节调试：`pwsh -NoProfile -File tests\run.ps1 -Section 11,17,18`（省略 `-Section` 时全量运行 `[1]`…`[18]`）。
-- 预期 365 项通过（本机安装 `claude` CLI 时为 366 项，同时放置 extras 时为 369 项）。
+- 预期 367 项通过（本机安装 `claude` CLI 时为 368 项，同时放置 extras 时为 371 项）。
 
 ## 规则
 - 改 `payload/` 里 Skill / Agent / Meta / Hook 的数量或名称，须先更新单一清单 `tools/manifest.json`，再同步 README、docs/USAGE.md、`tests/run.ps1` 和 PPT 的数字。
