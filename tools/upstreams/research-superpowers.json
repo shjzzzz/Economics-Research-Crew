@@ -1,0 +1,150 @@
+{
+  "_comment": "Upstream design-pattern tracker for leiverkus/research-superpowers (MIT). Native to theology, biblical archaeology and digital humanities; ERC borrows workflow-harness patterns only (SOFT-GATE override audit, focus-driven ingest, methodology-aware gates, skill-as-source-of-truth contract). No code or prompts are copied. Humanities-specific skills, the hermeneutic methodology as-is, OpenCode/MCP integrations and keyed services are excluded.",
+  "name": "research-superpowers",
+  "label": "research-superpowers",
+  "repo": "leiverkus/research-superpowers",
+  "url": "https://github.com/leiverkus/research-superpowers",
+  "license": "MIT",
+  "policy": "design-pattern-only; no code or prompt copying; humanities-specific content, OpenCode/MCP integrations and keyed services are excluded",
+  "last_audited_tag": "v0.49.0",
+  "last_audited_sha": "66e8e896",
+  "last_audited_date": "2026-11-23",
+  "last_audit_note": "Initial baseline from docs/concepts.md, docs/skill-contract.md and the repository tree; hooks/drift_check.py, docs/source-classes.md, docs/skill-pressure-testing.md and docs/phase-flow.md were not read line by line, so they stay candidates, not adopted patterns.",
+  "adopted_patterns": [
+    {
+      "id": "soft-gate-override-audit",
+      "adopted": "2026-11-23",
+      "note": "ERC already had researcher gates with --force and a required note; added the waived conditions (unmet) to the run ledger and a wiki_lint warning when more than 30% of the last 10 gate passes were forced. Native rewrite, report-only."
+    },
+    {
+      "id": "focus-driven-ingest",
+      "adopted": "2026-11-23",
+      "note": "ingest-source reads a source under an explicit focus (project research question by default) and appends a per-focus section on re-ingestion instead of creating a duplicate card; focus is optional so existing cards stay valid."
+    }
+  ],
+  "candidate_patterns": [
+    {
+      "id": "methodology-aware-gates",
+      "idea": "Declare the project's methodology and adapt stage requirements (for ERC: causal-empirical, structural/theory, descriptive, mixed; results that deviate from the analysis plan are marked exploratory)",
+      "erc_files": [
+        "payload/.claude/pipeline-stages.json",
+        "payload/.claude/scripts/orchestrator.py",
+        "payload/Templates/research-project.md"
+      ],
+      "status": "candidate; needs a design pass because it changes stage gates"
+    },
+    {
+      "id": "skill-agent-sot-contract",
+      "idea": "Skill is the only procedural source of truth; agent files declare implements/skills and the dispatch contract; skills declare inputs/outputs; a deterministic lint checks the contract",
+      "erc_files": [
+        "payload/.claude/agents",
+        "payload/.claude/skills"
+      ],
+      "status": "candidate; verify Claude Code skills-preloading in official docs first, and mind that installed vaults carry user edits to agent files"
+    },
+    {
+      "id": "source-class-rubric",
+      "idea": "Grade sources (journal, working paper, official statistics, aggregator or reposted copy) and flag weak ones during review",
+      "erc_files": [
+        "payload/.claude/skills/literature-review/SKILL.md",
+        "payload/.claude/scripts/wiki_lint.py"
+      ],
+      "status": "candidate; read upstream docs/source-classes.md before designing"
+    },
+    {
+      "id": "skill-pressure-testing",
+      "idea": "Scenario tests that check whether a skill resists shortcuts under pressure",
+      "erc_files": [
+        "tests/routing_eval.py"
+      ],
+      "status": "candidate; any LLM-backed run consumes quota and only runs on explicit request"
+    }
+  ],
+  "explicitly_excluded": [
+    {
+      "id": "humanities_domain",
+      "keywords": [
+        "theology",
+        "biblical",
+        "hermeneutic",
+        "exegesis",
+        "archaeology",
+        "septuagint",
+        "manuscript tradition"
+      ],
+      "reason": "Domain content for humanities research; ERC is economics"
+    },
+    {
+      "id": "opencode_and_mcp",
+      "keywords": [
+        "opencode",
+        "mcp",
+        "zotero-to-bib",
+        "cowork",
+        "marketplace"
+      ],
+      "reason": "Host integrations and keyed or external services; ERC stays keyless and uses refmgr for reference managers"
+    }
+  ],
+  "capability_map": [
+    {
+      "id": "gates_and_audit",
+      "label": "Gates, overrides and audit trail",
+      "keywords": [
+        "soft-gate",
+        "gate",
+        "override",
+        "audit",
+        "drift"
+      ],
+      "erc_files": [
+        "payload/.claude/scripts/orchestrator.py",
+        "payload/.claude/hooks/orchestrator_guard.py",
+        "payload/.claude/scripts/wiki_lint.py"
+      ]
+    },
+    {
+      "id": "ingest_and_focus",
+      "label": "Source ingest and focus-driven reading",
+      "keywords": [
+        "ingest",
+        "focus",
+        "source",
+        "library"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/ingest-source/SKILL.md",
+        "payload/Templates/literature-note.md"
+      ]
+    },
+    {
+      "id": "methodology_and_plan",
+      "label": "Methodology-aware planning and pre-registration",
+      "keywords": [
+        "methodology",
+        "pre-registration",
+        "plan",
+        "quantitative"
+      ],
+      "erc_files": [
+        "payload/.claude/pipeline-stages.json",
+        "payload/Templates/analysis-plan.md"
+      ]
+    },
+    {
+      "id": "skill_contract_and_lint",
+      "label": "Skill/agent contract and plugin lint",
+      "keywords": [
+        "skill-contract",
+        "agent",
+        "lint-plugin",
+        "frontmatter",
+        "schema"
+      ],
+      "erc_files": [
+        "payload/.claude/agents",
+        "payload/.claude/skills"
+      ]
+    }
+  ]
+}

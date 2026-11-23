@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pwsh -NoProfile -File tests\run.ps1`
 - `powershell -NoProfile -File tests\run.ps1`
 - 支持按节调试：`pwsh -NoProfile -File tests\run.ps1 -Section 11,17,18`（省略 `-Section` 时全量运行 `[1]`…`[18]`）。
-- 预期 358 项通过（本机安装 `claude` CLI 时为 359 项，同时放置 extras 时为 362 项）。
+- 预期 365 项通过（本机安装 `claude` CLI 时为 366 项，同时放置 extras 时为 369 项）。
 
 ## 规则
 - 改 `payload/` 里 Skill / Agent / Meta / Hook 的数量或名称，须先更新单一清单 `tools/manifest.json`，再同步 README、docs/USAGE.md、`tests/run.ps1` 和 PPT 的数字。
@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 跨平台等价入口：`./install.sh --vault <库> ...` 或 `python tools/erc_cli.py install|test|sync|check-ars|check-upstreams`。
 - 校验已安装的库：`.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>`。
 - 同步 AGENTS.md 的 ERC 区块：`.\Sync-AgentsMd.ps1 -VaultPath <库> [-Check]`。
-- 上游更新检查（零 LLM 额度；无更新退出码 0，有更新 2，抓取失败 1）：`python tools/check_upstreams.py check [--repo ars|paper-orchestra|obsidian-second-brain]`；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；`.github/workflows/upstream-watch.yml` 每周一自动运行并开 issue。
+- 上游更新检查（零 LLM 额度；无更新退出码 0，有更新 2，抓取失败 1）：`python tools/check_upstreams.py check [--repo ars|paper-orchestra|obsidian-second-brain|research-superpowers]`；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；`.github/workflows/upstream-watch.yml` 每周一自动运行并开 issue。
 - `tests/run.ps1` 支持按节号运行（`-Section 11,17,18`），自动拉起跨节前置依赖（如 `[14]` 自动带 `[10][12][13]`）；全量跑完 `[1]`…`[18]` 并打印每节耗时。
 - `tests/refmgr_selftest.py <库>/.claude/scripts/paper_tools.py <库>`：离线测 EndNote/Zotero 交换。
 - `tests/routing_eval.py --vault <一次性库>`：**消耗 Claude Code 额度**，只在用户明确要求时运行；拒绝在已有 `settings.local.json` 的库上运行。
@@ -39,7 +39,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **hooks 合并**：`payload/.claude/settings.hooks.json` 是片段，经 `tools/merge_hooks.py` 幂等并入用户 `settings.json`（按脚本文件名判重，从不重复，不动其他键）；hook 命令在 Windows 优先 `py -3`（无 py 启动器时回退 `python`；避开 Microsoft Store 的 `python` 占位程序，它在 PATH 靠前时会让 hook 静默失败），macOS/Linux 自适应 `python3`。
 - **路由与流水线**：`payload/.claude/routing-triggers.json`（触发词→Skill/Agent）、`pipeline-stages.json`（阶段定义，供 `orchestrator.py` 使用）；改触发词后用 `tests/routing_cases.json` 对应的用例核对。
 - **库的内容模型**：`Meta/` 为控制面（规范、日志、索引），四层知识流与只读层（Tier 0 由 hook 拦写）见 `README.md`「核心架构」；`payload/CLAUDE.template.md` 才是装进用户库的 CLAUDE.md。
-- **许可边界**：`Imbad0202/academic-research-skills`（CC-BY-NC-4.0）只借设计模式、原生重写，禁止拷入其代码或提示词；映射见 `Meta/upstream-ars.json`。`paper-orchestra`（Apache-2.0）与 `obsidian-second-brain`（MIT）同样只借设计模式，不拷代码，清单在 `tools/upstreams/`；上游自动更新只检测并出简报，采纳须经研究者审阅。
+- **许可边界**：`Imbad0202/academic-research-skills`（CC-BY-NC-4.0）只借设计模式、原生重写，禁止拷入其代码或提示词；映射见 `Meta/upstream-ars.json`。`paper-orchestra`（Apache-2.0）、`obsidian-second-brain`（MIT）与 `research-superpowers`（MIT）同样只借设计模式，不拷代码，清单在 `tools/upstreams/`；上游自动更新只检测并出简报，采纳须经研究者审阅。
 ## 多代理分工
 - 主会话（Opus 5.5，high）负责规划、决策、整合；子代理（Sonnet，medium）见 `.claude/agents/`：`code-analyst`（只读分析）、`code-implementer`（改代码并测试）、`docs-researcher`（查官方文档）。通用规则与顾问触发时机见用户级 `~/.claude/CLAUDE.md`。
 - 改安装器、hooks 或 `payload/.claude/scripts/` 这类代码时，委派前先说明数量；`code-implementer` 完成后，主会话自己复核 `git diff` 并重跑上面两条测试，不直接采信报告。

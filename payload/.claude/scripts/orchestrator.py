@@ -373,6 +373,7 @@ def cmd_gate(a):
     idx = stage_index(cfg, sid)
     rec = st["stages"][sid]
     entry = {"ts": now(), "stage": sid, "decision": a.decision, "note": a.note, "forced": bool(a.force)}
+    unmet = None
     if a.decision == "pass":
         problems = verify_stage(vault, cfg, st, sid)
         if sid == "S7" and not a.fatal_resolved:
@@ -380,6 +381,9 @@ def cmd_gate(a):
         if problems and not a.force:
             print_problems("阶段 %s 未满足退出条件，不能通过（研究者坚持时用 --force 并在 --note 写明原因）：" % sid, problems)
             sys.exit(1)
+        if a.force:  # researcher override (SOFT-GATE): keep the audit trail of exactly what was waived ([] = nothing was unmet)
+            unmet = [str(p) for p in problems]
+            entry["unmet"] = unmet
         rec["status"] = "passed"
         if idx + 1 < len(cfg["stages"]):
             nxt = cfg["stages"][idx + 1]["id"]
@@ -409,7 +413,7 @@ def cmd_gate(a):
     st["history"].append(entry)
     save(vault, path, st)
     ledger_append(vault, "gate", project=st["project"], stage=sid, decision=a.decision, note=a.note,
-                  to=entry.get("to"), forced=bool(a.force) or None)
+                  to=entry.get("to"), forced=bool(a.force) or None, unmet=unmet)
     print(msg)
 
 

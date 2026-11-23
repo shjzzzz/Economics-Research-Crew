@@ -10,6 +10,7 @@ Tracked upstreams:
   ars                    payload/Meta/upstream-ars.json            (CC-BY-NC-4.0)
   paper-orchestra        tools/upstreams/paper-orchestra.json      (Apache-2.0)
   obsidian-second-brain  tools/upstreams/obsidian-second-brain.json (MIT)
+  research-superpowers   tools/upstreams/research-superpowers.json  (MIT)
   (any extra tools/upstreams/*.json is picked up automatically)
 
 Usage:

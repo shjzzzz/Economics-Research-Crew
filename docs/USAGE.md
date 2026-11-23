@@ -39,7 +39,7 @@ claude
 | `/paper-refine <项目>` | S11：清单复核多轮精修（≤3 轮）与外部期刊 R&R 返修 | `paper/versions/`、`reviews.json`、`worklog-vN.md`、`rebuttal-matrix.md` |
 | `/paper-polish <稿件>` | S11b：内容定稿后的语言与文风精修（不用于过 AI 检测） | `paper/polished.md`、变更报告、`polish check` 不变性核对结果 |
 | `/research-pipeline <主题/项目>` | S1–S12 全流程编排、恢复进度、关卡与结项知识回流 | 阶段计划、`STATE.json`、质量闭环与 `08-Research-Notes/` 综合页回流 |
-| `/ingest-source <文件>` | 两步摄入 `03-Literature/_sources/` 来源到 wiki | 先分析停下等确认；确认后写文献卡（含 `cite_key`）、关联概念页、刷新双地图 |
+| `/ingest-source <文件>` | 两步摄入 `03-Literature/_sources/` 来源到 wiki | 按 focus（默认取项目研究问题，可指定）先分析停下等确认；确认后写文献卡；同一来源换 focus 重新摄入时只在原卡追加 focus 小节（含 `cite_key`）、关联概念页、刷新双地图 |
 | `/query-wiki <问题>` | 沿 `index` + `link-map` 枢纽页检索库内证据 | 区分事实与推断的带引用回答，可回存 `query` / `synthesis` 笔记 |
 | `/wiki-lint` | 知识库确定性体检、论文指标联动与语义审计 | 断链/孤立页/重名/矛盾/过时/知识回流报告，批准后再修 |
 | `/scientific-visualization` | 期刊投稿级 Python 多子图、误差棒与显著性标注 | 顶刊格式 PDF/SVG/TIFF 图件 |
@@ -134,7 +134,7 @@ claude
 ## 10. 多平台与跨系统支持（Windows 11 / macOS；Claude Code / Antigravity `agy` / Codex CLI）
 - **跨系统安装**：Windows 11 使用 `Install-EconomicsResearchCrew.ps1`（或 `python tools/erc_cli.py`）；macOS / Linux 使用 `./install.sh --vault ~/MyVault [--platform all] [--with-hooks]`（自动将 hooks 里的命令适配为 `python3`；Windows 11 优先用 `py -3`，无 py 启动器时回退 `python`，以避开 Microsoft Store 的 `python` 占位程序）。
 - **多 CLI 自适应**：`-Platform auto` / `--platform auto` 自动检测本机 CLI，也可用 `claude` / `agy` / `codex` / `all` 指定；`payload/.claude/` 是唯一源。
-- **上游自适应追踪**：运行 `python tools/check_upstreams.py check`（或 macOS `./install.sh check-upstreams`）按各上游的能力映射表检测 `academic-research-skills`、`paper-orchestra`、`obsidian-second-brain` 的新版本，输出原生适配简报（零 LLM 额度，只借设计模式，不拷贝代码）。GitHub Actions 每周一自动运行，有更新时开 issue。采纳始终由研究者审阅后原生重写；完成后用 `mark-audited --repo <名称> --sha <sha> [--tag <tag>]` 推进基线。
+- **上游自适应追踪**：运行 `python tools/check_upstreams.py check`（或 macOS `./install.sh check-upstreams`）按各上游的能力映射表检测 `academic-research-skills`、`paper-orchestra`、`obsidian-second-brain`、`research-superpowers` 的新版本，输出原生适配简报（零 LLM 额度，只借设计模式，不拷贝代码）。GitHub Actions 每周一自动运行，有更新时开 issue。采纳始终由研究者审阅后原生重写；完成后用 `mark-audited --repo <名称> --sha <sha> [--tag <tag>]` 推进基线。
 - agy 与 Codex 共用根目录 `AGENTS.md`（自包含 `ERC:BEGIN…ERC:END` 区块，压控在 ≤24,000 字节上限内）、`.agents/skills/`、`.agents/agents/`、`.agents/scripts/`。安装器在纯 agy/Codex 环境下也会自动调用 `.agents/scripts/wiki_lint.py map` 生成双地图。
 - 修改库内 `CLAUDE.md` 或 `.claude/ECONOMICS-RESEARCH.md` 后，运行 `.\Sync-AgentsMd.ps1 -VaultPath <库>` 同步 `AGENTS.md` 区块（`-Check` 只查不写）。
 - agy 在 `-WithHooks` 下安装 `protect_raw.py`（放行时返回 `ask`，不自动批准）与 `routing_hint.py`；Codex 无 hook，原始材料只读靠规则约束。

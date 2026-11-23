@@ -1022,6 +1022,30 @@ p = subprocess.run([sys.executable, sys.argv[1]], input=inp, capture_output=True
 print('OK' if p.returncode == 2 and 'BLOCKED by protect_raw' in p.stderr.decode('utf-8') else 'BAD')
 "@ (Join-Path $payload ".claude\hooks\protect_raw.py") $v18
 Ok ($prChk -eq "OK") "protect_raw writes readable UTF-8 stderr"
+# SOFT-GATE override audit: a forced gate pass records which conditions were waived; wiki_lint flags frequent overrides
+$orc18 = Join-Path $v18 ".claude\scripts\orchestrator.py"
+$lint18 = Join-Path $v18 ".claude\scripts\wiki_lint.py"
+$ErrorActionPreference = "Continue"
+& $py -X utf8 $orc18 --vault $v18 init 01-Research-Projects\demo-ov *> $null
+& $py -X utf8 $orc18 --vault $v18 gate --decision pass --force --note "研究者坚持放行" *> $null
+$ovLines = @([IO.File]::ReadAllLines((Join-Path $v18 "Meta\run-ledger.jsonl"), $enc) | Where-Object { $_ -match '"event": "gate"' })
+$ovRec = if ($ovLines.Count -gt 0) { $ovLines[-1] | ConvertFrom-Json } else { $null }
+Ok ($null -ne $ovRec -and $ovRec.forced -eq $true -and @($ovRec.unmet).Count -ge 1) "forced gate pass records the waived conditions (unmet) in the ledger"
+function Lint-Override([int]$Total, [int]$Forced, [string]$Extra = '') {
+    $ledgerLines = 1..$Total | ForEach-Object { $f = if ($_ -le $Forced) { ', "forced": true' + $Extra } else { '' }; '{"ts": "2026-11-23T00:00:00", "event": "gate", "decision": "pass"' + $f + '}' }
+    [IO.File]::WriteAllLines((Join-Path $v18 "Meta\run-ledger.jsonl"), [string[]]$ledgerLines, $enc)
+    $lo = (& $py -X utf8 $lint18 lint --vault $v18 --json) -join "`n"
+    return @(($lo | ConvertFrom-Json).findings | Where-Object { $_.check -eq "override" }).Count
+}
+Ok ((Lint-Override 10 4) -eq 1) "wiki_lint warns when more than 30% of the last 10 gate passes were forced"
+Ok ((Lint-Override 10 1) -eq 0) "wiki_lint is silent when overrides are rare"
+Ok ((Lint-Override 10 4 ', "unmet": ["artifact missing"]') -eq 1) "wiki_lint counts forced passes that waived a condition (unmet)"
+Ok ((Lint-Override 10 10 ', "unmet": []') -eq 0) "wiki_lint ignores --force when nothing was actually unmet"
+Ok ((Lint-Override 2 2) -eq 0) "wiki_lint needs at least 3 gate passes before judging overrides"
+# focus-driven ingest: the skill documents per-focus re-ingestion and the literature note template carries a focus field
+$ingTxt = [IO.File]::ReadAllText((Join-Path $payload ".claude\skills\ingest-source\SKILL.md"), $enc)
+$litTpl = [IO.File]::ReadAllText((Join-Path $payload "Templates\literature-note.md"), $enc)
+Ok ($ingTxt -match "本次 focus" -and $ingTxt -match "换 focus 重新摄入" -and $litTpl -match "(?m)^focus:" -and $litTpl -match "Focus 视角") "ingest-source supports per-focus (re-)ingestion; literature note template has focus field and section"
 }
 
 if ($script:CurSec -and $script:SecSw) {

@@ -33,6 +33,7 @@ SCOPE = ["01-Research-Projects", "02-Areas", "03-Literature", "04-Theories",
 SKIP_PARTS = {"_sources", ".obsidian", ".claude", ".agents", ".codex", ".git", "node_modules",
               "_vendor", "_erc-staging", "_erc-backups", "Templates"}
 NEEDS_SOURCES = {"literature", "theory", "method", "synthesis", "query"}
+OVERRIDE_WINDOW, OVERRIDE_MIN, OVERRIDE_LIMIT = 10, 3, 0.30  # SOFT-GATE audit: >30% forced gate passes in the last 10
 STALE_DAYS = 365  # freshness policy: evidence pages not updated for a year get a review warning (never auto-edited)
 PATH_EXT = (".pdf", ".md", ".txt", ".csv", ".dta", ".xlsx", ".html", ".epub", ".docx")
 NON_PAGE_EXT = (".base", ".canvas", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".pdf", ".csv", ".dta", ".xlsx", ".docx")
@@ -159,6 +160,29 @@ def _index_targets(index_text):
     return stems, rels
 
 
+def override_rate(vault):
+    """(overridden, total) over the last OVERRIDE_WINDOW gate passes in Meta/run-ledger.jsonl when the rate exceeds
+    OVERRIDE_LIMIT; None when the ledger is absent, too short, or overrides are rare. Report-only."""
+    path = Path(vault) / "Meta" / "run-ledger.jsonl"
+    if not path.exists():
+        return None
+    passes = []
+    for line in read(path).splitlines():
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(rec, dict) and rec.get("event") == "gate" and rec.get("decision") == "pass":
+            # an override only counts when something was actually waived; "unmet": [] means --force changed nothing,
+            # entries without the field (written before it existed) fall back to the forced flag
+            passes.append(bool(rec.get("forced")) and rec.get("unmet") != [])
+    recent = passes[-OVERRIDE_WINDOW:]
+    if len(recent) < OVERRIDE_MIN:
+        return None
+    forced = sum(recent)
+    return (forced, len(recent)) if forced / len(recent) > OVERRIDE_LIMIT else None
+
+
 def lint(vault, strict=False):
     findings = []
 
@@ -275,6 +299,11 @@ def lint(vault, strict=False):
             add("warning", "Meta/link-map.md", "map", "folder-map / link-map missing or out of date; run: wiki_lint.py map --vault .")
     except OSError:
         pass
+
+    ov = override_rate(vault)
+    if ov:
+        add("warning", "Meta/run-ledger.jsonl", "override",
+            "%d of the last %d gate passes were forced (--force); overrides should be the exception: revisit the exit conditions or the analysis plan" % ov)
 
     errors = sum(1 for f in findings if f["level"] == "error")
     warnings = sum(1 for f in findings if f["level"] == "warning")

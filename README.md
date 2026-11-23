@@ -51,7 +51,7 @@
 
 | Skill | 用途 | 核心机制 |
 |---|---|---|
-| `/ingest-source` | 两步摄入 `03-Literature/_sources/` 来源 | SHA256 去重 → 先分析停下等确认 → 写文献卡（含 `cite_key`）并关联概念页与双地图 |
+| `/ingest-source` | 两步摄入 `03-Literature/_sources/` 来源 | SHA256 去重 → 按 focus（默认项目研究问题）先分析并停下等确认 → 写文献卡；换 focus 重摄入只追加小节（含 `cite_key`）并关联概念页与双地图 |
 | `/query-wiki` | 基于已积累知识库与决策记录作答 | 先读 `Meta/index.md` 与 `link-map.md` 枢纽页 → 沿 `[[双链]]` 展开，严格区分事实与推断 |
 | `/wiki-lint` | 知识库确定性体检与语义审计 | `wiki_lint.py lint/map` + `paper_tools.py report` 联动 + 矛盾/过时/知识回流检查（批准后再修） |
 
@@ -120,6 +120,7 @@ chmod +x install.sh
 | `google-research/paper-orchestra` | Apache-2.0 | 借鉴受限输入写作、引文表、结果追溯与精修回退理念 | 原生重写，不含其代码（其流水线依赖外部 API 密钥与 LaTeX，与本项目零依赖原则冲突）；保留经济学研究者关卡；清单 `tools/upstreams/paper-orchestra.json` 持续追踪 |
 | `Imbad0202/academic-research-skills`（截至 `v3.24.4`） | CC-BY-NC-4.0 | 借鉴苏格拉底防越位、让步门槛、框架锁定、L3 锚点、`data_access_level`、7 类 AI 失效闸门、R&R 矩阵、审稿引述/推荐文献核验、按稿件日期评判、分配归宿核查、`--no-source-reason` 诚实空值与 `Advisory` 分层 | **仅借设计模式并在本项目原生重写，绝不含其任何代码或提示词**；通过 `tools/check_ars_updates.py` 持续追踪 |
 | `eugeniughelbur/obsidian-second-brain` | MIT | 已吸收（原生重写）：证据页新鲜度提示、带无答案用例的检索自测；摄入时更新已有页、共享日志等本项目已有对应 | 仅借设计模式；**排除**自主改写、定时自改和需密钥的研究集成，因其与只读层、先报告后修改、`constraints.md` 不得由 AI 自改的规则冲突；本机若已装其插件，项目 Skill 优先；清单 `tools/upstreams/obsidian-second-brain.json` 持续追踪 |
+| `leiverkus/research-superpowers`（截至 `v0.49.0`） | MIT | 已吸收（原生重写）：闸门被绕过时记录未满足的条件，近 10 次放行中强制放行超过 30% 时 `wiki_lint` 告警；摄入文献按 focus（默认项目研究问题）阅读，换 focus 重摄入只追加小节 | 仅借设计模式、不拷代码；**排除**人文学科内容、OpenCode/MCP 集成与需密钥的服务；方法类型分关卡、Skill/Agent 契约、来源分级仍是候选；清单 `tools/upstreams/research-superpowers.json` 持续追踪 |
 | `academic-humanizer` / `econ-writing-skill` / `humanizer-zh-academic` | MIT | 借鉴语言精修分层、经济学章节公式与中文学术套话分类（`Meta/ai-tells.json`） | 原生重写；**不采用**“降低 AIGC 检测率”目标，AI 参与须如实披露 |
 | 2 个绘图 Skill（必装）：`thu-digitizer`、`scientific-visualization` | MIT（Rimagination；K-Dense Inc.，上游 `K-Dense-AI/scientific-agent-skills`） | 原样收录，各自目录内附上游 `LICENSE` | 未经本项目安全审计；按 MIT 条款保留版权声明 |
 | `payload-extras/`（可选 `-WithExtras`） | 多为上游未附许可证 | 仅供用户本机自用的第三方 Skill（含 `publication-chart-skill` / `econ-visualization` / `copyplot` / `tikz`），**不随公开仓库分发**（已 gitignore） | 未经本项目审计、默认不安装、不配置任何 MCP |
