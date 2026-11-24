@@ -26,14 +26,14 @@ task_type: open-ended
 | S2 文献 | `/literature-review`（`literature-agent`） | 争论簇文献矩阵、精确缺口、未核实清单 | 文献争论簇、精确缺口与未核实清单是否完整？ |
 | S3 机制 | `/theory-modeling`（`theory-agent`）+ `/tax-policy-analysis`（`tax-policy-agent`） | 竞争性假说与简化式映射；权威法源与政策冲击要素 | 竞争性假说能否推出？制度/法源与冲击时点是否核实？ |
 | S4 设计 | `/causal-inference-audit`（`causal-inference-agent`） | 识别审查报告 + 冻结 `analysis-plan.md`（含威胁—检验矩阵与措辞上限） | 识别假设与威胁—检验矩阵是否可辩护？计划是否冻结？ |
-| S5 执行 | `/econometric-analysis`（`econometrics-agent`） | 模块化代码、样本瀑布、`analysis-log.md`、结果入 `Meta/results-ledger.json` | 是否按计划执行、记录偏离并完成结果入簿？ |
+| S5 执行 | `/econometric-analysis`（`econometrics-agent`） | 模块化代码、样本瀑布、`analysis-log.md`、规格入 `Meta/spec-ledger.json`、结果入 `Meta/results-ledger.json`（`specs_logged` 机检） | 是否按计划执行、记录偏离并完成规格与结果入簿？ |
 | S6 独立审查 | `/academic-review`（`academic-reviewer`，独立上下文） | 编号 `F1/M1/m1` + 5 维分 + 框架锁定 + 7 类 AI 失效模式核查 | 独立审查意见是否完整汇报？ |
 | S7 决定 | Research Director + 研究者 | 接受进入写作 / 退回某阶段 / 停止 | 致命问题是否已解决？（通过须加 `--fatal-resolved`） |
 | S8 论文大纲 | `/paper-outline` | `paper/outline.md`（主张清单、6 步引言蓝图、文献簇、图表计划） | C1：论证脊柱、主张清单与结构是否确定？ |
 | S9 引文 | `/literature-review` + `paper_tools.py cite` | `Meta/citation-map.json`（含 `locator` 与核验状态）、`paper/citations.bib` | C2：引文表核验状态与定位锚点是否可接受？ |
 | S10 成稿 | `/paper-draft`（`paper-writer-agent`） | `paper/draft.md`（`[@key]`/`{{res:id}}`/`<!-- claim -->`）与主张对照表 | C3：主张—证据对照、覆盖度与经济量级是否准确？ |
 | S11 精修与润色 | `/paper-refine`（`paper-writer-agent` + `academic-reviewer`）+ 可选 `/paper-polish` | `paper/versions/`、`reviews.json`、`worklog-vN.md`、可选 `polished.md` | C4：精修结果、剩余问题与可选润色（`polish check` 通过）是否可接受？ |
-| S12 终检 | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`；机械检查与 7 类失效全清；知识回流 | C5：投稿前清单（含 AI 披露与知识库回流）是否完成？ |
+| S12 终检 | Research Director + 研究者 + `/replication-package` | `paper/final.md`、`paper/ai-disclosure.md`、`replication/`（`package_ready` 机检）；机械检查与 7 类失效全清；知识回流 | C5：投稿前清单（含复现包、AI 披露与知识库回流）是否完成？ |
 
 ## 4. 编排执行、质量闭环与知识回流
 ### 4.1 单阶段操作流
@@ -45,8 +45,8 @@ task_type: open-ended
    - Claude Code 下 hooks 强制拦截跳阶段、超重试、超并发（默认 1，S3 为 2，硬上限 3）、手改机读文件并对 `gate` 弹确认；agy / Codex 无此层 hook，须自觉遵守。
 
 ### 4.2 质量闭环（S5 → S6 → S7）
-1. `econometrics-agent` 严格按 S4 冻结计划执行并登记 `results-ledger.json`。
-2. `academic-reviewer` 只收产物不收推理，独立输出编号问题与 7 类失效核查。
+1. `econometrics-agent` 严格按 S4 冻结计划执行，每个规格登记 `spec-ledger.json`、引用的数值登记 `results-ledger.json`。
+2. `academic-reviewer` 只收产物不收推理，先做编辑初审，再依据 `spec summary` 核查“试了多少、报告多少”，独立输出编号问题与 7 类失效核查。
 3. Director 汇总处理建议：有 **Fatal Flaw** 严禁接受，建议退回对应阶段（常见 S4）；Major 修改后复审；Minor 酌情处理。最终由研究者决定并写入 `Meta/decisions.md`、`Meta/review-queue.md` 与 `PROJECT.md`。
 
 ### 4.3 结项知识回流（S12 收尾必问）

@@ -24,7 +24,7 @@
 | **Tier 1 跨项目复利层** | `02-Areas/`、`03-Literature/`、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`、`MOC/` | 跨项目复用的结构化文献卡（含 `cite_key` 与三层定位锚点）、机制页、方法页、综合页与枢纽页 |
 | **Tier 2 项目执行层** | `01-Research-Projects/<项目>/`、`06-Data/{processed,metadata}/`、`07-Code/{stata,python,R}/` | 仅 `PROJECT.md` 进索引与双链图；`STATE.json`、`analysis-plan.md` 与 `paper/` 过程稿/版本快照不污染全库图谱 |
 | **Tier 3 交付与归档层** | `09-Writing/`、`10-Archive/` | `09-Writing/` 仅放**非完整研究项目的独立文稿**（政策简报/评论/讲义）；`10-Archive/` 结项归档 |
-| **Meta 控制面** | `Meta/` | **静态规范**（`purpose` / `research-standards` / `collaboration-protocol` / `style-guide` / `mechanism-library` / `ai-tells.json` / `upstream-ars.json`）、**协作账本**（`index` / `log` / `review-queue` / `decisions` / `constraints` / `source-registry`；另有 `aliases.csv` 术语别名表）、**脚本独占机读文件**（`citation-map.json` / `results-ledger.json` / `run-ledger.jsonl` / `folder-map.md` / `link-map.md`） |
+| **Meta 控制面** | `Meta/` | **静态规范**（`purpose` / `research-standards` / `collaboration-protocol` / `style-guide` / `mechanism-library` / `ai-tells.json` / `upstream-ars.json`）、**协作账本**（`index` / `log` / `review-queue` / `decisions` / `constraints` / `source-registry`；另有 `aliases.csv` 术语别名表）、**脚本独占机读文件**（`citation-map.json` / `results-ledger.json` / `spec-ledger.json` / `run-ledger.jsonl` / `folder-map.md` / `link-map.md`） |
 
 两张自动生成地图（`Meta/folder-map.md`、`Meta/link-map.md`）及其精简版写入 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成。
 
@@ -38,14 +38,14 @@
 | **S2 文献** | `/literature-review` | `literature-agent` | 2–4 个争论簇文献矩阵、精确缺口、未核实清单 | 缺口是否真实、文献是否遗漏？ |
 | **S3 机制与制度** | `/theory-modeling` + `/tax-policy-analysis` | `theory-agent`、`tax-policy-agent` | 竞争性假说与简化式映射；权威法源（含冲突适用）与政策冲击要素 | 假说能否推出？法源与冲击时点是否核实？ |
 | **S4 识别设计** | `/causal-inference-audit` | `causal-inference-agent` | 威胁—检验—证伪矩阵、冻结 `analysis-plan.md`、因果措辞上限 | 识别假设是否可辩护？计划是否冻结？ |
-| **S5 实证执行** | `/econometric-analysis` | `econometrics-agent`（唯一 Bash/PowerShell） | 模块化脚本、样本瀑布、`analysis-log.md`、结果入簿 `results-ledger.json` | 是否按计划执行、记录偏离并完成入簿？ |
-| **S6 独立审查** | `/academic-review` | `academic-reviewer`（只读隔离） | 已读清单 + `F1/M1/m1` + 5 维分 + 分配归宿 + 框架锁定 + 7 类 AI 失效 | 独立审查意见是否完整汇报？ |
+| **S5 实证执行** | `/econometric-analysis` | `econometrics-agent`（唯一 Bash/PowerShell） | 8 步标准产出与 M1→M6 主表、样本瀑布、`analysis-log.md`、每个规格入 `spec-ledger.json`、结果入簿 `results-ledger.json`（机检 `specs_logged`） | 是否按计划执行、记录偏离并完成入簿？ |
+| **S6 独立审查** | `/academic-review` | `academic-reviewer`（只读隔离） | 编辑初审三问 + 规格账本核查 + 已读清单 + `F1/M1/m1` + 5 维分 + 分配归宿 + 框架锁定 + 7 类 AI 失效 | 独立审查意见是否完整汇报？ |
 | **S7 决策** | `/research-pipeline` | Research Director + 研究者 | 接受进入写作 / 退回某阶段 / 停止 | 致命问题是否解决？（`--fatal-resolved`） |
 | **S8 论文大纲** | `/paper-outline` | — | `paper/outline.md`（主张清单、6 步引言蓝图、文献布局、一表一问） | **C1**：论证脊柱与主张清单是否确定？ |
 | **S9 引文核验** | `/literature-review` + `paper_tools cite` | — | `Meta/citation-map.json`（Crossref/人工确认 + `locator`）、`citations.bib` | **C2**：引文核验与定位锚点是否可接受？ |
 | **S10 受限成稿** | `/paper-draft` | `paper-writer-agent` | `paper/draft.md`（仅 `[@key]`、`{{res:id}}`、`<!-- claim -->`）与对照表 | **C3**：主张覆盖度与经济量级是否准确？ |
 | **S11 精修与润色** | `/paper-refine`（+ 可选 `/paper-polish`） | `paper-writer-agent` + `academic-reviewer` | `review verify` 预检、`versions/`、`reviews.json`、`rebuttal-matrix.md`、`polished.md` | **C4**：精修结果与可选润色（`polish check`）是否可接受？ |
-| **S12 终检回流** | `/research-pipeline` | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`、7 类失效清零、`synthesis` 回流 | **C5**：投稿前清单与知识回流是否完成？ |
+| **S12 终检回流** | `/research-pipeline` + `/replication-package` | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`、`replication/` 复现包（机检 `package_ready`）、7 类失效清零、`synthesis` 回流 | **C5**：投稿前清单、复现包与知识回流是否完成？ |
 
 **知识库维护 3 个常驻 Skills**：
 
@@ -62,10 +62,10 @@
 | 工具 / Hook | 核心命令或触发时机 | 解决的问题 |
 |---|---|---|
 | `orchestrator.py` | `init / status / next / artifact / verify / gate / fail / recover / enforce / log` | 机读项目状态机（`STATE.json`）与追加式运行账本（`Meta/run-ledger.jsonl`）；关卡仅由研究者决定 |
-| `paper_tools.py` | `cite (add/from-note/import/zotero/zotero-note/open/verify/confirm/check/bib/ris/csl)`、`results (register/import/render/check)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明 |
+| `paper_tools.py` | `cite (add/from-note/import/zotero/zotero-note/open/verify/confirm/check/bib/ris/csl)`、`results (register/import/render/check)`、`spec (log/summary)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`package check`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明（含否定词与语气强弱）、规格账本（试了多少 vs 报告多少，选择性报告信号）、对数点→百分比换算与误写检查、复现包审计（README 四节、主脚本、绝对路径、隐藏字符、Office 作者元数据） |
 | `wiki_lint.py` | `lint`、`map [--check]`、`hash` | 确定性体检、生成双地图并刷新 `ERC:MAP`；自动过滤 `paper/versions/` 与多项目 `PROJECT.md` 误报 |
-| `kb_search.py` | `index`、`search`、`stats` | 全库**本地**全文召回（SQLite FTS5 + BM25，中文字 bigram，`Meta/aliases.csv` 中英同义展开，`--expand-links` 沿双链扩展）；纯标准库、不调用任何模型、不联网；命中带 `cite_key`/标题路径/行号锚点与 `coverage`（命中查询词比例，弱匹配会提示），供 `/query-wiki` 跨文献问答召回；索引放库内 `.erc-index/`（自忽略，可随时重建）；命中只是线索，结论须回到原文核对 |
-| `tools/check_upstreams.py` | `list`、`check [--repo NAME] [--out FILE] [--json]`、`mark-audited --repo NAME --sha S [--tag T]` | **零 LLM 额度**一次检测 3 个上游（`academic-research-skills`、`paper-orchestra`、`obsidian-second-brain`），按各自清单映射受影响模块并输出原生适配简报；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；GitHub Actions 每周一自动运行，有更新时开 issue，**只检测，不自动改库** |
+| `kb_search.py` | `index`、`search`、`stats`、`eval` | 全库**本地**全文召回（SQLite FTS5 + BM25，中文字 bigram，`Meta/aliases.csv` 中英同义展开，`--expand-links` 沿双链扩展）；纯标准库、不调用任何模型、不联网；命中带 `cite_key`/标题路径/行号锚点与 `coverage`（命中查询词比例，弱匹配会提示），供 `/query-wiki` 跨文献问答召回；结果登记簿与规格账本也进入索引（`--scope meta`，每条一节），可查“这个数来自哪个规格”；`eval` 用“问题 → 应命中来源”清单算 recall@k 与 MRR；索引放库内 `.erc-index/`（自忽略，可随时重建）；命中只是线索，结论须回到原文核对 |
+| `tools/check_upstreams.py` | `list`、`check [--repo NAME] [--out FILE] [--json]`、`mark-audited --repo NAME --sha S [--tag T]` | **零 LLM 额度**一次检测 5 个上游（`academic-research-skills`、`paper-orchestra`、`obsidian-second-brain`、`research-superpowers`、`Auto-Empirical-Research-Skills`），按各自清单映射受影响模块并输出原生适配简报；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；GitHub Actions 每周一自动运行，有更新时开 issue，**只检测，不自动改库** |
 | `tools/check_ars_updates.py` | `check [--out FILE] [--json]`、`mark-audited --tag T --sha S` | ARS 单上游检测（`check_upstreams.py` 的底层，保持兼容） |
 | `tools/erc_cli.py` + `install.sh` | `install / test / sync / check-ars` | Windows 11 与 macOS / Linux 跨平台安装、校验与同步，自动适配 `python` / `python3` hook 命令 |
 | 7 个可选 Hooks（`-WithHooks`） | `session_context`、`protect_raw`、`orchestrator_guard`、`validate_frontmatter`、`validate_paper`、`routing_hint`、`orchestrator_record` | 会话启动/压缩后自动恢复项目阶段状态；拦截改写原始数据/机读账本/跳阶段/超并发；草稿未知引文/结果即时告警；确定性路由提示与派出记录（均设 `timeout: 10`） |
@@ -105,7 +105,7 @@ chmod +x install.sh
 ./install.sh test --vault ~/MyVault                            # 结构校验
 ./install.sh sync --vault ~/MyVault                            # 同步 CLAUDE.md -> AGENTS.md
 ./install.sh check-ars                                                      # 检测 ARS 上游更新
-./install.sh check-upstreams                                                # 检测全部 3 个上游更新
+./install.sh check-upstreams                                                # 检测全部 5 个上游更新
 ```
 
 > 所有安装器只新增不覆盖，改动前自动备份 `CLAUDE.md`、`.mcp.json`、`.claude/settings.json`、`AGENTS.md`、`.agents/hooks.json` 至 `_erc-backups/<时间戳>/`。详细操作手册见 [docs/USAGE.md](docs/USAGE.md)。
@@ -123,6 +123,7 @@ chmod +x install.sh
 | `eugeniughelbur/obsidian-second-brain` | MIT | 已吸收（原生重写）：证据页新鲜度提示、带无答案用例的检索自测；摄入时更新已有页、共享日志等本项目已有对应 | 仅借设计模式；**排除**自主改写、定时自改和需密钥的研究集成，因其与只读层、先报告后修改、`constraints.md` 不得由 AI 自改的规则冲突；本机若已装其插件，项目 Skill 优先；清单 `tools/upstreams/obsidian-second-brain.json` 持续追踪 |
 | `leiverkus/research-superpowers`（截至 `v0.49.0`） | MIT | 已吸收（原生重写）：闸门被绕过时记录未满足的条件，近 10 次放行中强制放行超过 30% 时 `wiki_lint` 告警；摄入文献按 focus（默认项目研究问题）阅读，换 focus 重摄入只追加小节 | 仅借设计模式、不拷代码；**排除**人文学科内容、OpenCode/MCP 集成与需密钥的服务；方法类型分关卡、Skill/Agent 契约、来源分级仍是候选；清单 `tools/upstreams/research-superpowers.json` 持续追踪 |
 | `academic-humanizer` / `econ-writing-skill` / `humanizer-zh-academic` | MIT | 借鉴语言精修分层、经济学章节公式与中文学术套话分类（`Meta/ai-tells.json`） | 原生重写；**不采用**“降低 AIGC 检测率”目标，AI 参与须如实披露 |
+| `brycewang-stanford/Auto-Empirical-Research-Skills`（截至 `e0f61306`） | CC-BY-SA-4.0（仓库默认） | 已吸收（原生重写）：规格账本与选择性报告信号、对数点换算一致性、润色三模式与否定词/语气保真、复现包审计与 `replication-package` Skill、M1→M6 渐进主表、编辑初审、评分细则评测（正反例） | 仅借设计模式，不拷文字与代码，故不受 ShareAlike 约束；**排除** StatsPAI 绑定、降 AIGC 与去水印、p-hacking 搜索引擎、70 余个社区合集与数值基准；清单 `tools/upstreams/aers.json` 持续追踪 |
 | 2 个绘图 Skill（必装）：`thu-digitizer`、`scientific-visualization` | MIT（Rimagination；K-Dense Inc.，上游 `K-Dense-AI/scientific-agent-skills`） | 原样收录，各自目录内附上游 `LICENSE` | 未经本项目安全审计；按 MIT 条款保留版权声明 |
 | `payload-extras/`（可选 `-WithExtras`） | 多为上游未附许可证 | 仅供用户本机自用的第三方 Skill（含 `publication-chart-skill` / `econ-visualization` / `copyplot` / `tikz`），**不随公开仓库分发**（已 gitignore） | 未经本项目审计、默认不安装、不配置任何 MCP |
 
@@ -139,7 +140,7 @@ chmod +x install.sh
 ### 回归验证命令
 | 验证项 | 命令 | 说明 |
 |---|---|---|
-| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、17 Skills、frontmatter、全部 `Meta/` 与 Hooks |
+| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、18 Skills、frontmatter、全部 `Meta/` 与 Hooks |
 | 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 354 项测试（本机安装 `claude` CLI 时 355 项，同时放置 extras 时 358 项；支持 `-Section` 按节调试），全在临时目录运行，不触碰真实知识库 |
 | 上游更新检查 | `python tools/check_upstreams.py check`（ARS 单独：`check_ars_updates.py check`） | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报，抓取失败返回 `1`；`.github/workflows/upstream-watch.yml` 每周一自动运行 |
 | 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | 消耗 Claude 额度；覆盖 `tests/routing_cases.json` 16 个路由用例 |

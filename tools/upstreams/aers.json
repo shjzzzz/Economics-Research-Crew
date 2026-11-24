@@ -1,0 +1,132 @@
+{
+  "_comment": "Upstream design-pattern tracker for brycewang-stanford/Auto-Empirical-Research-Skills (repository default CC-BY-SA-4.0; vendored sub-collections carry their own licences). ERC borrows design patterns only and rewrites them natively; no text, code or prompts are copied, so ERC is not bound by ShareAlike. StatsPAI-specific skills, the de-AIGC / watermark-removal goal, the p-hacking search engine, the 70+ vendored community collections and the numeric benchmark are excluded.",
+  "name": "aers",
+  "label": "Auto-Empirical-Research-Skills",
+  "repo": "brycewang-stanford/Auto-Empirical-Research-Skills",
+  "url": "https://github.com/brycewang-stanford/Auto-Empirical-Research-Skills",
+  "license": "CC-BY-SA-4.0",
+  "policy": "design-pattern-only; no text, code or prompt copying; StatsPAI binding, de-AIGC/watermark removal, p-hacking engine, vendored community collections and numeric benchmark are excluded",
+  "last_audited_tag": null,
+  "last_audited_sha": "e0f61306",
+  "last_audited_date": "2026-11-24",
+  "last_audit_note": "Baseline from README, docs/LICENSE_AUDIT.md and a sparse checkout of the seven in-house skills (00.1-00.3, 48, 50, 69, 73), eval-harness/, benchmark/ and aers_score/. The 70+ vendored community collections were not read.",
+  "adopted_patterns": [
+    {
+      "id": "spec-ledger",
+      "adopted": "2026-11-24",
+      "note": "From the p-hacking detection idea: every specification run is logged (paper_tools.py spec log/summary), results link to it with --spec, academic-review audits tried vs reported; S5 gate check specs_logged."
+    },
+    {
+      "id": "log-point-consistency",
+      "adopted": "2026-11-24",
+      "note": "From aer-consistency: {{res:id:pct}} converts log points, results check flags b written as 100*b percent."
+    },
+    {
+      "id": "polish-modes-fidelity",
+      "adopted": "2026-11-24",
+      "note": "From de-AIGC-skills: audit-only / edit / author-voiced modes, one confirmation point, negation and hedge fidelity in polish check. The de-AIGC goal itself is excluded."
+    },
+    {
+      "id": "replication-package",
+      "adopted": "2026-11-24",
+      "note": "From aer-replication: replication-package skill, README template, package check (incl. hidden characters and Office author metadata), S12 gate check package_ready."
+    },
+    {
+      "id": "progressive-main-table",
+      "adopted": "2026-11-24",
+      "note": "From Full-empirical-analysis: 8-step standard output and M1-M6 progressive main table in econometric-analysis."
+    },
+    {
+      "id": "desk-screen",
+      "adopted": "2026-11-24",
+      "note": "From aer-referee-sim: three-question desk screen before the full review in academic-review."
+    },
+    {
+      "id": "rubric-evals",
+      "adopted": "2026-11-24",
+      "note": "From eval-harness: tests/evals scenarios with pass/fail fixture pairs, offline grading, plus chain integrity and kb_search eval (recall@k)."
+    }
+  ],
+  "candidate_patterns": [
+    {
+      "id": "numeric-benchmark",
+      "idea": "Tasks with known answers recomputed from data (LaLonde, Card IV)",
+      "erc_files": [
+        "tests/evals/"
+      ],
+      "status": "excluded for now: needs a real agent run per task"
+    }
+  ],
+  "capability_map": [
+    {
+      "id": "empirical_execution",
+      "label": "Estimation workflow, tables, robustness",
+      "keywords": [
+        "empirical",
+        "robustness",
+        "table",
+        "regression",
+        "specification",
+        "estimator"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/econometric-analysis/SKILL.md",
+        "payload/.claude/scripts/paper_tools.py"
+      ]
+    },
+    {
+      "id": "referee_and_consistency",
+      "label": "Referee simulation and internal consistency",
+      "keywords": [
+        "referee",
+        "consistency",
+        "desk",
+        "rebuttal"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/academic-review/SKILL.md"
+      ]
+    },
+    {
+      "id": "replication",
+      "label": "Replication package and data editor policy",
+      "keywords": [
+        "replication",
+        "data editor",
+        "readme",
+        "package"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/replication-package/SKILL.md",
+        "payload/Templates/replication-readme.md"
+      ]
+    },
+    {
+      "id": "writing_fidelity",
+      "label": "Language pass and fidelity gate",
+      "keywords": [
+        "de-aigc",
+        "humanize",
+        "fidelity",
+        "polish",
+        "watermark"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/paper-polish/SKILL.md"
+      ]
+    },
+    {
+      "id": "evals",
+      "label": "Evaluation harness and benchmark",
+      "keywords": [
+        "eval",
+        "rubric",
+        "benchmark",
+        "scenario"
+      ],
+      "erc_files": [
+        "tests/evals/run_evals.py"
+      ]
+    }
+  ]
+}

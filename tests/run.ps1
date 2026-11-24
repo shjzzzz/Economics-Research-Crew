@@ -83,14 +83,14 @@ Ok ((Run-Install $v) -eq 0) "install exit 0"
 Ok ((Run-Check $v) -eq 0) "checker exit 0"
 $skillCount = (Get-ChildItem (Join-Path $v ".claude\skills") -Directory).Count
 $agentCount = (Get-ChildItem (Join-Path $v ".claude\agents") -Filter *.md).Count
-Ok ($skillCount -eq 17) "17 skills (got $skillCount)"
+Ok ($skillCount -eq 18) "18 skills (got $skillCount)"
 Ok ($agentCount -eq 7) "7 agents (got $agentCount)"
 Ok (Test-Path (Join-Path $v ".claude\skills\thu-digitizer\SKILL.md")) "built-in plot/table skills installed by default"
 $extraSkillDirs = if (Test-Path (Join-Path $pkg "payload-extras\skills")) { @(Get-ChildItem (Join-Path $pkg "payload-extras\skills") -Directory) } else { @() }
 if ($extraSkillDirs.Count -gt 0) {
 $vx = New-Vault
 Ok ((Run-Install $vx @("-WithExtras")) -eq 0) "install -WithExtras exit 0"
-Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (17 + $extraSkillDirs.Count)) "-WithExtras adds only the extras on top of the 17 core skills"
+Ok ((Get-ChildItem (Join-Path $vx ".claude\skills") -Directory).Count -eq (18 + $extraSkillDirs.Count)) "-WithExtras adds only the extras on top of the 18 core skills"
 Ok (-not (Test-Path (Join-Path $vx ".mcp.json"))) "-WithExtras installs no MCP config"
 }
 $mapRe = '(?s)<!-- ERC:MAP:BEGIN.*?<!-- ERC:MAP:END -->'
@@ -297,7 +297,7 @@ Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform in
 Ok ((Run-Check $v10) -eq 0) "checker passes for all platforms"
 Ok ((Test-Path (Join-Path $v10 "CLAUDE.md")) -and (Test-Path (Join-Path $v10 ".claude\skills"))) "Claude files present"
 $sk = @(Get-ChildItem (Join-Path $v10 ".agents\skills") -Directory)
-Ok ($sk.Count -eq 17) ".agents has 17 skills (got $($sk.Count))"
+Ok ($sk.Count -eq 18) ".agents has 18 skills (got $($sk.Count))"
 $badName = @($sk | Where-Object { ([IO.File]::ReadAllText((Join-Path $_.FullName "SKILL.md"), $enc)) -notmatch ("(?m)^name:\s*" + [regex]::Escape($_.Name) + "\s*$") })
 Ok ($badName.Count -eq 0) "every SKILL.md name equals its folder"
 $ag = @(Get-ChildItem (Join-Path $v10 ".agents\agents") -Filter *.md)
@@ -661,9 +661,9 @@ Remove-Item Env:\ERC_CROSSREF_MOCK -ErrorAction SilentlyContinue
 # --- 13. architecture, wiki isolation & argument spine upgrades ---------------
 }
 if (Begin-Sec "13" "architecture & spine upgrades") {
-# 13a. checker verifies all 17 skills (including paper-polish & 2 MIT plot skills)
+# 13a. checker verifies all 18 skills (including paper-polish & 2 MIT plot skills)
 $chkText = ((& $shell -NoProfile -File $checker -VaultPath $v12 2>&1) -join "`n")
-Ok ($LASTEXITCODE -eq 0 -and $chkText -match "17 skills") "checker reports and validates all 17 skills"
+Ok ($LASTEXITCODE -eq 0 -and $chkText -match "18 skills") "checker reports and validates all 18 skills"
 # 13b. pure agy & codex installs generate folder-map / link-map via .agents/scripts/wiki_lint.py
 Ok ((Test-Path (Join-Path $v10b "Meta\folder-map.md")) -and (Test-Path (Join-Path $v10b "Meta\link-map.md"))) "agy-only install generates both maps"
 Ok ((MapBlock (Join-Path $v10b "AGENTS.md")) -notmatch "尚未生成") "agy-only AGENTS.md map block refreshed"
@@ -853,6 +853,10 @@ $null = PT16 @("results","register","--id","r1","--value","0.5","--no-source-rea
 $p1Final = Join-Path $p16 "final.md"
 [IO.File]::WriteAllText($p1Final, "<!-- claim: C1 -->`n`n结果 {{res:r1}} 与征管相关 [@k16]。`n", $enc)
 $null = O16 @("--project","p1","artifact",$p1Final,"--stage","S12")
+$null = PT16 @("spec","log","--id","p1.s1","--purpose","baseline","--planned")
+$rep16 = Join-Path $v16 "01-Research-Projects\p1\replication"; New-Item -ItemType Directory -Force $rep16 | Out-Null
+[IO.File]::WriteAllText((Join-Path $rep16 "README.md"), "## Data availability`n## Computational requirements`n## Instructions`n## Tables and figures`n", $enc)
+[IO.File]::WriteAllText((Join-Path $rep16 "main.do"), "* run all`n", $enc)
 Ok ((O16 @("--project","p1","verify","--stage","S12")) -match "rc=0") "orchestrator cross-project verify S12 checks p1 outline (not active p2) and binds blank-line claim tag"
 # 16e. paper_tools edge cases: forthcoming year, short zh title, bibtex --, Chinese CSV, non-.md render, bare_stats heading, case-insensitive OVERSTATED, report latest manuscript, polish frontmatter
 $m16 = Join-Path $v16 "mock16.json"
@@ -1125,6 +1129,24 @@ Ok ($skTxt -match "kb_search\.py" -and $agSk -match "\.agents/scripts/kb_search\
 Remove-Item -LiteralPath $v19 -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+if (Begin-Sec "20" "Empirical line + chain integrity (AERS fusion)") {
+$v20 = New-Vault
+Ok ((Run-Install $v20 @("-Platform","all")) -eq 0) "v20 all-platform install exit 0"
+Ok ((Test-Path (Join-Path $v20 ".claude\skills\replication-package\SKILL.md")) -and (Test-Path (Join-Path $v20 ".agents\skills\replication-package\SKILL.md")) -and (Test-Path (Join-Path $v20 "Templates\replication-readme.md"))) "replication-package skill and README template installed for Claude and agy/Codex"
+$ErrorActionPreference = "Continue"
+foreach ($t in @(@("tests\empirical_selftest.py", (Join-Path $v20 ".claude\scripts\paper_tools.py")), @("tests\evals\run_evals.py", "--chain", "--selftest"))) {
+    $stOut = & $py -X utf8 (Join-Path $pkg $t[0]) $t[1..($t.Count - 1)] 2>&1
+    foreach ($ln in $stOut) {
+        $m = [regex]::Match([string]$ln, '^\s+(PASS|FAIL) (.+)$')
+        if ($m.Success) { Ok ($m.Groups[1].Value -eq "PASS") ((Split-Path $t[0] -Leaf) + ": " + $m.Groups[2].Value) }
+    }
+    Ok ($LASTEXITCODE -eq 0) ((Split-Path $t[0] -Leaf) + " exit 0")
+}
+$agPt = (& $py -X utf8 (Join-Path $v20 ".agents\scripts\paper_tools.py") --vault $v20 spec summary --json) -join "`n"
+Ok (($LASTEXITCODE -eq 0) -and ($agPt -match '"logged": 0')) "agy/Codex paper_tools copy runs spec summary on a fresh vault"
+Remove-Item -LiteralPath $v20 -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 if ($script:CurSec -and $script:SecSw) {
     $script:SecSw.Stop()
     Write-Host ("  [{0}] done in {1:N2}s" -f $script:CurSec, $script:SecSw.Elapsed.TotalSeconds) -ForegroundColor DarkGray
@@ -1132,7 +1154,7 @@ if ($script:CurSec -and $script:SecSw) {
 $script:TotalSw.Stop()
 
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17,$v18,$v19) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17,$v18,$v19,$v20) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host ("passed: {0}  failed: {1}  elapsed: {2:N2}s" -f $script:pass, $script:fail, $script:TotalSw.Elapsed.TotalSeconds) -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

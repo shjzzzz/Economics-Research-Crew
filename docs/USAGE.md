@@ -5,7 +5,7 @@
 ## 1. 它是什么
 一组面向税收经济学、公共经济学、计量经济学与因果推断的 AI 研究协作框架：
 - **7 个专业 Subagent**（`.claude/agents/` / `.agents/agents/`）：各有职责、工具权限与 `data_access_level` 隔离。
-- **17 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 15 个 S1–S12 研究写作与知识库核心 Skill + 2 个 MIT 许可的绘图 Skill（`scientific-visualization`、`thu-digitizer`），用 `/名称` 触发。
+- **18 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 16 个 S1–S12 研究写作与知识库核心 Skill + 2 个 MIT 许可的绘图 Skill（`scientific-visualization`、`thu-digitizer`），用 `/名称` 触发。
 - **单源项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`，同步生成多平台 `AGENTS.md`）：定义路由、四层知识架构与论证脊柱。
 - **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板，和引言八段与理论模型写作蓝图（`Templates/intro-model-blueprint.md`）。
 - **确定性脚本与 7 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）、`kb_search.py`（本地全文召回）；可选的会话/压缩状态恢复、原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
@@ -22,9 +22,9 @@ claude
 请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
 只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
 ```
-再用 `/agents` 确认 **7 个 Agent**，`/skills` 确认 **17 个 Skill**。
+再用 `/agents` 确认 **7 个 Agent**，`/skills` 确认 **18 个 Skill**。
 
-## 3. 17 个必装 Skill 速查
+## 3. 18 个必装 Skill 速查
 | 命令 | 阶段 / 何时用 | 核心产出 |
 |---|---|---|
 | `/research-question <主题>` | S1：主题收敛为可检验研究问题与 estimand（苏格拉底防越位） | ≤3 候选（仅获明确指令后）、理想 vs 准实验对比、可行性评估、`PROJECT.md` |
@@ -32,12 +32,13 @@ claude
 | `/theory-modeling <机制>` | S3：形式化建模与竞争性机制推导 | 假设表、逐步推导、比较静态、竞争机制排他推论、简化式映射 |
 | `/tax-policy-analysis <政策>` | S3：中国税法适用、冲突处理、征管归宿与政策冲击抽取 | 法源与效力表（含证据等级）、归宿渠道、政策冲击识别要素表 |
 | `/causal-inference-audit <设计>` | S4：DID/IV/RDD/聚束/SCM 识别审查（不跑回归） | 六项必答核查、现代诊断清单、威胁—检验—证伪矩阵、冻结 `analysis-plan.md` 与因果措辞上限 |
-| `/econometric-analysis <任务>` | S5：数据审计、计量实现、论文复现与代码审计 | 模块化脚本、样本瀑布、`analysis-log.md`、机读 CSV 并入簿 `results-ledger.json` |
-| `/academic-review <稿件/设计>` | S6/S11：独立对抗审稿（只审不改） | 编号清单 `F1/M1/m1` + 5 维评分 + 框架锁定检测 + 7 类 AI 失效核查 |
+| `/econometric-analysis <任务>` | S5：数据审计、计量实现、论文复现与代码审计 | 8 步标准产出与 M1→M6 主表、样本瀑布、`analysis-log.md`、每个规格入 `spec-ledger.json`、机读 CSV 并入簿 `results-ledger.json` |
+| `/academic-review <稿件/设计>` | S6/S11：独立对抗审稿（只审不改） | 编辑初审三问 + 规格账本核查 + 编号清单 `F1/M1/m1` + 5 维评分 + 框架锁定检测 + 7 类 AI 失效核查 |
 | `/paper-outline <项目>` | S8：把冻结研究产物转为可校验论文架构 | `paper/outline.md`（主张清单、6 步引言蓝图、文献布局、图表叙事计划） |
 | `/paper-draft <项目>` | S10：严格受限输入的分节成稿 | `paper/draft.md`（只用 `[@key]`、`{{res:id}}`、`<!-- claim -->`）与主张对照表 |
 | `/paper-refine <项目>` | S11：清单复核多轮精修（≤3 轮）与外部期刊 R&R 返修 | `paper/versions/`、`reviews.json`、`worklog-vN.md`、`rebuttal-matrix.md` |
-| `/paper-polish <稿件>` | S11b：内容定稿后的语言与文风精修（不用于过 AI 检测） | `paper/polished.md`、变更报告、`polish check` 不变性核对结果 |
+| `/paper-polish <稿件>` | S11b：内容定稿后的语言与文风精修（只诊断 / 编辑 / 作者重述三模式；不用于过 AI 检测） | 诊断报告或 `paper/polished.md`、变更报告、`polish check` 不变性核对结果（含否定词与语气） |
+| `/replication-package <项目>` | S12：复现包组装与审计（保密数据写获取途径，不入包） | `replication/`（README 四节、主脚本、表图对照）、`package check` 结果 |
 | `/research-pipeline <主题/项目>` | S1–S12 全流程编排、恢复进度、关卡与结项知识回流 | 阶段计划、`STATE.json`、质量闭环与 `08-Research-Notes/` 综合页回流 |
 | `/ingest-source <文件>` | 两步摄入 `03-Literature/_sources/` 来源到 wiki | 按 focus（默认取项目研究问题，可指定）先分析停下等确认；确认后写文献卡；同一来源换 focus 重新摄入时只在原卡追加 focus 小节（含 `cite_key`）、关联概念页、刷新双地图 |
 | `/query-wiki <问题>` | 沿 `index` + `link-map` 枢纽页检索库内证据 | 区分事实与推断的带引用回答，可回存 `query` / `synthesis` 笔记 |
@@ -113,7 +114,7 @@ claude
 
 ## 9. 论文写作工具链（`paper_tools.py`）
 1. **大纲（S8）**：`/paper-outline` 生成含主张清单与 6 步引言蓝图的 `paper/outline.md`。
-2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`；若为保密税务微数据/官方年鉴手工摘录而无法提供库内源文件，用 `--no-source-reason "…"` 做“诚实空值”披露（与 `--source` 互斥）。
+2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`；若为保密税务微数据/官方年鉴手工摘录而无法提供库内源文件，用 `--no-source-reason "…"` 做“诚实空值”披露（与 `--source` 互斥）。每跑一次估计（含不报告的）先 `spec log --id <proj.sN> --purpose baseline|robustness|… [--planned]`，登记结果时加 `--spec <proj.sN>`；`spec summary` 报告试了多少、报告多少、非预设被报告的规格与选择性报告信号（S5 关卡机检 `specs_logged`）。对数因变量系数写 `{{res:id:pct}}`，渲染为 $(e^b-1)\times100$；`results check` 会提示把系数直接写成百分比的误写。
 3. **引文管理（S9）**：
    - 从知识库文献卡直接桥接：`paper_tools.py cite from-note 03-Literature/<卡片>.md`；
    - 手动新增：`paper_tools.py cite add --key k --title "…" --year Y --locator "p.12, Table 2" --claim-scope "…" [--doi D | --type chinese | --type legal --doc-no … --effective …]`；
@@ -129,7 +130,8 @@ claude
      - 导出：`cite ris -o refs.ris`（EndNote / Zotero 导入，带 BOM 以保证中文）、`cite csl -o refs.json`（Zotero / Word / Pandoc）、`cite bib -o refs.bib`。
      - 法规类条目需要文号与生效日期，导入时会跳过并提示改用 `cite add --type legal`。
 4. **成稿与主张审计（S10）**：`cite check`、`results check`、`claim check`（核对 `locator` 锚点、大纲主张覆盖度与因果动词越界）、`questions`、`report`。
-5. **精修、审稿复核与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `paper_tools.py review verify --review <报告> --manuscript <稿件>`（NFC 核对审稿原文引述 + Crossref 核验审稿推荐文献存在性）→ `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记全不变）。
+5. **精修、审稿复核与润色（S11/S11b）**：`refine start` → `academic-reviewer` 基线评审 → `paper_tools.py review verify --review <报告> --manuscript <稿件>`（NFC 核对审稿原文引述 + Crossref 核验审稿推荐文献存在性）→ `refine record`（复评强制 `--carried-*`/`--new-*`）→ 内容定稿后可选 `/paper-polish`（`polish scan` 扫描 `Meta/ai-tells.json`，`polish check --before 原稿 --after 润色稿` 证明数字/引文/标记/否定词全不变，语气变强时告警）。
+6. **复现包（S12）**：`/replication-package` 组装 `01-Research-Projects/<项目>/replication/`，`paper_tools.py package check <目录> [--fix]` 审计 README 四节、主脚本、绝对路径、隐藏字符与 Office 作者元数据（`--fix` 用于双盲清理）；S12 关卡机检 `package_ready`。
 
 ## 10. 多平台与跨系统支持（Windows 11 / macOS；Claude Code / Antigravity `agy` / Codex CLI）
 - **跨系统安装**：Windows 11 使用 `Install-EconomicsResearchCrew.ps1`（或 `python tools/erc_cli.py`）；macOS / Linux 使用 `./install.sh --vault ~/MyVault [--platform all] [--with-hooks]`（自动将 hooks 里的命令适配为 `python3`；Windows 11 优先用 `py -3`，无 py 启动器时回退 `python`，以避开 Microsoft Store 的 `python` 占位程序）。
@@ -141,7 +143,7 @@ claude
 
 ## 11. 自定义、扩展与常见问题
 - **自定义**：修改 `.claude/agents/*.md`、`.claude/skills/<name>/SKILL.md`、`Meta/style-guide.md`、`Meta/ai-tells.json` 后运行 `Test-EconomicsResearchCrew.ps1` 检查结构。升级用 `-Update` 生成 `.new` 副本，绝不覆盖你的本地改动。
-- **`-WithExtras`**：可选安装 `payload-extras/` 中的本地自用第三方 Skill（只新增、不装 MCP、未经审计；其中含 4 个上游未附许可证、仅供本机自用的绘图/制表 Skill：`publication-chart-skill`、`econ-visualization`、`copyplot`、`tikz`），使用规则见 `payload-extras/README.md`；与必装 17 个 Skill 重叠时必装 Skill 优先。
+- **`-WithExtras`**：可选安装 `payload-extras/` 中的本地自用第三方 Skill（只新增、不装 MCP、未经审计；其中含 4 个上游未附许可证、仅供本机自用的绘图/制表 Skill：`publication-chart-skill`、`econ-visualization`、`copyplot`、`tikz`），使用规则见 `payload-extras/README.md`；与必装 18 个 Skill 重叠时必装 Skill 优先。
 - **`-WithUpstream`**：需同时指定 `-RepoUrl`，在隔离目录构建，不自动导入会冲突的上游 dispatcher。
 - **验证回归**：运行 `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1`（全在临时目录运行，不触碰真实知识库）。
 - **卸载**：不提供自动卸载，按 README 文件清单手动删除；安装前备份保留在 `_erc-backups/<时间戳>/`。

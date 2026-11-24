@@ -26,8 +26,15 @@ cite keys that exist in a verified citation table, and every number must trace t
                                               needs a write-enabled ZOTERO_API_KEY; never edits or deletes existing items)
   cite list
   results register --id ID --value V [--label L --se S --n N --source FILE --script FILE --no-source-reason T --note T]
-  results import CSV --prefix P --source FILE [--script FILE]   register every cell as P.<row>.<col>
-  results render DRAFT.md [-o OUT.md]         fill {{res:id}} / {{res:id:3}} placeholders from the ledger
+                   [--spec SPEC_ID]           --spec links the number to the specification it came from
+  results import CSV --prefix P --source FILE [--script FILE] [--spec SPEC_ID]   register every cell as P.<row>.<col>
+  results render DRAFT.md [-o OUT.md]         fill {{res:id}} / {{res:id:3}} / {{res:id:pct}} placeholders from the ledger
+                                              (:pct = log points as a percentage, (e^b-1)*100, 1 decimal; :pct2 = 2 decimals)
+  spec log --id ID --purpose baseline|robustness|heterogeneity|mechanism|placebo|exploration [--planned]
+           [--outcome Y --treatment D --controls C --fe F --cluster G --sample S --estimator E
+            --estimate B --se S --p P --n N --script FILE --note T]
+                                              log EVERY specification that was run, reported or not
+  spec summary [--json]                       tried vs reported, unplanned specs reported, selective-reporting signal
   results check DRAFT.md...                   unknown ids, stale sources, bare statistics not linked to results
   review verify --review R.md --manuscript M.md [--offline] [--strict] [--json]
                                               verify reviewer quotes against manuscript (NFC) & suggested references
@@ -37,7 +44,11 @@ cite keys that exist in a verified citation table, and every number must trace t
   refine status
   polish scan DRAFT.md... [--strict]          list AI-writing tells (patterns from Meta/ai-tells.json); advisory
   polish check --before A.md --after B.md     a language pass must leave citation keys, {{res}} placeholders,
-                                              claim tags, question markers and every number unchanged
+                                              claim tags, question markers, every number and every negation unchanged;
+                                              fewer hedges or more boosters ("证明", "clearly") is a warning
+  package check DIR [--fix]                   replication package: README sections (data availability, software,
+                                              instructions, tables/figures), master script, absolute paths, hidden
+                                              characters, Office author metadata, ledger scripts outside the package
   questions DRAFT.md...                       unanswered researcher questions (marker for researcher: see below)
   report                                      metrics: citations verified, numbers linked, open questions, rounds
 
@@ -52,6 +63,7 @@ import datetime
 import difflib
 import hashlib
 import json
+import math
 import os
 import re
 import sys
@@ -69,9 +81,10 @@ RES_REL = os.path.join("Meta", "results-ledger.json")
 OK_STATUS = {"verified", "confirmed"}
 MAX_ROUNDS = 3
 KEY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_:\-]*$")
+ID_RE = re.compile(r"^[A-Za-z0-9_.\-:]+$")  # results-ledger and spec-ledger ids
 CITE_GROUP = re.compile(r"\[([^\[\]]*@[^\[\]]*)\]")
 CITE_KEY = re.compile(r"@([A-Za-z][A-Za-z0-9_:\-]*)")
-PLACEHOLDER = re.compile(r"\{\{res:([A-Za-z0-9_.\-:]+?)(?::(\d+))?\}\}")
+PLACEHOLDER = re.compile(r"\{\{res:([A-Za-z0-9_.\-:]+?)(?::(\d+|pct\d?))?\}\}")
 Q_RE = re.compile(r"⟦问：(.*?)⟧", re.S)
 A_RE = re.compile(r"⟦答：(.*?)⟧", re.S)
 STAT_RE = re.compile(r"(?<![\w.])(\d+\.\d+|\d+(?:\.\d+)?\s*%)")
@@ -751,13 +764,18 @@ def to_float(s):
         return None
 
 
-def register(vault, m, rid, value, label="", se=None, n=None, source=None, script=None, note="", no_source_reason=None):
-    if not re.match(r"^[A-Za-z0-9_.\-:]+$", rid):
+def register(vault, m, rid, value, label="", se=None, n=None, source=None, script=None, note="", no_source_reason=None,
+             spec=None):
+    if not ID_RE.match(rid):
         sys.exit("id 只能含字母数字、下划线、点、冒号、连字符：%s" % rid)
+    if spec and spec not in smap(vault)[1]["entries"]:
+        sys.exit("规格 %s 不在 Meta/spec-ledger.json；请先运行 spec log 登记。" % spec)
     if source and no_source_reason:
         sys.exit("不能同时提供 --source 和 --no-source-reason；有源文件只填 --source，确无源文件才填诚实理由。")
     e = {"id": rid, "value": str(value), "numeric": to_float(value), "label": label, "se": se, "n": n,
          "note": note, "registered": now()}
+    if spec:
+        e["spec"] = spec
     if no_source_reason:
         e["source"] = None
         e["no_source_reason"] = no_source_reason.strip()
@@ -777,7 +795,7 @@ def cmd_results_register(a):
     path, m = rmap(vault)
     if a.id in m["entries"] and not a.replace:
         sys.exit("id 已存在：%s（要覆盖请加 --replace）" % a.id)
-    register(vault, m, a.id, a.value, a.label, a.se, a.n, a.source, a.script, a.note or "", a.no_source_reason)
+    register(vault, m, a.id, a.value, a.label, a.se, a.n, a.source, a.script, a.note or "", a.no_source_reason, a.spec)
     save(path, m)
     orc.ledger_append(vault, "result_register", id=a.id)
     e = m["entries"][a.id]
@@ -823,7 +841,7 @@ def cmd_results_import(a):
                 suffix += 1
             seen_ids.add(rid)
             register(vault, m, rid, r[j].strip(), "%s / %s / %s" % (a.prefix, r[0].strip(), header[j].strip()),
-                     source=a.source or os.path.relpath(csv_path, vault), script=a.script)
+                     source=a.source or os.path.relpath(csv_path, vault), script=a.script, spec=a.spec)
             count += 1
     save(path, m)
     orc.ledger_append(vault, "result_import", prefix=a.prefix, count=count)
@@ -838,9 +856,12 @@ def render_text(text, m):
         if e is None:
             missing.append(mo.group(1))
             return mo.group(0)
-        val = e["value"]
-        if mo.group(2) is not None and e.get("numeric") is not None:
-            val = ("%." + mo.group(2) + "f") % e["numeric"]
+        val, fmt, num = e["value"], mo.group(2), e.get("numeric")
+        if fmt and num is not None:
+            if fmt.startswith("pct"):
+                val = ("%." + (fmt[3:] or "1") + "f") % ((math.exp(num) - 1) * 100)
+            else:
+                val = ("%." + fmt + "f") % num
         return val
     return PLACEHOLDER.sub(sub, text), missing
 
@@ -873,6 +894,27 @@ def bare_stats(text):
     return hits
 
 
+PCT_RE = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?)\s*[%％]")
+
+
+def log_point_slips(text, m):
+    """A log-point coefficient b written as 100*b percent; the percentage change is (e^b-1)*100."""
+    out = []
+    for para in re.split(r"\r?\n\s*\r?\n", strip_code(text)):
+        pcts = PCT_RE.findall(PLACEHOLDER.sub(" ", para))
+        for mo in PLACEHOLDER.finditer(para):
+            e = m["entries"].get(mo.group(1))
+            b = e.get("numeric") if e else None
+            if b is None or abs(b) > 3 or (mo.group(2) or "").startswith("pct") or abs(math.exp(b) - 1 - b) * 100 < 0.5:
+                continue
+            for s in pcts:
+                tol = 0.5 * 10 ** -(len(s.split(".")[1]) if "." in s else 0)
+                if abs(float(s) - 100 * abs(b)) <= tol:
+                    out.append("{{res:%s}} = %s 被写成 %s%%；若因变量取对数，百分比变化应为 (e^b−1)×100 = %.1f%%，可用 {{res:%s:pct}}" % (
+                        mo.group(1), e["value"], s, (math.exp(b) - 1) * 100, mo.group(1)))
+    return out
+
+
 def results_problems(vault, files):
     _, m = rmap(vault)
     errors, warns, sha_cache = [], [], {}
@@ -888,6 +930,7 @@ def results_problems(vault, files):
                     sha_cache[sp] = sha256(sp) if os.path.isfile(sp) else None
                 if sha_cache[sp] != e.get("source_sha256"):
                     warns.append("%s：%s 的来源文件 %s 已变化或缺失，登记值可能过期" % (rel, mo.group(1), e["source"]))
+        warns += [rel + "：" + w for w in log_point_slips(text, m)]
         bs = bare_stats(text)
         if bs:
             warns.append("%s：有 %d 处统计量没有链接到结果登记簿（例如第 %d 行的 %s）" % (rel, len(bs), bs[0][0], bs[0][1]))
@@ -900,6 +943,84 @@ def cmd_results_check(a):
     print_findings(errors, warns)
     print("错误 %d，警告 %d。" % (len(errors), len(warns)))
     sys.exit(1 if errors else 0)
+
+
+# ------------------------------------------------------------------ specification ledger (every estimate run, reported or not)
+SPEC_REL = os.path.join("Meta", "spec-ledger.json")
+SPEC_PURPOSES = ("baseline", "robustness", "heterogeneity", "mechanism", "placebo", "exploration")
+SPEC_FIELDS = ("outcome", "treatment", "controls", "fe", "cluster", "sample", "estimator", "estimate", "se", "p", "n", "note")
+
+
+def smap(vault):
+    path = os.path.join(vault, SPEC_REL)
+    return path, load(path, {"version": 1, "entries": {}})
+
+
+def cmd_spec_log(a):
+    vault = vault_of(a)
+    path, m = smap(vault)
+    if not ID_RE.match(a.id):
+        sys.exit("id 只能含字母数字、下划线、点、冒号、连字符：%s" % a.id)
+    if a.id in m["entries"] and not a.replace:
+        sys.exit("规格 id 已存在：%s（要覆盖请加 --replace）" % a.id)
+    e = {"id": a.id, "purpose": a.purpose, "planned": a.planned, "registered": now()}
+    for f in SPEC_FIELDS:
+        v = getattr(a, f)
+        if v not in (None, ""):
+            e[f] = to_float(v) if f in ("estimate", "se", "p") and to_float(v) is not None else v
+    if a.script:
+        ap = in_vault(vault, a.script)
+        if not orc.inside(ap, vault) or not os.path.isfile(ap):
+            sys.exit("script 必须是库内已存在的文件：%s" % a.script)
+        e["script"], e["script_sha256"] = relpath(ap, vault), sha256(ap)
+    m["entries"][a.id] = e
+    save(path, m)
+    orc.ledger_append(vault, "spec_log", id=a.id, purpose=a.purpose)
+    print("已登记规格 %s（%s%s）" % (a.id, a.purpose, "，预设" if a.planned else "，非预设"))
+
+
+def spec_summary(vault):
+    _, sm = smap(vault)
+    _, rm = rmap(vault)
+    specs = sm["entries"]
+    linked = {}
+    for rid, e in rm["entries"].items():
+        if e.get("spec"):
+            linked.setdefault(e["spec"], []).append(rid)
+    reported = [s for k, s in specs.items() if k in linked]
+
+    def sig_share(rows):
+        ps = [s["p"] for s in rows if isinstance(s.get("p"), (int, float))]
+        return (round(sum(p < 0.05 for p in ps) / len(ps), 3), len(ps)) if ps else (None, 0)
+    share_all, n_all = sig_share(specs.values())
+    share_rep, n_rep = sig_share(reported)
+    rep = {"logged": len(specs), "reported": len(reported), "unreported": len(specs) - len(reported),
+           "by_purpose": dict(Counter(s.get("purpose") for s in specs.values())),
+           "reported_unplanned": sorted(s["id"] for s in reported if not s.get("planned")),
+           "sig_share_all": share_all, "sig_share_reported": share_rep,
+           "dangling_results": sorted(r for k, rs in linked.items() if k not in specs for r in rs)}
+    warns = []
+    if rep["reported_unplanned"]:
+        warns.append("报告了 %d 个非预设规格（%s）：正文须标为探索性分析" % (
+            len(rep["reported_unplanned"]), ", ".join(rep["reported_unplanned"][:5])))
+    if n_all >= 5 and n_rep and share_rep - share_all >= 0.3:
+        warns.append("选择性报告信号：已报告规格中 p<0.05 占 %.0f%%，全部规格中只占 %.0f%%（共 %d 个）" % (
+            100 * share_rep, 100 * share_all, n_all))
+    if rep["dangling_results"]:
+        warns.append("结果登记簿中 %d 个数值指向不存在的规格：%s" % (
+            len(rep["dangling_results"]), ", ".join(rep["dangling_results"][:5])))
+    return rep, warns
+
+
+def cmd_spec_summary(a):
+    rep, warns = spec_summary(vault_of(a))
+    if a.json:
+        print(json.dumps(dict(rep, warnings=warns), ensure_ascii=False, indent=2))
+        return
+    print("规格账本：共试 %d 个，报告 %d 个，未报告 %d 个；按用途 %s" % (
+        rep["logged"], rep["reported"], rep["unreported"], rep["by_purpose"] or "{}"))
+    print("p<0.05 占比：全部 %s，已报告 %s" % (rep["sig_share_all"], rep["sig_share_reported"]))
+    print_findings([], warns)
 
 
 # ------------------------------------------------------------------ questions
@@ -1148,6 +1269,10 @@ CITE_EVIDENCE_RE = re.compile(r"\[[^\[\]]*@")
 SENT_SPLIT = re.compile(r"(?<=[。！？!?])|(?<=[.])\s+(?=[A-Z\[])")
 NUM_RE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)*%?")
 HEADING_RE = re.compile(r"^#{1,6}\s+.*$", re.M)
+NEG_RE = re.compile(r"并非|没有|(?<!并)不(?![同仅断但过少足久妨管论])|未(?!来)|无(?!论)|(?<!并)非(?!常)"
+                    r"|\b(?:not|no|never|neither|nor|without|cannot)\b|n't", re.I)
+HEDGE_RE = re.compile(r"可能|或许|也许|在一定程度上|表明|提示|似乎|\b(?:may|might|could|suggests?|likely|appears?)\b", re.I)
+BOOST_RE = re.compile(r"证明|证实|毫无疑问|必然|显然|充分说明|\b(?:proves?|proved|demonstrates?|clearly|definitely|undoubtedly|certainly)\b", re.I)
 
 
 def load_tells(vault):
@@ -1250,6 +1375,9 @@ def polish_signature(text):
         "主张标注": sorted(CLAIM_TAG_RE.findall(body)),
         "研究者问答标记": sorted(["问:" + q for q in Q_RE.findall(body)] + ["答:" + a for a in A_RE.findall(body)]),
         "正文数字": sorted(NUM_RE.findall(prose)),
+        "否定词": sorted(x.lower() for x in NEG_RE.findall(prose)),
+        "限定语": len(HEDGE_RE.findall(prose)),
+        "强断言": len(BOOST_RE.findall(prose)),
         "标题": HEADING_RE.findall(body),
     }
 
@@ -1262,16 +1390,124 @@ def multiset_diff(before, after):
 def cmd_polish_check(a):
     sb, sa = polish_signature(read_text(a.before)), polish_signature(read_text(a.after))
     errors, warns = [], []
-    for k in ("引文键", "结果占位符", "主张标注", "研究者问答标记", "正文数字"):
+    for k in ("引文键", "结果占位符", "主张标注", "研究者问答标记", "正文数字", "否定词"):
         gone, new = multiset_diff(sb[k], sa[k])
         if gone or new:
             errors.append("%s 有变化：减少 %s；新增 %s" % (k, gone[:8] or "无", new[:8] or "无"))
+    if sa["限定语"] < sb["限定语"] or sa["强断言"] > sb["强断言"]:
+        warns.append("语气变强：限定语 %d → %d，强断言 %d → %d；逐处确认措辞仍在证据允许范围内" % (
+            sb["限定语"], sa["限定语"], sb["强断言"], sa["强断言"]))
     if sb["标题"] != sa["标题"]:
         warns.append("标题有变化（润色不应改章节标题）：%d → %d 个" % (len(sb["标题"]), len(sa["标题"])))
     print_findings(errors, warns)
     if not errors:
-        print("通过：引文键、{{res}} 占位符、主张标注、问答标记与正文数字与润色前完全一致。")
+        print("通过：引文键、{{res}} 占位符、主张标注、问答标记、正文数字与否定词与润色前完全一致。")
     sys.exit(1 if errors else 0)
+
+
+# ------------------------------------------------------------------ replication package (S12)
+README_SECTIONS = (("数据可得性 / Data availability", r"数据可得|数据(来源与)?获取|data availability|data access"),
+                   ("计算环境 / Computational requirements", r"计算环境|软件(与|及)?版本|computational requirements|software"),
+                   ("运行说明 / Instructions", r"运行(说明|步骤|顺序)|instructions|how to run|replication steps"),
+                   ("表图对照 / Tables and figures", r"表图(对照|清单)|list of (tables|exhibits)|tables? and figures?"))
+MASTER_RE = re.compile(r"^(?:(?:00_)?(?:main|master|run_?all)\.(?:do|r|py|sh|m|jl)|makefile)$", re.I)
+CODE_EXT = {".do", ".ado", ".r", ".py", ".m", ".jl", ".sas", ".sps", ".sh", ".ipynb"}
+TEXT_EXT = CODE_EXT | {".md", ".txt", ".tex", ".bib", ".csv", ".qmd", ".rmd"}
+OFFICE_EXT = {".docx", ".pptx", ".xlsx"}
+ABS_PATH_RE = re.compile(r"(?<![\w])(?:[A-Za-z]:[\\/]|/Users/|/home/)")
+INVISIBLE_RE = re.compile("[\u200b\u200c\u200d\u2060\u00ad\u202a-\u202e\u2066-\u2069]|(?<=.)\ufeff", re.S)
+OFFICE_PEOPLE = re.compile(r"(<(dc:creator|cp:lastModifiedBy)>)(.+?)(</\2>)", re.S)
+
+
+def _office_people(path, fix):
+    import zipfile
+    with zipfile.ZipFile(path) as z:
+        items = [(i, z.read(i.filename)) for i in z.infolist()]
+    core = next((d.decode("utf-8", "replace") for i, d in items if i.filename == "docProps/core.xml"), "")
+    names = sorted({m.group(3).strip() for m in OFFICE_PEOPLE.finditer(core) if m.group(3).strip()})
+    if names and fix:
+        tmp = path + ".erc-tmp"
+        with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
+            for i, d in items:
+                if i.filename == "docProps/core.xml":
+                    d = OFFICE_PEOPLE.sub(lambda m: m.group(1) + m.group(4), d.decode("utf-8")).encode("utf-8")
+                z.writestr(i, d)
+        os.replace(tmp, path)
+    return names
+
+
+def package_problems(vault, pkg, fix=False):
+    """Blocking errors (README, sections, master script) and warnings (paths, hidden characters, author metadata,
+    ledger scripts outside the package). --fix strips hidden characters and Office author fields."""
+    if not os.path.isdir(pkg):
+        return ["找不到复现包目录 %s" % relpath(pkg, vault)], [], []
+    errors, warns, fixed, files = [], [], [], []
+    for root, dirs, fs in os.walk(pkg):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        files += [os.path.join(root, f) for f in fs]
+    rel = lambda p: os.path.relpath(p, pkg).replace("\\", "/")
+    readme = next((p for p in files if os.path.dirname(p) == pkg and re.match(r"readme\.(md|txt)$", os.path.basename(p), re.I)), None)
+    if not readme:
+        errors.append("缺少顶层 README.md / README.txt")
+    else:
+        rt = read_text(readme)
+        errors += ["README 缺少“%s”一节" % name for name, pat in README_SECTIONS if not re.search(pat, rt, re.I)]
+    if not any(MASTER_RE.match(os.path.basename(p)) for p in files):
+        errors.append("缺少一键运行的主脚本（main.do / master.do / run_all.R / main.py / Makefile 等）")
+    abs_hits, hidden, people = [], [], []
+    for p in files:
+        ext = os.path.splitext(p)[1].lower()
+        if ext in TEXT_EXT:
+            try:
+                with open(p, encoding="utf-8", newline="") as fh:
+                    t = fh.read()
+            except (UnicodeDecodeError, OSError):
+                continue
+            if ext in CODE_EXT and ABS_PATH_RE.search(t):
+                abs_hits.append(rel(p))
+            n = len(INVISIBLE_RE.findall(t))
+            if n:
+                hidden.append("%s(%d)" % (rel(p), n))
+                if fix:
+                    with open(p, "w", encoding="utf-8", newline="") as fh:
+                        fh.write(INVISIBLE_RE.sub("", t))
+                    fixed.append("已删除 %s 中 %d 个隐藏字符" % (rel(p), n))
+        elif ext in OFFICE_EXT:
+            try:
+                names = _office_people(p, fix)
+            except Exception as e:  # corrupt or encrypted file: report, never crash the audit
+                warns.append("无法读取 %s 的元数据：%s" % (rel(p), e))
+                continue
+            if names:
+                people.append("%s(%s)" % (rel(p), "、".join(names)))
+                if fix:
+                    fixed.append("已清空 %s 的作者元数据" % rel(p))
+    if abs_hits:
+        warns.append("代码含绝对路径（换机即失效）：%s" % ", ".join(abs_hits[:8]))
+    if hidden and not fix:
+        warns.append("含零宽/双向控制等隐藏字符：%s（--fix 可删除）" % ", ".join(hidden[:8]))
+    if people and not fix:
+        warns.append("Office 文件带作者元数据，双盲投稿前应清空：%s（--fix 可清空）" % ", ".join(people[:8]))
+    pkg_rel = relpath(pkg, vault)
+    outside = sorted({e[k] for m in (rmap(vault)[1], smap(vault)[1]) for e in m["entries"].values()
+                      for k in ("script",) if e.get(k) and not (e[k] + "/").startswith(pkg_rel + "/")})
+    if outside and not pkg_rel.startswith(".."):
+        warns.append("登记簿中 %d 个脚本不在复现包内（结果无法由复现包重现）：%s" % (len(outside), ", ".join(outside[:5])))
+    return errors, warns, fixed
+
+
+def cmd_package_check(a):
+    vault = vault_of(a)
+    errors, warns, fixed = package_problems(vault, os.path.abspath(a.dir), a.fix)
+    for x in fixed:
+        print("修复  " + x)
+    print_findings(errors, warns)
+    print("复现包：错误 %d，警告 %d。" % (len(errors), len(warns)))
+    sys.exit(1 if errors else 0)
+
+
+STAGE_CHECKS = ("citations_resolved", "citations_verified", "results_linked", "claims_aligned", "no_open_questions",
+                "specs_logged", "package_ready")
 
 
 def stage_check(vault, name, files, project=None):
@@ -1285,6 +1521,14 @@ def stage_check(vault, name, files, project=None):
         return results_problems(vault, md)[0]
     if name == "claims_aligned":
         return claim_problems(vault, md, strict=True, project=project)[0]
+    if name == "specs_logged":
+        rep, _ = spec_summary(vault)
+        out = [] if rep["logged"] else ["规格账本为空：每次估计都须用 spec log 登记（含不报告的）"]
+        return out + ["结果 %s 指向不存在的规格" % r for r in rep["dangling_results"]]
+    if name == "package_ready":
+        if not project:
+            return ["package_ready 需要项目目录"]
+        return package_problems(vault, os.path.join(vault, orc.PROJECTS_DIR, project, "replication"))[0]
     if name == "no_open_questions":
         return ["%s：有未回答的 ⟦问：%s⟧" % (relpath(f, vault), q[:30])
                 for f in md for q in open_questions(read_text(f))]
@@ -1334,6 +1578,7 @@ def cmd_report(a):
            "cited_verified_rate": round(ok / len(cited), 3) if cited else None,
            "results_registered": len(rm["entries"]), "numbers_linked": linked, "bare_statistics": bare,
            "numbers_linked_rate": round(linked / (linked + bare), 3) if (linked + bare) else None,
+           "specs": {k: v for k, v in spec_summary(vault)[0].items() if k in ("logged", "reported", "unreported")},
            "claims_defined": len(defined_ids), "claims_covered": len(defined_ids & seen_claims),
            "open_questions": openq,
            "refine": {"current": rv["current"], "rounds": [{k: r[k] for k in ("version", "decision", "fatal", "major", "minor")}
@@ -1345,6 +1590,8 @@ def cmd_report(a):
         rep["citations_total"], st_counts, rep["cited_keys"], ok, unknown, rep["cited_verified_rate"]))
     print("结果登记 %d 个；正文已链接 %d 处、未链接统计量 %d 处（链接率 %s）" % (
         rep["results_registered"], linked, bare, rep["numbers_linked_rate"]))
+    if rep["specs"]["logged"]:
+        print("规格账本：试 %(logged)d 个，报告 %(reported)d 个（详见 spec summary）" % rep["specs"])
     if defined_ids:
         print("主张覆盖：%d/%d（已定义 %d 条，正文已锚定 %d 条）" % (
             rep["claims_covered"], rep["claims_defined"], rep["claims_defined"], rep["claims_covered"]))
@@ -1502,11 +1749,19 @@ def main(argv=None):
     p.add_argument("--id", required=True); p.add_argument("--value", required=True); p.add_argument("--label", default="")
     p.add_argument("--se"); p.add_argument("--n"); p.add_argument("--source"); p.add_argument("--script")
     p.add_argument("--no-source-reason"); p.add_argument("--note"); p.add_argument("--replace", action="store_true")
-    p.set_defaults(f=cmd_results_register)
+    p.add_argument("--spec"); p.set_defaults(f=cmd_results_register)
     p = r.add_parser("import"); p.add_argument("csv"); p.add_argument("--prefix", required=True)
-    p.add_argument("--source"); p.add_argument("--script"); p.set_defaults(f=cmd_results_import)
+    p.add_argument("--source"); p.add_argument("--script"); p.add_argument("--spec"); p.set_defaults(f=cmd_results_import)
     p = r.add_parser("render"); p.add_argument("draft"); p.add_argument("-o", "--output"); p.set_defaults(f=cmd_results_render)
     p = r.add_parser("check"); p.add_argument("files", nargs="+"); p.set_defaults(f=cmd_results_check)
+
+    sp = top.add_parser("spec").add_subparsers(dest="cmd", required=True)
+    p = sp.add_parser("log"); p.add_argument("--id", required=True)
+    p.add_argument("--purpose", required=True, choices=SPEC_PURPOSES); p.add_argument("--planned", action="store_true")
+    for fld in SPEC_FIELDS:
+        p.add_argument("--" + fld)
+    p.add_argument("--script"); p.add_argument("--replace", action="store_true"); p.set_defaults(f=cmd_spec_log)
+    p = sp.add_parser("summary"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_spec_summary)
 
     f = top.add_parser("refine").add_subparsers(dest="cmd", required=True)
     p = f.add_parser("start"); p.add_argument("draft"); p.set_defaults(f=cmd_refine_start)
@@ -1533,6 +1788,10 @@ def main(argv=None):
     p.add_argument("--review", required=True); p.add_argument("--manuscript", required=True)
     p.add_argument("--offline", action="store_true"); p.add_argument("--strict", action="store_true")
     p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_review_verify)
+
+    pk = top.add_parser("package").add_subparsers(dest="cmd", required=True)
+    p = pk.add_parser("check"); p.add_argument("dir"); p.add_argument("--fix", action="store_true")
+    p.set_defaults(f=cmd_package_check)
 
     p = top.add_parser("questions"); p.add_argument("files", nargs="+"); p.set_defaults(f=cmd_questions)
     p = top.add_parser("report"); p.add_argument("--json", action="store_true"); p.set_defaults(f=cmd_report)

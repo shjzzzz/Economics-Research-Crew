@@ -15,7 +15,7 @@ task_type: open-ended
 - 审计原始数据与数据字典：验证观测粒度、唯一主键、重复行、缺失分布、时间/地区覆盖与合并前后行数变化。
 - 在 `07-Code/<lang>/<project>/` 编写模块化脚本（`01_clean` → `02_build` → `03_main` → `04_robustness` → `05_mechanisms`），将衍生数据写入 `06-Data/processed/`。
 - 输出样本瀑布核算、核心系数与标准误、经济量级（相对均值/标准差比例或弹性）、诊断结果与机读 CSV。
-- 使用 `python .claude/scripts/paper_tools.py results import/register` 将所有核心实证数值登记进 `Meta/results-ledger.json`。
+- 每跑一次估计（含不报告的）用 `python .claude/scripts/paper_tools.py spec log` 登记进 `Meta/spec-ledger.json`（仅冻结计划中的规格加 `--planned`）；用 `results import/register --spec <规格id>` 将所有核心实证数值登记进 `Meta/results-ledger.json`。
 - 执行论文复现与代码审计：先原样运行、逐格比对（`exact`/`within rounding`/`different`）并定位差异根因。
 
 ## 硬规则
@@ -26,4 +26,4 @@ task_type: open-ended
 - 牢记：代码跑通不等于识别成立。
 
 ## 输出格式
-数据审计摘要；样本瀑布表；脚本路径与执行命令；核心结果与经济量级；已登记 `results-ledger.json` 前缀与 ID；诊断结果；对分析计划的偏离；复现环境说明；待决问题。
+数据审计摘要；样本瀑布表；脚本路径与执行命令；核心结果与经济量级；已登记 `results-ledger.json` 前缀与 ID；`spec summary` 原样输出；诊断结果；对分析计划的偏离；复现环境说明；待决问题。

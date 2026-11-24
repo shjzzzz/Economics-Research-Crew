@@ -15,6 +15,15 @@ task_type: open-ended
 - **合规红线**：**不是**用于规避 AI 检测或免除披露的工具。遇到“降低 AI 率 / 降 AIGC / 过检测”请求一律拒绝，并说明本流程只改善表达，AI 参与（含润色）仍须如实写入 `paper/ai-disclosure.md` 并按期刊要求披露。
 - 缺证据的句子不改写成结论，改写 `⟦问：…⟧` 交研究者；措辞强度严禁超过 `paper/outline.md` 该主张的允许上限。
 
+## 1.5 三种模式（开场第一行写明本次模式）
+| 模式 | 做什么 | 何时用 |
+|---|---|---|
+| **只诊断**（默认） | 只跑第 3 节第 1–2 步：命中清单 + 证据锚定状态 + 拟改法，不改一个字 | 研究者只说“检查/诊断”；合著或已发表文本；研究者想亲自改 |
+| **编辑** | 完整流程，按第 3 节四层准则改写到 `paper/polished.md` | 低风险段落的表达打磨 |
+| **作者重述** | 完整流程，但摘要、引言、结论等高信号段落只给改写要点（问题、证据锚、建议句式），由作者本人执笔 | 期刊要求作者本人措辞，或研究者希望关键段落保持本人文风 |
+
+**唯一的改前确认点**：编辑与作者重述模式下，先交出诊断报告并停下，研究者明确同意后才改写（研究者事先已同意的除外）。
+
 ## 2. 前置读取
 - 采用版稿件（`paper/draft.md` 或精修采用版）、`Meta/style-guide.md`、`paper/outline.md` 主张表、`Meta/ai-tells.json`。
 - 若研究者提供代表作段落或目标期刊模板（`Templates/venues/*.md`），先提取其句长节奏、连接词习惯、限定语位置、段首写法与固定术语；未提供则使用克制精准的中性学术文风，并用 `⟦问：…⟧` 询问偏好。
@@ -28,7 +37,7 @@ task_type: open-ended
    - **保留项（绝不误删）**：与证据挂钩的审慎限定语、识别局限的诚实陈述、学术惯用“本文/我们”与必要被动语态、作者固定术语译法（`Meta/style-guide.md`）、变量与公式。
    - **章节层诊断（仅提问题，结构修改交研究者）**：摘要先发现后识别不评他人；引言前 2–3 页见主结果与量级、文献成对话而非罗列；结论简短不引新结果且延伸建议具体；标题点出问题与方法/结果且不夸大。
    - 中文破折号、英文 em-dash 按作者与期刊习惯保留或调整，既不刻意添加也不机械删光。
-4. **机械不变性核对（必过闸门）**：运行 `python .claude/scripts/paper_tools.py polish check --before <原稿> --after paper/polished.md`。引文键、`{{res}}` 占位符、主张标注、问答标记与正文数字必须与润色前**完全一致**，否则退回修改；章节标题变化告警。
+4. **机械不变性核对（必过闸门）**：运行 `python .claude/scripts/paper_tools.py polish check --before <原稿> --after paper/polished.md`。引文键、`{{res}}` 占位符、主张标注、问答标记、正文数字与**否定词**必须与润色前**完全一致**（否定词增减往往改变句意），否则退回修改；“限定语减少或强断言增加”告警，须逐处确认措辞仍在证据允许范围内；章节标题变化告警。
 
 ## 4. 产出与知识回流
 - 输出：`paper/polished.md` + 变更报告（按类计数、动词降级清单、未决 `⟦问⟧`、`polish check` 原样输出）。
@@ -36,4 +45,4 @@ task_type: open-ended
 
 ## 5. 硬性禁止与致谢
 - 禁止为过检测或显得“像人写”而改写；禁止改动/补全任何数字、引文键、占位符与标记；禁止把无证据句子润色成确定结论；禁止删除真实识别局限。
-- 致谢（思路借鉴、原生重写、未复制文本）：`AIScientists-Dev/academic-humanizer`（MIT）、`hanlulong/econ-writing-skill`（MIT）、`redbaronyyyyy-eng/humanizer-zh-academic`（MIT，仅借中文套话分类，**不采用**降 AIGC 目标）；`franklee16/academic-research-skills` 仅作参考未采用内容。
+- 致谢（思路借鉴、原生重写、未复制文本）：`AIScientists-Dev/academic-humanizer`（MIT）、`hanlulong/econ-writing-skill`（MIT）、`redbaronyyyyy-eng/humanizer-zh-academic`（MIT，仅借中文套话分类，**不采用**降 AIGC 目标）；`franklee16/academic-research-skills` 仅作参考未采用内容；`brycewang-stanford/Auto-Empirical-Research-Skills`（CC BY-SA 4.0）仅借“三种模式、改前唯一确认点、否定词与语气保真”的设计，**不采用**其降 AIGC 与去水印目标，未复制文本。

@@ -2,7 +2,7 @@
 
 > Single source of truth for routing, economics argument spine, orchestration, writing constraints and evidence standards. Workspace layout and hard red lines live in `CLAUDE.md` / `Meta/vault-map.md`.
 
-## 1. Intent Routing Table (17 Skills, 7 Agents)
+## 1. Intent Routing Table (18 Skills, 7 Agents)
 | Stage / Role | User intent (examples) | Primary Skill | Authorized Agent |
 |---|---|---|---|
 | S1 Question | 选题、收敛研究问题、定题、确定 estimand | `/research-question` | — |
@@ -16,6 +16,7 @@
 | S10 Draft | 起草论文、写初稿、分节写作、把大纲写成正文 | `/paper-draft` | `paper-writer-agent` |
 | S11 Refine / R&R | 精修、按审稿意见修改、返修、R&R、多轮修改 | `/paper-refine` | `paper-writer-agent` / `academic-reviewer` |
 | S11b Polish | 润色、去 AI 味、语言精修、文风校准、消除套话 | `/paper-polish` | — |
+| S12 Replication | 复现包、可得性声明、双盲清理 | `/replication-package` | — |
 | Plots (MIT) | 出版级期刊图（Python）、从图表图片/PDF 提取数据 | `/scientific-visualization`, `/thu-digitizer` | — |
 | Wiki Ingest | 摄入文献/来源到知识库、处理 `00-Inbox`/`_sources` | `/ingest-source` | — |
 | Wiki Query | 知识库里有什么、根据知识库回答、查已有文献 | `/query-wiki` | — |
@@ -24,7 +25,7 @@
 
 ## 2. Economics Argument Spine (S1–S12)
 Maintain one traceable causal spine across every empirical/institutional paper (details in `Meta/research-standards.md`):
-`S1 Question & Estimand` → `S2 Literature Debate & Gap` → `S3 Competing Mechanisms & Institutional Shock` → `S4 Threat-to-Test Matrix, Frozen Plan & Wording Ceiling` → `S5 Reproducible Estimation, Sample Waterfall & Results Ledger` → `S6 Independent Review + 7-Mode AI Failure Gate` → `S7 Researcher Go/Return/Stop` → `S8 Claim-Driven Outline` → `S9 Verified Citations with Locators` → `S10 Constrained Section Drafting` → `S11 Checklist Refinement / R&R (+ optional /paper-polish)` → `S12 Final Gate, AI Disclosure & Wiki Write-back`.
+`S1 Question & Estimand` → `S2 Literature Debate & Gap` → `S3 Competing Mechanisms & Institutional Shock` → `S4 Threat-to-Test Matrix, Frozen Plan & Wording Ceiling` → `S5 Reproducible Estimation, Sample Waterfall & Spec/Results Ledgers` → `S6 Independent Review + 7-Mode AI Failure Gate` → `S7 Researcher Go/Return/Stop` → `S8 Claim-Driven Outline` → `S9 Verified Citations with Locators` → `S10 Constrained Section Drafting` → `S11 Checklist Refinement / R&R (+ optional /paper-polish)` → `S12 Final Gate, Replication, AI Disclosure & Wiki Write-back`.
 
 Quality loop: research agents propose → `econometrics-agent` executes → `academic-reviewer` challenges independently (artifacts only) → Director + researcher decide. A Fatal Flaw blocks acceptance; never skip S4 just because code runs.
 
@@ -35,10 +36,10 @@ Quality loop: research agents propose → `econometrics-agent` executes → `aca
 
 ## 4. Paper Writing & Human–AI Collaboration (S8–S12)
 Follow `Meta/collaboration-protocol.md` (A0–A3, C1–C5) and `Meta/style-guide.md` (detailed CLI workflows live in `/literature-review`, `/paper-draft`, `/paper-refine`, `/paper-polish`):
-- **Constrained inputs**: citations use `[@key]` from `Meta/citation-map.json` (with `locator` & `claim_scope` against L3 mismatch); numbers use `{{res:id}}` from `Meta/results-ledger.json` (honest null `--no-source-reason` when confidential/manual); result blocks carry `<!-- claim: Cn -->`; gaps become `⟦问：…⟧` (answered `⟦答：…⟧`), never invention.
-- **Reference managers**: `paper_tools.py cite import|zotero|ris|csl|bib|open|zotero-note` exchanges with EndNote/Zotero (`ZOTERO_API_KEY` env-only, GET-only pulls; `zotero-note --yes` requires researcher approval). Imported items always start `unverified` (`manual` for Chinese) and are never auto-confirmed.
+- **Constrained inputs**: citations use `[@key]` from `Meta/citation-map.json` (with `locator` & `claim_scope` against L3 mismatch); numbers use `{{res:id}}` from `Meta/results-ledger.json` (honest null `--no-source-reason`; `:pct` for log points), linked by `--spec` to `Meta/spec-ledger.json` (every spec run); result blocks carry `<!-- claim: Cn -->`; gaps become `⟦问：…⟧` (answered `⟦答：…⟧`), never invention.
+- **Reference managers**: `paper_tools.py cite import|zotero|ris|csl|bib|open|zotero-note` ↔ EndNote/Zotero (`ZOTERO_API_KEY` env-only, GET-only pulls, `zotero-note --yes` needs researcher approval); imports start `unverified` (`manual` for Chinese), never auto-confirmed.
 - **Refinement (`/paper-refine`)**: `academic-reviewer` lists read files, judges literature by manuscript date, checks distributional incidence, Frame-Lock and Concession Threshold (≥4/5, no consecutive concessions), and emits numbered `F1/M1/m1` + 5 scores (`ident, contrib, inst, consist, write`). Run `paper_tools.py review verify` before revising. Re-reviews use checklist counts (`--carried-*`/`--new-*`); accept only if Fatal ≤ prev, (Major < prev or tied Major with total ≥ prev), identical dimensions and no drop ≥2. New analysis goes to `Meta/review-queue.md`.
-- **Language polish (`/paper-polish`)**: runs only after content settles; `polish check` proves citations, `{{res}}`, claim tags, Q/A markers and numbers are invariant. Never used to evade AI detection; disclose AI use in `paper/ai-disclosure.md`.
+- **Language polish (`/paper-polish`)**: runs only after content settles; `polish check` proves citations, `{{res}}`, claims, Q/A markers, numbers and negations unchanged. Never used to evade AI detection; disclose AI use in `paper/ai-disclosure.md`.
 - **Isolation & failure gate**: every Skill/Agent declares `data_access_level` (`raw`/`redacted`/`verified_only`); `Meta/mechanism-library.md` offers testable hypotheses, not evidence; S6/S12 must clear the 7-mode AI failure gate.
 
 ## 5. Econometric, Tax-Law & Evidence Discipline
@@ -50,4 +51,4 @@ Follow `Meta/collaboration-protocol.md` (A0–A3, C1–C5) and `Meta/style-guide
 - Routing & updates: `Meta/index.md` routes both filesystem (`Meta/folder-map.md`) and knowledge graph (`Meta/link-map.md` hubs → `[[wikilinks]]`); every ingest/lint/organization pass updates `Meta/index.md` and appends to `Meta/log.md`. Search legacy notes by folder, not the link graph.
 - Tier 1 frontmatter: `type` (`literature|theory|method|synthesis|query|research-project|dataset|analysis-plan|analysis-log`), `sources`, `updated`, `verification` (`verified|unverified`); literature notes add `cite_key`.
 - Two-step ingest (`/ingest-source`): analyze & await approval → write/cross-link pages → update `Meta/index.md`, `Meta/source-registry.md` (SHA256) and `Meta/log.md`; log contradictions in `Meta/review-queue.md`.
-- Deterministic checks & maps: run `python .claude/scripts/wiki_lint.py lint --vault .` and `python .claude/scripts/wiki_lint.py map --vault .`. After S12, compound key findings into `08-Research-Notes/` (`type: synthesis`) with researcher consent.
+- Deterministic checks & maps: run `python .claude/scripts/wiki_lint.py lint --vault .`, then `map`. After S12, compound key findings into `08-Research-Notes/` (`type: synthesis`) with researcher consent.

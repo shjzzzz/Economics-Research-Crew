@@ -66,6 +66,17 @@
       ]
     },
     {
+      "skill": "replication-package",
+      "patterns": [
+        "复现包",
+        "复现材料",
+        "replication package",
+        "(数据|代码)(与|和)?(代码|数据)?可得性",
+        "投稿前打包",
+        "双盲清理"
+      ]
+    },
+    {
       "skill": "paper-draft",
       "patterns": [
         "起草(论文|全文|初稿)",

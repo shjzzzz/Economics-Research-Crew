@@ -6,6 +6,9 @@
                         [--mode any|all] [--expand-links HOPS]
     python kb_search.py index  [--vault PATH] [--rebuild]
     python kb_search.py stats  [--vault PATH]
+    python kb_search.py eval QRELS.json [--vault PATH] [--k 5,10] [--scope S]
+                        retrieval benchmark: QRELS = [{"q": question, "expect": [cite_key or file stem]}];
+                        reports recall@k (share of questions whose expected source is in the top k), MRR, misses
 
 Every command first brings <vault>/.erc-index/kb.sqlite up to date (stat-based, incremental), so
 results never lag behind the notes. Notes are split into heading-level chunks; Chinese is indexed as
@@ -15,7 +18,8 @@ wikilink neighbours of the hits. Hits carry cite_key, path, heading path, line r
 never conclusions: re-read the page before citing. No hit -> {"hits": [], "note": "no match"}, exit 0.
 Use keywords rather than sentences; Chinese terms need >= 2 characters; "quotes" keep a phrase together.
 Scopes: wiki (default: Tier 1 folders, MOC, PROJECT.md), legacy (other notes), raw (03-Literature/_sources),
-project (project drafts/logs), meta (Meta/). Never indexed: dot-folders, _erc*, _vendor, node_modules,
+project (project drafts/logs), meta (Meta/, including the results and specification ledgers, indexed as one
+section per entry so "which specification produced this number" is searchable). Never indexed: dot-folders, _erc*, _vendor, node_modules,
 Templates, 06-Data, 07-Code, paper/versions, root CLAUDE.md/AGENTS.md.
 """
 import argparse
@@ -38,6 +42,7 @@ SKIP_DIRS, TOP_SKIP = {"node_modules", "_vendor", "Templates"}, {"06-Data", "07-
 TIERS = ("wiki", "legacy", "raw", "project", "meta")
 BODY_FIELDS = ("claim_scope", "locator")  # long frontmatter text: searchable as a "(frontmatter)" chunk
 KEYWORD_FIELDS = ("keywords", "tags", "method", "focus", "research_field", "authors", "journal", "type")
+LEDGERS = {"Meta/results-ledger.json": "结果登记簿 results ledger", "Meta/spec-ledger.json": "规格账本 specification ledger"}
 CHUNK = 1500
 CJK = "[㐀-䶿一-鿿豈-﫿]+"
 CJK_RE = re.compile(CJK)
@@ -108,9 +113,22 @@ def notes(vault):
         for f in sorted(files):
             p = Path(root) / f
             rel = p.relative_to(vault)
-            if (f.lower().endswith(".md") and not wl._is_paper_version(rel)
-                    and not (top and f.lower() in ("claude.md", "agents.md"))):
+            if ((f.lower().endswith(".md") and not wl._is_paper_version(rel)
+                    and not (top and f.lower() in ("claude.md", "agents.md"))) or rel.as_posix() in LEDGERS):
                 yield rel, p
+
+
+def ledger_md(rel, raw):
+    """A JSON ledger as markdown: one "## id" section per entry, "field: value" lines (hashes dropped)."""
+    try:
+        entries = json.loads(raw).get("entries", {})
+    except (ValueError, AttributeError):
+        entries = {}
+    out = ["---", "title: " + LEDGERS[rel.as_posix()], "type: ledger", "---"]
+    for k, e in entries.items():
+        out += ["", "## " + k] + ["%s: %s" % (f, v) for f, v in (e.items() if isinstance(e, dict) else [])
+                                  if v not in (None, "", []) and not f.endswith("sha256")]
+    return "\n".join(out)
 
 
 def make_chunks(lines, start):
@@ -197,7 +215,8 @@ def update_index(vault, rebuild=False):
             continue
         if key in known:
             drop_doc(con, known[key][0])
-        add_doc(con, rel, tier, stamp, p.read_text(encoding="utf-8-sig", errors="replace"))
+        text = p.read_text(encoding="utf-8-sig", errors="replace")
+        add_doc(con, rel, tier, stamp, ledger_md(rel, text) if rel.suffix == ".json" else text)
         changed += 1
     gone = [v[0] for k, v in known.items() if k not in keep]
     for doc_id in gone:
@@ -312,7 +331,7 @@ def expand_links(con, hits, hops, where, args, groups):
     return out
 
 
-def search(vault, a):
+def find(vault, a):
     con = update_index(vault)[0]
     q = " ".join(a.query).strip()
     match, groups, added = build_match(q, load_aliases(vault), a.mode)
@@ -333,7 +352,27 @@ def search(vault, a):
         res["note"] = "no match"
     elif max(h["coverage"] for h in hits if h["via"] == "match") < 0.5:
         res["note"] = "weak match: no hit contains half of the query terms; treat as no evidence unless the page itself confirms"
-    print(json.dumps(res, ensure_ascii=False, indent=2))
+    return res
+
+
+def evaluate(vault, a):
+    """Retrieval benchmark: QRELS is a JSON list of {"q": question, "expect": [cite_key or file stem, ...], "scope"?}.
+    A question counts as found at k when any expected source is among the first k documents returned."""
+    cases = json.loads(Path(a.qrels).read_text(encoding="utf-8-sig"))
+    ks = sorted({int(k) for k in a.k.split(",")})
+    rows = []
+    for c in cases:
+        ns = argparse.Namespace(query=[c["q"]], scope=c.get("scope", a.scope), type=None, year=None, cite_key=None,
+                                limit=ks[-1], mode="any", expand_links=0)
+        want = {str(x).lower() for x in c["expect"]}
+        docs = list(dict.fromkeys((h["cite_key"].lower(), Path(h["path"]).stem.lower()) for h in find(vault, ns)["hits"]))
+        rank = next((i for i, d in enumerate(docs, 1) if want & set(d)), None)
+        rows.append({"q": c["q"], "rank": rank})
+    n = max(len(rows), 1)
+    return {"cases": len(rows),
+            "recall": {"@%d" % k: round(sum(1 for r in rows if r["rank"] and r["rank"] <= k) / n, 3) for k in ks},
+            "mrr": round(sum(1.0 / r["rank"] for r in rows if r["rank"]) / n, 3),
+            "misses": [r["q"] for r in rows if not r["rank"]]}
 
 
 def stats(vault):
@@ -349,7 +388,7 @@ def stats(vault):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("index", "search", "stats"):
+    for name in ("index", "search", "stats", "eval"):
         p = sub.add_parser(name)
         p.add_argument("--vault", default=".")
         if name == "index":
@@ -363,11 +402,15 @@ def main(argv=None):
             p.add_argument("--limit", type=int, default=10)
             p.add_argument("--mode", choices=("any", "all"), default="any")
             p.add_argument("--expand-links", dest="expand_links", type=int, default=0)
+        if name == "eval":
+            p.add_argument("qrels")
+            p.add_argument("--k", default="5,10")
+            p.add_argument("--scope", default="wiki")
     a = ap.parse_args(argv)
     vault = Path(a.vault).resolve()
     try:
-        if a.cmd == "search":
-            search(vault, a)
+        if a.cmd in ("search", "eval"):
+            print(json.dumps((find if a.cmd == "search" else evaluate)(vault, a), ensure_ascii=False, indent=2))
         elif a.cmd == "stats":
             stats(vault)
         else:

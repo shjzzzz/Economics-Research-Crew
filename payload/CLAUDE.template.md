@@ -11,7 +11,7 @@
 - 详细研究规则见下方 import 的 `.claude/ECONOMICS-RESEARCH.md`。
 
 ## 二、路由规则（最先遵守）
-收到研究类请求按序执行（出现 `[routing]` 按提示调用对应 Skill；17 Skill / 7 Agent 见核心协议 §1）：
+收到研究类请求按序执行（出现 `[routing]` 按提示调用对应 Skill；18 Skill / 7 Agent 见核心协议 §1）：
 1. **概念性/事实性短问题**：直接回答。
 2. **单项研究任务**：**先用 Skill 工具调用该 Skill**再按其步骤执行；不得口头提 Skill 却自由发挥。
 3. **完整研究 / 多阶段 / “继续上次的研究”**：调用 `/research-pipeline`。

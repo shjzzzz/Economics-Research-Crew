@@ -25,6 +25,7 @@
     "paper-draft",
     "paper-refine",
     "paper-polish",
+    "replication-package",
     "scientific-visualization",
     "thu-digitizer"
   ],
@@ -88,7 +89,8 @@
     "Templates/handoff.md",
     "Templates/paper-outline.md",
     "Templates/intro-model-blueprint.md",
-    "Templates/rebuttal-matrix.md"
+    "Templates/rebuttal-matrix.md",
+    "Templates/replication-readme.md"
   ],
   "agents_required": [
     ".agents/scripts/wiki_lint.py",

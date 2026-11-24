@@ -11,6 +11,7 @@ Tracked upstreams:
   paper-orchestra        tools/upstreams/paper-orchestra.json      (Apache-2.0)
   obsidian-second-brain  tools/upstreams/obsidian-second-brain.json (MIT)
   research-superpowers   tools/upstreams/research-superpowers.json  (MIT)
+  aers                   tools/upstreams/aers.json                  (CC-BY-SA-4.0)
   (any extra tools/upstreams/*.json is picked up automatically)
 
 Usage:

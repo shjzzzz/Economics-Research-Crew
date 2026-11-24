@@ -1,6 +1,6 @@
 ---
 name: econometric-analysis
-description: "Plan, implement, inspect, reproduce or audit an econometric analysis in Stata, R or Python with sample waterfall accounting and results-ledger registration. Use for 数据清洗、变量构造、描述统计、回归分析、基准回归、异质性分析、复现论文、代码审计、稳健性检验执行."
+description: "Plan, implement, inspect, reproduce or audit an econometric analysis in Stata, R or Python with an 8-step standard output set (M1-M6 progressive main table), sample waterfall accounting, a specification ledger of every estimate run and results-ledger registration. Use for 数据清洗、变量构造、描述统计、回归分析、基准回归、异质性分析、复现论文、代码审计、稳健性检验执行."
 argument-hint: "[dataset, model or task]"
 data_access_level: raw
 task_type: open-ended
@@ -9,7 +9,7 @@ task_type: open-ended
 # Econometric Analysis（S5：可复现计量执行、代码审计与结果入簿）
 
 ## 1. 目标与边界
-严格按冻结的分析计划在 Stata / R / Python 中执行数据审计、变量构造、模型估计、复现或代码审计，输出**完整样本瀑布、经济量级与可机读结果表**，并登记入 `Meta/results-ledger.json`。**绝不修改 `06-Data/raw`，绝不事后挑设定追显著性。**
+严格按冻结的分析计划在 Stata / R / Python 中执行数据审计、变量构造、模型估计、复现或代码审计，输出**完整样本瀑布、经济量级与可机读结果表**，并登记入 `Meta/results-ledger.json`；**跑过的每一个规格（含不报告的）都登记入 `Meta/spec-ledger.json`**，让“试了多少、报告了多少”可审计。**绝不修改 `06-Data/raw`，绝不事后挑设定追显著性。**
 
 ## 2. 前置读取
 - 读取 `06-Data/metadata/` 数据卡（若缺失先按 `Templates/dataset-card.md` 建卡）、项目 `analysis-plan.md`（若尚未冻结且涉及因果估计，提醒先走 `/causal-inference-audit`）。
@@ -20,11 +20,13 @@ task_type: open-ended
 ### 3.1 标准实证执行模式
 1. **原始数据审计（只读）**：核查观测粒度、唯一主键、重复行、缺失模式、时间/地区覆盖与异常值；严禁原地修改 `06-Data/raw/`。
 2. **确认执行清单**：动代码前向研究者复核 $Y$、$D$、控制变量、固定效应、样本筛选、权重、聚类层级与输入/输出路径。
-3. **模块化可复现实现**：在 `07-Code/<lang>/<project>/` 按步骤组织脚本（`01_clean` → `02_build` → `03_main` → `04_robustness` → `05_mechanisms`），衍生数据仅写入 `06-Data/processed/`；运行任何写文件脚本前先说明输入与输出。
+3. **模块化可复现实现**：在 `07-Code/<lang>/<project>/` 按步骤组织脚本（`01_clean` → `02_build` → `03_main` → `04_robustness` → `05_mechanisms`），衍生数据仅写入 `06-Data/processed/`；运行任何写文件脚本前先说明输入与输出。标准产出覆盖 8 步：① 数据清洗 ② 变量构造 ③ 描述统计（Table 1，含处理组/对照组均值差）④ 诊断检验 ⑤ 基准估计 ⑥ 稳健性 ⑦ 进一步分析（机制、异质性）⑧ 出版级表图；计划未要求的步骤写明“不适用”而非静默跳过。
+   - **主表 M1→M6 渐进式**：从无控制变量起，逐列加入控制变量、固定效应与聚类调整（列数按计划，不必凑满 6 列）；表注写明每列设定、聚类层级与样本 $N$，读者能看出系数随设定如何变化。
 4. **样本瀑布与诊断核验**：逐行记录原始 $N$ → 去重 → 合并（检查合并前后行数变化防多对多爆炸）→ 筛选 → 最终估计样本 $N$；核查系数符号与量纲、标准误、收敛状态与软件/包版本。
-5. **计算经济量级并导出机读表**：同步计算因变量处理前均值/标准差、系数占均值/标准差比例或隐含弹性；将关键回归表导出为清晰 CSV。
-6. **强制结果入簿（打通 S5 → S8/S10）**：使用 `python .claude/scripts/paper_tools.py results import <CSV> --prefix <项目.表号> --source <CSV路径> --script <脚本路径>` 或 `results register` 登记全部待引用核心数值、标准误与样本量。
-7. **记录分析日志与偏离**：按 `Templates/analysis-log.md` 写入日志；任何偏离冻结分析计划的调整（含缩尾、控制变量或样本变更）必须逐条记录原因，明确区分“预设主分析”与“探索性补充”。
+5. **计算经济量级并导出机读表**：同步计算因变量处理前均值/标准差、系数占均值/标准差比例或隐含弹性；对数因变量的系数换算为百分比时用 $(e^{b}-1)\times 100$，正文写 `{{res:id:pct}}` 由工具换算，不手算；将关键回归表导出为清晰 CSV。
+6. **规格账本（每跑一次估计就登记，不论是否报告）**：`python .claude/scripts/paper_tools.py spec log --id <项目.sN> --purpose baseline|robustness|heterogeneity|mechanism|placebo|exploration [--planned] --outcome Y --treatment D --controls … --fe … --cluster … --estimate b --se s --p p --n N --script <脚本>`。`--planned` 只给冻结分析计划中预设的规格；事后新增的一律不加。
+7. **强制结果入簿（打通 S5 → S8/S10）**：使用 `python .claude/scripts/paper_tools.py results import <CSV> --prefix <项目.表号> --source <CSV路径> --script <脚本路径> --spec <规格id>` 或 `results register … --spec <规格id>` 登记全部待引用核心数值、标准误与样本量；交给 S6 前运行 `paper_tools.py spec summary`，把“试了 N 个、报告 M 个、非预设被报告的规格”原样写入分析日志。
+8. **记录分析日志与偏离**：按 `Templates/analysis-log.md` 写入日志；任何偏离冻结分析计划的调整（含缩尾、控制变量或样本变更）必须逐条记录原因，明确区分“预设主分析”与“探索性补充”。
 
 ### 3.2 论文复现与代码审计模式
 用于复现既有论文或审计已有实证代码：
@@ -37,8 +39,8 @@ task_type: open-ended
 7. 输出复现对照表与差异清单；**忠实复现完成后再做稳健性拓展**。
 
 ## 4. 产出与知识回流
-- 产出：模块化代码（`07-Code/`）、衍生数据（`06-Data/processed/`）、数据卡（`06-Data/metadata/`）、分析日志（`analysis-log.md`）、机读结果 CSV 及更新后的 `Meta/results-ledger.json`。
+- 产出：模块化代码（`07-Code/`）、衍生数据（`06-Data/processed/`）、数据卡（`06-Data/metadata/`）、分析日志（`analysis-log.md`）、机读结果 CSV 及更新后的 `Meta/results-ledger.json` 与 `Meta/spec-ledger.json`（两本账都进入 `kb_search` 索引，可用 `--scope meta` 检索“这个数来自哪个规格”）。
 - 下游交接：仅把产物路径（不含作者辩护推理）交给 S6 `/academic-review`。
 
 ## 5. 硬性禁止
-严禁写入/覆盖 `06-Data/raw`；严禁未告知输入输出即运行写文件脚本；严禁静默删样本、未记录缩尾或以追逐显著性为目的更改设定；不得把“代码跑通”等同于“因果识别成立”。
+严禁写入/覆盖 `06-Data/raw`；严禁未告知输入输出即运行写文件脚本；严禁静默删样本、未记录缩尾或以追逐显著性为目的更改设定；严禁只登记报告的规格、漏记试过的规格，或事后给规格补 `--planned`；不得把“代码跑通”等同于“因果识别成立”。
