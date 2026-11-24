@@ -2,7 +2,7 @@
 """Local full-text retrieval over the research vault. No embeddings, no models, no network.
 
     python kb_search.py search QUERY... [--vault PATH] [--scope wiki|legacy|raw|project|meta|all]
-                        [--type T[,T]] [--year Y|Y1-Y2] [--cite-key K] [--limit N]
+                        [--type T[,T]] [--year Y|Y1-Y2] [--cite-key K] [--limit DOCS]
                         [--mode any|all] [--expand-links HOPS]
     python kb_search.py index  [--vault PATH] [--rebuild]
     python kb_search.py stats  [--vault PATH]
@@ -31,11 +31,12 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import wiki_lint as wl  # parse_frontmatter, WIKILINK, CODE_FENCE, INLINE_CODE, SCOPE, project helpers
 
-VERSION = 2  # bump when schema or tokenizer changes (stored in PRAGMA user_version)
+VERSION = 3  # bump when schema or tokenizer changes (stored in PRAGMA user_version)
 DB = ".erc-index/kb.sqlite"
 WIKI_DIRS = set(wl.SCOPE) | {"MOC"}
 SKIP_DIRS, TOP_SKIP = {"node_modules", "_vendor", "Templates"}, {"06-Data", "07-Code"}
 TIERS = ("wiki", "legacy", "raw", "project", "meta")
+BODY_FIELDS = ("claim_scope", "locator")  # long frontmatter text: searchable as a "(frontmatter)" chunk
 KEYWORD_FIELDS = ("keywords", "tags", "method", "focus", "research_field", "authors", "journal", "type")
 CHUNK = 1500
 CJK = "[㐀-䶿一-鿿豈-﫿]+"
@@ -165,7 +166,8 @@ def add_doc(con, rel, tier, stamp, text):
         "INSERT INTO docs(path, stamp, tier, type, cite_key, title, year, verification, stem) VALUES(?,?,?,?,?,?,?,?,?)",
         (rel.as_posix(), stamp, tier, str(fm.get("type") or "").strip().lower(), cite_key, title,
          int(year[0]) if year else None, str(fm.get("verification") or "").strip().lower(), stem.lower())).lastrowid
-    for heading, l1, l2, body in make_chunks(lines, start):
+    fm_text = "\n".join(str(fm[k]) for k in BODY_FIELDS if fm.get(k))
+    for heading, l1, l2, body in ([("(frontmatter)", 1, max(start, 1), fm_text)] if fm_text else []) + make_chunks(lines, start):
         cid = con.execute("INSERT INTO chunks(doc_id, heading, l1, l2, text) VALUES(?,?,?,?,?)",
                           (doc_id, heading, l1, l2, body)).lastrowid
         con.execute("INSERT INTO fts(rowid, title, keywords, body) VALUES(?,?,?,?)",
@@ -317,10 +319,10 @@ def search(vault, a):
         sql = ("SELECT %s, bm25(fts, 5.0, 4.0, 1.0) AS s FROM fts%s WHERE fts MATCH ? AND %s ORDER BY s LIMIT ?"
                % (COLS, JOIN, where))
         for r in con.execute(sql, [match] + args + [a.limit * 10]):
-            if per_doc[r["path"]] < 2:
-                per_doc[r["path"]] += 1
-                hits.append(hit(r, terms, -r["s"]))
-        hits = hits[:a.limit]
+            if per_doc[r["path"]] >= 2 or (r["path"] not in per_doc and len(per_doc) >= a.limit):
+                continue  # at most 2 chunks per document, at most --limit documents
+            per_doc[r["path"]] += 1
+            hits.append(hit(r, terms, -r["s"]))
         if hits and a.expand_links:
             hits += expand_links(con, hits, a.expand_links, where, args, terms)[:a.limit]
     res = {"query": q, "mode": a.mode, "scope": a.scope, "expanded": added, "total": len(hits), "hits": hits}

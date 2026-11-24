@@ -13,7 +13,7 @@ def w(rel, text):
     p = os.path.join(v, rel); os.makedirs(os.path.dirname(p), exist_ok=True)
     open(p, "w", encoding="utf-8", newline="\n").write(text)
 w("03-Literature/smith2020.md", "---\ntype: literature\ncite_key: smith2020\ntitle: Tax Compliance and Audit Threats\nauthors: [Smith, Jones]\nyear: 2020\nkeywords: [tax compliance, 纳税遵从]\nverification: verified\n---\n# 研究问题\n本文研究税收遵从度与稽查威慑的关系，使用双重差分设计。\n\n## Identification\nWe use staggered DID. See [[chen2018]].\n\n"+("填充文字。\n"*10))
-w("03-Literature/chen2018.md", "---\ntype: literature\ncite_key: chen2018\ntitle: 增值税改革与企业投资\nyear: 2018\nverification: unverified\n---\n# 摘要\n增值税转型显著提高了企业投资，识别策略为断点回归。 back to [[smith2020]]\n")
+w("03-Literature/chen2018.md", "---\ntype: literature\ncite_key: chen2018\ntitle: 增值税改革与企业投资\nyear: 2018\nclaim_scope: 独特样本口径甲乙\nverification: unverified\n---\n# 摘要\n增值税转型显著提高了企业投资，识别策略为断点回归。 back to [[smith2020]]\n")
 w("04-Theories/mech.md", "---\ntype: theory\ntitle: Deterrence mechanism\n---\n# Mechanism\nAudit probability raises compliance. See [[smith2020]].\n")
 w("旧税法笔记.md", "增值税暂行条例 legacy note\n")
 w("03-Literature/_sources/raw.md", "raw source about 稽查威慑\n")
@@ -34,6 +34,8 @@ chk(rc == 0 and any(h["cite_key"] == "smith2020" for h in j["hits"]), "2-char CJ
 chk(all(h["path"] != "旧税法笔记.md" for h in j["hits"]), "legacy not in default scope")
 rc, out, _ = run("search", "tax", "compliance"); j = json.loads(out)
 chk(j["hits"] and j["hits"][0]["cite_key"] == "smith2020", "english hit ranks smith2020 first")
+rc, out, _ = run("search", "样本口径"); j = json.loads(out)
+chk(any(h["cite_key"] == "chen2018" and h["heading_path"] == "(frontmatter)" for h in j["hits"]), "claim_scope in frontmatter is searchable")
 rc, out, _ = run("search", "纳税遵从"); j = json.loads(out)
 chk(any(h["cite_key"] == "smith2020" for h in j["hits"]) and "tax compliance" in j["expanded"], "alias expansion zh->en: " + str(j["expanded"]))
 rc, out, _ = run("search", "稽查威慑"); j = json.loads(out)
@@ -66,6 +68,8 @@ for i in range(30):
 procs = [subprocess.Popen([sys.executable, "-X", "utf8", kb, "search", "并发测试", "--vault", v2], stdout=subprocess.PIPE, stderr=subprocess.PIPE) for _ in range(4)]
 res = [(p.communicate(), p.returncode) for p in procs]
 chk(all(rc == 0 and json.loads(o.decode("utf-8"))["total"] > 0 for (o, e), rc in res), "4 concurrent first-time searches all succeed")
+out5 = subprocess.run([sys.executable, "-X", "utf8", kb, "search", "并发测试", "--vault", v2, "--limit", "5"], capture_output=True, text=True, encoding="utf-8").stdout
+chk(len({h["path"] for h in json.loads(out5)["hits"]}) == 5, "--limit counts documents, not chunks")
 shutil.rmtree(v2, ignore_errors=True)
 w("02-Areas/fresh.md", "---\ntype: area\n---\n# 新页\n独特词汇甲乙丙丁。\n")
 rc, out, _ = run("search", "甲乙丙丁"); j = json.loads(out)
