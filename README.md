@@ -1,36 +1,48 @@
 # Economics Research Crew
 
-面向**税收经济学、公共经济学、计量经济学与因果推断**的 AI 科研协作与论文写作系统。支持 **Windows 11 与 macOS / Linux**，自适应 **Claude Code、Antigravity CLI（`agy`）与 Codex CLI**；零外部 Python 依赖，不覆盖既有配置，不自动运行任何回归。
+面向**税收经济学、公共经济学、计量经济学与因果推断**的 AI 科研协作与论文写作系统。它把研究者的一句话，经意图路由送进 S1–S12 的论证脊柱，一路走到终稿、复现包与投稿前审稿；每个阶段的产物都由确定性脚本做机械检查，再由研究者在关卡拍板。
+
+支持 **Windows 11 与 macOS / Linux**，自适应 **Claude Code、Antigravity CLI（`agy`）与 Codex CLI**；零外部 Python 依赖，不覆盖既有配置，不自动运行任何回归。
 
 ---
 
-## 项目结构与意图路由全景图
+## 全景图：从研究者提问到终稿审稿的一张网
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/architecture-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="docs/architecture.svg">
-  <img alt="Economics Research Crew — 项目结构与意图路由架构" src="docs/architecture.svg">
+  <img alt="Economics Research Crew — 从研究者提问到终稿审稿的一张网" src="docs/architecture.svg">
 </picture>
 
-> 上图为原生矢量动态图（直接自动播放数据流与路由脉冲，随深/浅色主题自动切换）；如需 4 视图聚焦、点击节点跳转源码行号与导出 PNG/SVG/WebM，可打开本地 [docs/architecture.html](docs/architecture.html)（或[在线交互版](https://htmlpreview.github.io/?https://github.com/shjzzzz/Economics-Research-Crew/blob/main/docs/architecture.html)）。
+> 上图为矢量动态图，随深/浅色主题切换。交互版 [docs/architecture.html](docs/architecture.html)（或[在线预览](https://htmlpreview.github.io/?https://github.com/shjzzzz/Economics-Research-Crew/blob/main/docs/architecture.html)）提供 4 个聚焦视图：**一张网**、**主线 A 证据面**、**主线 B 实证面**、**共享账本·关卡·验证**；点击节点可跳转到源码行，并可导出 PNG / SVG / WebM。
 
 ---
 
-## 一、核心架构（四层知识流 + Meta 控制面）
+## 一、设计主线：一张网、两条主线、四个接口
 
-| 层级 | 目录 | 职责与隔离边界 |
+本项目不是 Skill 合集，而是一条从输入到终稿的连通链路。设计只沿两条主线展开，其余能力都挂在这两条线上：
+
+| 部分 | 做什么 | 落在哪里 |
 |---|---|---|
-| **Tier 0 原始只读层** | `03-Literature/_sources/`、`06-Data/raw/`、库内既有笔记（文献库/知识库） | **不可变**（hook 拦写）；保持原位、按目录检索、不自动视为已核实结论 |
-| **Tier 1 跨项目复利层** | `02-Areas/`、`03-Literature/`、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`、`MOC/` | 跨项目复用的结构化文献卡（含 `cite_key` 与三层定位锚点）、机制页、方法页、综合页与枢纽页 |
-| **Tier 2 项目执行层** | `01-Research-Projects/<项目>/`、`06-Data/{processed,metadata}/`、`07-Code/{stata,python,R}/` | 仅 `PROJECT.md` 进索引与双链图；`STATE.json`、`analysis-plan.md` 与 `paper/` 过程稿/版本快照不污染全库图谱 |
-| **Tier 3 交付与归档层** | `09-Writing/`、`10-Archive/` | `09-Writing/` 仅放**非完整研究项目的独立文稿**（政策简报/评论/讲义）；`10-Archive/` 结项归档 |
-| **Meta 控制面** | `Meta/` | **静态规范**（`purpose` / `research-standards` / `collaboration-protocol` / `style-guide` / `mechanism-library` / `ai-tells.json` / `upstream-ars.json`）、**协作账本**（`index` / `log` / `review-queue` / `decisions` / `constraints` / `source-registry`；另有 `aliases.csv` 术语别名表）、**脚本独占机读文件**（`citation-map.json` / `results-ledger.json` / `spec-ledger.json` / `run-ledger.jsonl` / `folder-map.md` / `link-map.md`） |
+| **入口** | 研究者一句自然语言 → `routing_hint` 匹配 18 组触发词 → 单项任务激活 `/skill`，多阶段任务走 `/research-pipeline` | `CLAUDE.md`、`.claude/routing-triggers.json`、`hooks/routing_hint.py` |
+| **主线 A · RAG-wiki 证据面** | 两步摄入写入 wiki → `kb_search` 本地全文召回 → `/query-wiki` 带锚点问答、`/literature-review` 引文核验 → 把 `cite_key` 与 `locator` 送进设计与写作 | `/ingest-source`、`/query-wiki`、`/wiki-lint`、`kb_search.py` |
+| **主线 B · AERS 实证面** | 冻结分析计划 → 按计划估计，每个规格登记入账 → 独立审稿查“试了多少、报告多少” → 只用已登记的数与引文写作 → 复现包与投稿前审计 | S1–S12 的 Skill 与 7 个隔离 Agent |
+| **共享账本** | 两条主线之间只通过账本交接：`results-ledger.json`（`{{res:id}}`）、`spec-ledger.json`（每个规格）、`citation-map.json`（`[@key]` + 定位锚点）；账本也进入 `kb_search` 索引 | `Meta/` |
+| **阶段关卡** | 上一阶段的产物变成下一阶段的机械检查；检查通过后仍由研究者 `gate` 拍板，AI 不能自判放行 | `orchestrator.py`、`paper_tools.py stage_check`、`orchestrator_guard` hook |
+| **验证层** | 逐环检查这张网是否连通，并用正反例证明评分细则能区分对错；全部离线、不耗额度 | `tests/evals/run_evals.py`、`kb_search.py eval`、`tests/run.ps1` |
 
-两张自动生成地图（`Meta/folder-map.md`、`Meta/link-map.md`）及其精简版写入 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成。
+### 关卡机检一览
+
+| 阶段 | 机械检查 | 检查内容 |
+|---|---|---|
+| S5 实证执行 | `specs_logged` | 规格账本非空（每次估计都登记，含不报告的），且登记结果的 `--spec` 不指向不存在的规格 |
+| S8 论文大纲 | `no_open_questions` | 不留未答的 `⟦问：…⟧` |
+| S10 / S11 成稿与精修 | `citations_resolved`、`results_linked` | 引文都在引文表中，数字都来自结果登记簿 |
+| S12 终检 | 以上全部 + `citations_verified`、`claims_aligned`、`package_ready` | 引文已核实、主张与大纲一致、复现包审计通过（README 四节、主脚本、无绝对路径与隐藏字符、无 Office 作者元数据） |
 
 ---
 
-## 二、经济学论文全周期论证脊柱（S1–S12）
+## 二、主线 B：经济学论文全周期论证脊柱（S1–S12）
 
 | 阶段 | 负责 Skill | 内部 Agent | 核心产出 | 研究者关卡 |
 |---|---|---|---|---|
@@ -47,17 +59,22 @@
 | **S11 精修与润色** | `/paper-refine`（+ 可选 `/paper-polish`） | `paper-writer-agent` + `academic-reviewer` | `review verify` 预检、`versions/`、`reviews.json`、`rebuttal-matrix.md`、`polished.md` | **C4**：精修结果与可选润色（`polish check`）是否可接受？ |
 | **S12 终检回流** | `/research-pipeline` + `/replication-package` | Research Director + 研究者 | `paper/final.md`、`paper/ai-disclosure.md`、`replication/` 复现包（机检 `package_ready`）、7 类失效清零、`synthesis` 回流 | **C5**：投稿前清单、复现包与知识回流是否完成？ |
 
-**知识库维护 3 个常驻 Skills**：
+---
 
-| Skill | 用途 | 核心机制 |
+## 三、主线 A：RAG-wiki 证据面
+
+| Skill / 工具 | 用途 | 核心机制 |
 |---|---|---|
-| `/ingest-source` | 两步摄入 `03-Literature/_sources/` 来源 | SHA256 去重 → 按 focus（默认项目研究问题）先分析并停下等确认 → 写文献卡；换 focus 重摄入只追加小节（含 `cite_key`）并关联概念页与双地图 |
-| `/query-wiki` | 基于已积累知识库与决策记录作答 | 先 `kb_search.py` 全文召回，再读 `Meta/index.md` 与 `link-map.md` 枢纽页 → 沿 `[[双链]]` 展开，严格区分事实与推断 |
-| `/wiki-lint` | 知识库确定性体检与语义审计 | `wiki_lint.py lint/map` + `paper_tools.py report` 联动 + 矛盾/过时/知识回流检查（批准后再修） |
+| `/ingest-source` | 两步摄入 `03-Literature/_sources/` 来源 | SHA256 去重 → 按 focus（默认项目研究问题）先分析并停下等确认 → 写文献卡（中英双语 tags，提议 `aliases.csv` 同义词）；换 focus 重摄入只追加小节 |
+| `kb_search.py` | 全库本地全文召回 | SQLite FTS5 + BM25、中文 bigram、同义词展开、`--expand-links` 沿双链扩展；每条命中带锚点与 `coverage`，弱匹配会提示；结果与规格账本也可检索（`--scope meta`）；`eval` 计算 recall@k 与 MRR |
+| `/query-wiki` | 基于知识库与决策记录作答 | 先召回、再读 `Meta/index.md` 与枢纽页、沿 `[[双链]]` 展开；命中只是线索，结论回到原文核对，零命中即答“库内证据不足” |
+| `/wiki-lint` | 知识库确定性体检与语义审计 | `wiki_lint.py lint/map` + `paper_tools.py report` + 矛盾/过时/知识回流检查（批准后再修） |
+
+S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`type: synthesis`），下一个项目从更厚的证据面起步。
 
 ---
 
-## 三、确定性工具链与 Hooks
+## 四、确定性工具链与 Hooks
 
 | 工具 / Hook | 核心命令或触发时机 | 解决的问题 |
 |---|---|---|
@@ -72,11 +89,25 @@
 
 ---
 
-## 四、跨系统与多平台支持
+## 五、四层知识库与 Meta 控制面
+
+| 层级 | 目录 | 职责与隔离边界 |
+|---|---|---|
+| **Tier 0 原始只读层** | `03-Literature/_sources/`、`06-Data/raw/`、库内既有笔记（文献库/知识库） | **不可变**（hook 拦写）；保持原位、按目录检索、不自动视为已核实结论 |
+| **Tier 1 跨项目复利层** | `02-Areas/`、`03-Literature/`、`04-Theories/`、`05-Methods/`、`08-Research-Notes/`、`MOC/` | 跨项目复用的结构化文献卡（含 `cite_key` 与三层定位锚点）、机制页、方法页、综合页与枢纽页 |
+| **Tier 2 项目执行层** | `01-Research-Projects/<项目>/`、`06-Data/{processed,metadata}/`、`07-Code/{stata,python,R}/` | 仅 `PROJECT.md` 进索引与双链图；`STATE.json`、`analysis-plan.md` 与 `paper/` 过程稿/版本快照不污染全库图谱 |
+| **Tier 3 交付与归档层** | `09-Writing/`、`10-Archive/` | `09-Writing/` 仅放**非完整研究项目的独立文稿**（政策简报/评论/讲义）；`10-Archive/` 结项归档 |
+| **Meta 控制面** | `Meta/` | **静态规范**（`purpose` / `research-standards` / `collaboration-protocol` / `style-guide` / `mechanism-library` / `ai-tells.json` / `upstream-ars.json`）、**协作账本**（`index` / `log` / `review-queue` / `decisions` / `constraints` / `source-registry`；另有 `aliases.csv` 术语别名表）、**脚本独占机读文件**（`citation-map.json` / `results-ledger.json` / `spec-ledger.json` / `run-ledger.jsonl` / `folder-map.md` / `link-map.md`） |
+
+两张自动生成地图（`Meta/folder-map.md`、`Meta/link-map.md`）及其精简版写入 `CLAUDE.md` / `AGENTS.md` 的 `ERC:MAP` 标记之间，由 `wiki_lint.py map` 生成。
+
+---
+
+## 六、跨系统与多平台支持
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（354/354；本机安装 `claude` CLI 时 355/355，同时放置 extras 时 358/358） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（467 项；本机安装 `claude` CLI 时 468 项） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/`（原生 `effort`/`disallowedTools`/`PowerShell`） | `.claude/settings.json`（全 7 个 hooks，含 `SessionStart` 状态恢复与 `timeout: 10`） | 已测试（含 `claude plugin validate --strict`） |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -84,7 +115,7 @@
 
 ---
 
-## 五、安装与同步
+## 七、安装与同步
 
 ### Windows 11（PowerShell 5.1 / 7）
 ```powershell
@@ -112,7 +143,28 @@ chmod +x install.sh
 
 ---
 
-## 六、设计借鉴、可选扩展与合规边界
+## 八、验证
+
+### 首次只读自检提示词
+```text
+请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
+只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
+```
+
+### 回归与连通性验证
+| 验证项 | 命令 | 说明 |
+|---|---|---|
+| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、18 Skills、frontmatter、全部 `Meta/` 与 Hooks |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 467 项（本机安装 `claude` CLI 时 468 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
+| 网络连通性与评分细则 | `python tests/evals/run_evals.py --chain --selftest` | 清单与 payload 一致、路由覆盖全部 Skill、S1–S12 的负责人/Agent/检查名都存在、Skill 里引用的 CLI 子命令确实存在；7 个评分场景各有正反例 |
+| 离线评分已保存回答 | `python tests/evals/run_evals.py --grade <目录>` | 只按评分细则判分，不调用模型 |
+| 检索评测 | `python .claude/scripts/kb_search.py eval qrels.json --vault <库> --k 5,10` | “问题 → 应命中来源”清单算 recall@k、MRR 与漏检项 |
+| 上游更新检查 | `python tools/check_upstreams.py check` | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报，抓取失败返回 `1`；每周一由 GitHub Actions 自动运行 |
+| 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | **消耗 Claude 额度**；覆盖 `tests/routing_cases.json` 16 个路由用例 |
+
+---
+
+## 九、设计借鉴、可选扩展与合规边界
 
 | 来源项目 | 许可证 | 本项目采用方式 | 明确边界 |
 |---|---|---|---|
@@ -126,21 +178,3 @@ chmod +x install.sh
 | `brycewang-stanford/Auto-Empirical-Research-Skills`（截至 `e0f61306`） | CC-BY-SA-4.0（仓库默认） | 已吸收（原生重写）：规格账本与选择性报告信号、对数点换算一致性、润色三模式与否定词/语气保真、复现包审计与 `replication-package` Skill、M1→M6 渐进主表、编辑初审、评分细则评测（正反例） | 仅借设计模式，不拷文字与代码，故不受 ShareAlike 约束；**排除** StatsPAI 绑定、降 AIGC 与去水印、p-hacking 搜索引擎、70 余个社区合集与数值基准；清单 `tools/upstreams/aers.json` 持续追踪 |
 | 2 个绘图 Skill（必装）：`thu-digitizer`、`scientific-visualization` | MIT（Rimagination；K-Dense Inc.，上游 `K-Dense-AI/scientific-agent-skills`） | 原样收录，各自目录内附上游 `LICENSE` | 未经本项目安全审计；按 MIT 条款保留版权声明 |
 | `payload-extras/`（可选 `-WithExtras`） | 多为上游未附许可证 | 仅供用户本机自用的第三方 Skill（含 `publication-chart-skill` / `econ-visualization` / `copyplot` / `tikz`），**不随公开仓库分发**（已 gitignore） | 未经本项目审计、默认不安装、不配置任何 MCP |
-
----
-
-## 七、首次对话与验证流程
-
-### 首次只读自检提示词
-```text
-请读取 CLAUDE.md、.claude/ECONOMICS-RESEARCH.md、Meta/vault-map.md、Meta/research-standards.md。
-只检查配置与目录，不修改知识库。报告已发现的 Agent、Skills、路径与潜在冲突。
-```
-
-### 回归验证命令
-| 验证项 | 命令 | 说明 |
-|---|---|---|
-| 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、18 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | 354 项测试（本机安装 `claude` CLI 时 355 项，同时放置 extras 时 358 项；支持 `-Section` 按节调试），全在临时目录运行，不触碰真实知识库 |
-| 上游更新检查 | `python tools/check_upstreams.py check`（ARS 单独：`check_ars_updates.py check`） | 零 LLM 额度；无更新返回 `0`，有更新返回 `2` 并输出适配简报，抓取失败返回 `1`；`.github/workflows/upstream-watch.yml` 每周一自动运行 |
-| 实机路由评测（可选） | `python tests/routing_eval.py --vault <临时库>` | 消耗 Claude 额度；覆盖 `tests/routing_cases.json` 16 个路由用例 |
