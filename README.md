@@ -52,7 +52,7 @@
 | Skill | 用途 | 核心机制 |
 |---|---|---|
 | `/ingest-source` | 两步摄入 `03-Literature/_sources/` 来源 | SHA256 去重 → 按 focus（默认项目研究问题）先分析并停下等确认 → 写文献卡；换 focus 重摄入只追加小节（含 `cite_key`）并关联概念页与双地图 |
-| `/query-wiki` | 基于已积累知识库与决策记录作答 | 先读 `Meta/index.md` 与 `link-map.md` 枢纽页 → 沿 `[[双链]]` 展开，严格区分事实与推断 |
+| `/query-wiki` | 基于已积累知识库与决策记录作答 | 先 `kb_search.py` 全文召回，再读 `Meta/index.md` 与 `link-map.md` 枢纽页 → 沿 `[[双链]]` 展开，严格区分事实与推断 |
 | `/wiki-lint` | 知识库确定性体检与语义审计 | `wiki_lint.py lint/map` + `paper_tools.py report` 联动 + 矛盾/过时/知识回流检查（批准后再修） |
 
 ---
@@ -64,6 +64,7 @@
 | `orchestrator.py` | `init / status / next / artifact / verify / gate / fail / recover / enforce / log` | 机读项目状态机（`STATE.json`）与追加式运行账本（`Meta/run-ledger.jsonl`）；关卡仅由研究者决定 |
 | `paper_tools.py` | `cite (add/from-note/import/zotero/zotero-note/open/verify/confirm/check/bib/ris/csl)`、`results (register/import/render/check)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明 |
 | `wiki_lint.py` | `lint`、`map [--check]`、`hash` | 确定性体检、生成双地图并刷新 `ERC:MAP`；自动过滤 `paper/versions/` 与多项目 `PROJECT.md` 误报 |
+| `kb_search.py` | `index`、`search`、`stats` | 全库**本地**全文召回（SQLite FTS5 + BM25，中文字 bigram，`Meta/aliases.csv` 中英同义展开，`--expand-links` 沿双链扩展）；纯标准库、不调用任何模型、不联网；命中带 `cite_key`/标题路径/行号锚点，供 `/query-wiki` 跨文献问答召回；索引放库内 `.erc-index/`（自忽略，可随时重建）；命中只是线索，结论须回到原文核对 |
 | `tools/check_upstreams.py` | `list`、`check [--repo NAME] [--out FILE] [--json]`、`mark-audited --repo NAME --sha S [--tag T]` | **零 LLM 额度**一次检测 3 个上游（`academic-research-skills`、`paper-orchestra`、`obsidian-second-brain`），按各自清单映射受影响模块并输出原生适配简报；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；GitHub Actions 每周一自动运行，有更新时开 issue，**只检测，不自动改库** |
 | `tools/check_ars_updates.py` | `check [--out FILE] [--json]`、`mark-audited --tag T --sha S` | ARS 单上游检测（`check_upstreams.py` 的底层，保持兼容） |
 | `tools/erc_cli.py` + `install.sh` | `install / test / sync / check-ars` | Windows 11 与 macOS / Linux 跨平台安装、校验与同步，自动适配 `python` / `python3` hook 命令 |

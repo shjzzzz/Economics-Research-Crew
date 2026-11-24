@@ -14,8 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 验证（改动后必跑，两个宿主都要过）
 - `pwsh -NoProfile -File tests\run.ps1`
 - `powershell -NoProfile -File tests\run.ps1`
-- 支持按节调试：`pwsh -NoProfile -File tests\run.ps1 -Section 11,17,18`（省略 `-Section` 时全量运行 `[1]`…`[18]`）。
-- 预期 367 项通过（本机安装 `claude` CLI 时为 368 项，同时放置 extras 时为 371 项）。
+- 支持按节调试：`pwsh -NoProfile -File tests\run.ps1 -Section 11,17,18`（省略 `-Section` 时全量运行 `[1]`…`[19]`）。
+- 预期 407 项通过（本机安装 `claude` CLI 时为 408 项，同时放置 extras 时为 411 项）。
 
 ## 规则
 - 改 `payload/` 里 Skill / Agent / Meta / Hook 的数量或名称，须先更新单一清单 `tools/manifest.json`，再同步 README、docs/USAGE.md、`tests/run.ps1` 和 PPT 的数字。
@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 校验已安装的库：`.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>`。
 - 同步 AGENTS.md 的 ERC 区块：`.\Sync-AgentsMd.ps1 -VaultPath <库> [-Check]`。
 - 上游更新检查（零 LLM 额度；无更新退出码 0，有更新 2，抓取失败 1）：`python tools/check_upstreams.py check [--repo ars|paper-orchestra|obsidian-second-brain|research-superpowers]`；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；`.github/workflows/upstream-watch.yml` 每周一自动运行并开 issue。
-- `tests/run.ps1` 支持按节号运行（`-Section 11,17,18`），自动拉起跨节前置依赖（如 `[14]` 自动带 `[10][12][13]`）；全量跑完 `[1]`…`[18]` 并打印每节耗时。
+- `tests/run.ps1` 支持按节号运行（`-Section 11,17,18`），自动拉起跨节前置依赖（如 `[14]` 自动带 `[10][12][13]`）；全量跑完 `[1]`…`[19]` 并打印每节耗时。
 - `tests/refmgr_selftest.py <库>/.claude/scripts/paper_tools.py <库>`：离线测 EndNote/Zotero 交换。
 - `tests/routing_eval.py --vault <一次性库>`：**消耗 Claude Code 额度**，只在用户明确要求时运行；拒绝在已有 `settings.local.json` 的库上运行。
 

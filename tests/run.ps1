@@ -1074,7 +1074,8 @@ $g9Rc = $LASTEXITCODE
 & $py -X utf8 $orc18b --vault $v18b gate --decision revise --note "reset circuit breaker" *> $null
 $g10Out = ((@{tool_name="Agent"; tool_input=@{subagent_type="literature-agent"}; cwd=$v18b} | ConvertTo-Json -Depth 5 -Compress) | & $py $grd18b 2>&1) -join "`n"
 $g10Rc = $LASTEXITCODE
-Ok ($g9Rc -eq 2 -and $g9Out -match "熔断上限" -and $g10Rc -eq 0) "orchestrator_guard triggers max_stage_dispatches circuit breaker and resets on revise"
+# match the ASCII part only: the hook prints UTF-8 but PowerShell decodes native stderr with the console code page (GBK on zh-CN)
+Ok ($g9Rc -eq 2 -and $g9Out -match "BLOCKED by orchestrator_guard.*8/8" -and $g10Rc -eq 0) "orchestrator_guard triggers max_stage_dispatches circuit breaker and resets on revise"
 # protect_raw blocks shell delete on core dirs (Meta / 01-Research-Projects) while allowing normal Write and unrelated metadata delete
 $delMeta = & $py -c "import json,subprocess,sys; p=subprocess.run([sys.executable,sys.argv[1]],input=json.dumps({'tool_name':'Bash','tool_input':{'command':'rm -rf Meta/index.md'},'cwd':sys.argv[2]}).encode(),capture_output=True); print(p.returncode)" $pr18b $v18b
 $delMetaData = & $py -c "import json,subprocess,sys; p=subprocess.run([sys.executable,sys.argv[1]],input=json.dumps({'tool_name':'Bash','tool_input':{'command':'rm 06-Data/metadata/tmp.txt'},'cwd':sys.argv[2]}).encode(),capture_output=True); print(p.returncode)" $pr18b $v18b
@@ -1094,6 +1095,36 @@ Ok ($hoTxt -match "≤300" -and $ingTxt -match "Prompt 注入" -and $rqTxt -matc
 Remove-Item -LiteralPath $v18b -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+# --- 19. kb_search (local full-text retrieval, no models) -----------------------
+if (Begin-Sec "19" "kb_search local retrieval") {
+$v19 = New-Vault
+Ok ((Run-Install $v19 @("-Platform","all")) -eq 0) "v19 all-platform install exit 0"
+$kbC = Join-Path $v19 ".claude\scripts\kb_search.py"
+$kbA = Join-Path $v19 ".agents\scripts\kb_search.py"
+Ok ((Test-Path $kbC) -and (Test-Path $kbA)) "kb_search.py installed for Claude and agy/Codex"
+Ok ((Run-Check $v19) -eq 0) "checker passes with kb_search.py required"
+$ErrorActionPreference = "Continue"
+$kbTest = Join-Path $pkg "tests\kb_search_selftest.py"
+$stOut = & $py -X utf8 $kbTest $kbC 2>&1
+foreach ($ln in $stOut) {
+    $m = [regex]::Match([string]$ln, '^\s+(PASS|FAIL) (.+)$')
+    if ($m.Success) { Ok ($m.Groups[1].Value -eq "PASS") ("kb_search: " + $m.Groups[2].Value) }
+}
+Ok ($LASTEXITCODE -eq 0) "kb_search selftest exit 0 (installed Claude copy)"
+& $py -X utf8 $kbA index --vault $v19 *> $null
+Ok (($LASTEXITCODE -eq 0) -and (Test-Path (Join-Path $v19 ".erc-index\kb.sqlite")) -and (Test-Path (Join-Path $v19 ".erc-index\.gitignore"))) "agy/Codex copy indexes a fresh vault into .erc-index (self-ignored)"
+$stJson = ((& $py -X utf8 $kbA stats --vault $v19) -join "
+") | ConvertFrom-Json
+Ok ($stJson.docs -gt 0 -and $null -eq $stJson.by_tier.legacy) "fresh-vault index has docs and skips .claude/.agents/Templates (no legacy tier)"
+$nm = (& $py -X utf8 $kbA search "zzzz-no-such-term" --vault $v19) -join "
+"
+Ok (($LASTEXITCODE -eq 0) -and ($nm -match '"note": "no match"')) "no-hit search exits 0 with an explicit no-match note"
+$skTxt = [IO.File]::ReadAllText((Join-Path $payload ".claude\skills\query-wiki\SKILL.md"), $enc)
+$agSk = [IO.File]::ReadAllText((Join-Path $v19 ".agents\skills\query-wiki\SKILL.md"), $enc)
+Ok ($skTxt -match "kb_search\.py" -and $agSk -match "\.agents/scripts/kb_search\.py" -and $agSk -notmatch "\.claude/scripts") "query-wiki calls kb_search.py; agy skill path rewritten to .agents/scripts"
+Remove-Item -LiteralPath $v19 -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 if ($script:CurSec -and $script:SecSw) {
     $script:SecSw.Stop()
     Write-Host ("  [{0}] done in {1:N2}s" -f $script:CurSec, $script:SecSw.Elapsed.TotalSeconds) -ForegroundColor DarkGray
@@ -1101,7 +1132,7 @@ if ($script:CurSec -and $script:SecSw) {
 $script:TotalSw.Stop()
 
 # --- cleanup + summary ----------------------------------------------------------
-foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17,$v18) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
+foreach ($d in $v,$vx,$v3,$v4,$v5,$v6,$v6b,$v6c,$v10,$v10b,$v10c,$v11,$v11b,$v11c,$v12,$v13,$v14,$v15,$v16,$v17,$v18,$v19) { if ($d -and (Test-Path $d) -and $d.StartsWith([IO.Path]::GetTempPath())) { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue } }
 Write-Host ""
 Write-Host ("passed: {0}  failed: {1}  elapsed: {2:N2}s" -f $script:pass, $script:fail, $script:TotalSw.Elapsed.TotalSeconds) -ForegroundColor $(if ($script:fail) { "Red" } else { "Green" })
 if ($script:fail) { exit 1 }

@@ -8,7 +8,7 @@
 - **17 个必装 Skill**（`.claude/skills/` / `.agents/skills/`）：含 15 个 S1–S12 研究写作与知识库核心 Skill + 2 个 MIT 许可的绘图 Skill（`scientific-visualization`、`thu-digitizer`），用 `/名称` 触发。
 - **单源项目规则**（`CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`，同步生成多平台 `AGENTS.md`）：定义路由、四层知识架构与论证脊柱。
 - **规范与模板**（`Meta/`、`Templates/`）：研究方向（`purpose`）、目录（`index`）、决定记录（`decisions`）、机制库、风格指南、AI 套话库，以及大纲/分析计划/日志/数据卡/文献卡/R&R 返修矩阵模板，和引言八段与理论模型写作蓝图（`Templates/intro-model-blueprint.md`）。
-- **确定性脚本与 7 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）；可选的会话/压缩状态恢复、原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
+- **确定性脚本与 7 个 Hooks**（`.claude/scripts/`、`.claude/hooks/`）：`orchestrator.py`（状态机与关卡）、`paper_tools.py`（引文/结果/主张/精修/润色校验）、`wiki_lint.py`（体检与双地图）、`kb_search.py`（本地全文召回）；可选的会话/压缩状态恢复、原始材料只读保护、编排守卫、草稿与 frontmatter 校验、意图路由提示。
 
 它不包含计量软件，也不会擅自运行回归；它确保每项研究遵循“识别先行、数字与引文机械可追溯、研究者把关”的纪律。
 
@@ -85,7 +85,7 @@ claude
 ## 6. 知识库维护（可积累的 Wiki）
 - **先填 `Meta/purpose.md`**：研究方向、核心问题、范围边界；研究者关键决定记入 `Meta/decisions.md`；对 AI 的纠正（一条一行）记入 `Meta/constraints.md`，所有 Skill/Agent 开工前都会读；同一概念的不同叫法记入 `Meta/aliases.csv`（`canonical,alias`），摄入前先查、`wiki_lint.py lint` 会报疑似重复页。
 - **两步摄入（`/ingest-source`）**：原始文件放 `03-Literature/_sources/`，先算 SHA256 去重并输出分析（含拟定 `cite_key` 与拟关联概念页），**等你确认后**才写卡、更新 `Meta/index.md`/`source-registry.md`/`log.md` 并刷新双地图；可一键用 `paper_tools.py cite from-note` 桥接入论文引文表。
-- **图谱检索（`/query-wiki`）**：先读 `Meta/index.md` 与 `Meta/link-map.md` 枢纽页，沿 `[[双链]]` 展开，回答区分“事实”与“推断”。
+- **图谱检索（`/query-wiki`）**：先用 `python .claude/scripts/kb_search.py search --vault . '<关键词>' --expand-links 1` 做全文召回（本地 BM25，无模型无网络；索引随检索自动增量更新；中文词至少 2 字；默认只搜 Tier 1，旧笔记用 `--scope legacy`），再读 `Meta/index.md` 与 `Meta/link-map.md` 枢纽页，沿 `[[双链]]` 展开，回答区分“事实”与“推断”。命中只是线索，必须回到原文核对；中英文同义词记入 `Meta/aliases.csv`，文献卡 `keywords` 建议中英文并写，以弥补无向量检索对同义词的弱点。索引在库内 `.erc-index/`（自动忽略，可删除后重建）。
 - **体检与双地图（`/wiki-lint`）**：`python .claude/scripts/wiki_lint.py lint --vault .` 与 `map --vault .` 生成 `Meta/folder-map.md`、`Meta/link-map.md` 并刷新 `CLAUDE.md`/`AGENTS.md` 中的 `ERC:MAP` 区块；自动排除库根目录既有笔记、`paper/versions/` 与项目过程稿的孤立/重名噪音。
 
 ## 7. Hooks（可选，`-WithHooks` 启用）

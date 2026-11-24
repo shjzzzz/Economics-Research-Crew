@@ -82,6 +82,7 @@
     ".claude/scripts/orchestrator.py",
     ".claude/scripts/paper_tools.py",
     ".claude/scripts/refmgr.py",
+    ".claude/scripts/kb_search.py",
     ".claude/hooks/validate_paper.py",
     ".claude/pipeline-stages.json",
     "Templates/handoff.md",
@@ -94,6 +95,7 @@
     ".agents/scripts/orchestrator.py",
     ".agents/scripts/paper_tools.py",
     ".agents/scripts/refmgr.py",
+    ".agents/scripts/kb_search.py",
     ".agents/pipeline-stages.json"
   ],
   "hooks_claude": [
