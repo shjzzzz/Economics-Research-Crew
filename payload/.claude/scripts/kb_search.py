@@ -11,7 +11,7 @@ Every command first brings <vault>/.erc-index/kb.sqlite up to date (stat-based, 
 results never lag behind the notes. Notes are split into heading-level chunks; Chinese is indexed as
 character bigrams, English as lowercase words. Ranking is BM25 (title/heading 5, keywords/tags/authors 4,
 body 1). Meta/aliases.csv (canonical,alias) is expanded both ways at query time. --expand-links adds
-wikilink neighbours of the hits. Hits carry cite_key, path, heading path and line range; they are leads,
+wikilink neighbours of the hits. Hits carry cite_key, path, heading path, line range and coverage (share of query terms found); they are leads,
 never conclusions: re-read the page before citing. No hit -> {"hits": [], "note": "no match"}, exit 0.
 Use keywords rather than sentences; Chinese terms need >= 2 characters; "quotes" keep a phrase together.
 Scopes: wiki (default: Tier 1 folders, MOC, PROJECT.md), legacy (other notes), raw (03-Literature/_sources),
@@ -31,7 +31,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import wiki_lint as wl  # parse_frontmatter, WIKILINK, CODE_FENCE, INLINE_CODE, SCOPE, project helpers
 
-VERSION = 3  # bump when schema or tokenizer changes (stored in PRAGMA user_version)
+VERSION = 4  # bump when schema or tokenizer changes (stored in PRAGMA user_version)
 DB = ".erc-index/kb.sqlite"
 WIKI_DIRS = set(wl.SCOPE) | {"MOC"}
 SKIP_DIRS, TOP_SKIP = {"node_modules", "_vendor", "Templates"}, {"06-Data", "07-Code"}
@@ -48,7 +48,7 @@ STOP = {"the", "an", "of", "in", "on", "and", "or", "to", "for", "is", "are", "w
         "why", "which", "with", "by", "at", "from", "that", "this", "be", "as", "do", "does"}
 SCHEMA = """
 CREATE TABLE docs(id INTEGER PRIMARY KEY, path TEXT UNIQUE, stamp TEXT, tier TEXT, type TEXT, cite_key TEXT,
-                  title TEXT, year INTEGER, verification TEXT, stem TEXT);
+                  title TEXT, year INTEGER, verification TEXT, stem TEXT, kw TEXT);
 CREATE TABLE chunks(id INTEGER PRIMARY KEY, doc_id INTEGER, heading TEXT, l1 INTEGER, l2 INTEGER, text TEXT);
 CREATE TABLE links(doc_id INTEGER, target TEXT);
 CREATE INDEX ix_chunks ON chunks(doc_id);
@@ -56,7 +56,7 @@ CREATE INDEX ix_links ON links(doc_id);
 CREATE INDEX ix_stem ON docs(stem);
 CREATE VIRTUAL TABLE fts USING fts5(title, keywords, body, tokenize='unicode61 remove_diacritics 2');
 """
-COLS = ("d.path, d.tier, d.type, d.cite_key, d.title, d.year, d.verification, "
+COLS = ("d.path, d.tier, d.type, d.cite_key, d.title, d.year, d.verification, d.kw, "
         "c.heading, c.l1, c.l2, c.text")
 JOIN = " JOIN chunks c ON c.id = fts.rowid JOIN docs d ON d.id = c.doc_id"
 
@@ -160,12 +160,13 @@ def add_doc(con, rel, tier, stamp, text):
     stem, cite_key = rel.stem, str(fm.get("cite_key") or "").strip()
     title = str(fm.get("title") or "").strip() or stem
     year = re.search(r"\d{4}", str(fm.get("year", "")))
-    keywords = " ".join(tokenize(" ".join([x for f in KEYWORD_FIELDS for x in as_list(fm.get(f))]
-                                          + [cite_key, str(fm.get("year", ""))])))
+    kw_raw = " ".join([x for f in KEYWORD_FIELDS for x in as_list(fm.get(f))] + [cite_key, str(fm.get("year", ""))])
+    keywords = " ".join(tokenize(kw_raw))
     doc_id = con.execute(
-        "INSERT INTO docs(path, stamp, tier, type, cite_key, title, year, verification, stem) VALUES(?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO docs(path, stamp, tier, type, cite_key, title, year, verification, stem, kw) VALUES(?,?,?,?,?,?,?,?,?,?)",
         (rel.as_posix(), stamp, tier, str(fm.get("type") or "").strip().lower(), cite_key, title,
-         int(year[0]) if year else None, str(fm.get("verification") or "").strip().lower(), stem.lower())).lastrowid
+         int(year[0]) if year else None, str(fm.get("verification") or "").strip().lower(), stem.lower(),
+         kw_raw.lower())).lastrowid
     fm_text = "\n".join(str(fm[k]) for k in BODY_FIELDS if fm.get(k))
     for heading, l1, l2, body in ([("(frontmatter)", 1, max(start, 1), fm_text)] if fm_text else []) + make_chunks(lines, start):
         cid = con.execute("INSERT INTO chunks(doc_id, heading, l1, l2, text) VALUES(?,?,?,?,?)",
@@ -231,7 +232,7 @@ def phrase(s):
 
 
 def build_match(q, alias_groups, mode):
-    """FTS5 MATCH expression, every alternative spelling (for snippets) and the aliases that were added."""
+    """FTS5 MATCH expression, the query-term groups (alternative spellings each) and the aliases that were added."""
     qlow = q.lower()
     words = [w.lower() for w in WORD.findall(re.sub(r'"[^"]*"', " ", q))]
     units = [s.strip().lower() for s in re.findall(r'"([^"]+)"', q)]
@@ -242,8 +243,7 @@ def build_match(q, alias_groups, mode):
             groups = [x for x in groups if not (len(x) == 1 and x[0] in g)] + [sorted(g)]
             added += [t for t in sorted(g) if not term_in(t, qlow)]
     clauses = [c for c in ("(" + " OR ".join(filter(None, map(phrase, g))) + ")" for g in groups) if c != "()"]
-    terms = [t for g in groups for t in g]
-    return (" AND " if mode == "all" else " OR ").join(clauses), terms, added
+    return (" AND " if mode == "all" else " OR ").join(clauses), groups, added
 
 
 def filters(a):
@@ -279,18 +279,21 @@ def snippet(text, terms):
     return ("…" if a else "") + flat[a:a + 190] + ("…" if a + 190 < len(flat) else "")
 
 
-def hit(r, terms, score=0.0, origin=None):
-    return {"cite_key": r["cite_key"], "title": r["title"], "path": r["path"], "heading_path": r["heading"],
+def hit(r, groups, score=0.0, origin=None):
+    """One result. coverage = share of the query terms (any spelling) found in title/heading/keywords/chunk."""
+    hay = " ".join((r["title"], r["heading"], r["kw"] or "", r["text"])).lower()
+    terms = [t for g in groups for t in g]
+    return {"coverage": round(sum(any(term_in(t, hay) for t in g) for g in groups) / max(len(groups), 1), 2), **{"cite_key": r["cite_key"], "title": r["title"], "path": r["path"], "heading_path": r["heading"],
             "line_start": r["l1"], "line_end": r["l2"], "score": round(score, 3), "tier": r["tier"],
             "type": r["type"], "year": r["year"], "verification": r["verification"],
-            "via": "link" if origin else "match", "via_path": origin, "snippet": snippet(r["text"], terms)}
+            "via": "link" if origin else "match", "via_path": origin, "snippet": snippet(r["text"], terms)}}
 
 
 NEIGHBOURS = ("SELECT d2.id FROM links l JOIN docs d2 ON d2.stem = l.target WHERE l.doc_id = ?1 "
               "UNION SELECT l.doc_id FROM links l JOIN docs d1 ON d1.stem = l.target WHERE d1.id = ?1")
 
 
-def expand_links(con, hits, hops, where, args, terms):
+def expand_links(con, hits, hops, where, args, groups):
     """Wikilink neighbours (in or out, up to hops) of the hits that pass the same filters."""
     paths = sorted({h["path"] for h in hits})
     seen = {r["id"]: r["path"] for r in con.execute(
@@ -304,7 +307,7 @@ def expand_links(con, hits, hops, where, args, terms):
         for did, origin in nxt.items():
             r = con.execute("SELECT %s FROM chunks c JOIN docs d ON d.id = c.doc_id WHERE d.id = ? AND %s "
                             "ORDER BY c.id LIMIT 1" % (COLS, where), [did] + args).fetchone()
-            out += [hit(r, terms, origin=origin)] if r else []
+            out += [hit(r, groups, origin=origin)] if r else []
         frontier = nxt
     return out
 
@@ -312,7 +315,7 @@ def expand_links(con, hits, hops, where, args, terms):
 def search(vault, a):
     con = update_index(vault)[0]
     q = " ".join(a.query).strip()
-    match, terms, added = build_match(q, load_aliases(vault), a.mode)
+    match, groups, added = build_match(q, load_aliases(vault), a.mode)
     where, args = filters(a)
     hits, per_doc = [], Counter()
     if match:
@@ -322,12 +325,14 @@ def search(vault, a):
             if per_doc[r["path"]] >= 2 or (r["path"] not in per_doc and len(per_doc) >= a.limit):
                 continue  # at most 2 chunks per document, at most --limit documents
             per_doc[r["path"]] += 1
-            hits.append(hit(r, terms, -r["s"]))
+            hits.append(hit(r, groups, -r["s"]))
         if hits and a.expand_links:
-            hits += expand_links(con, hits, a.expand_links, where, args, terms)[:a.limit]
+            hits += expand_links(con, hits, a.expand_links, where, args, groups)[:a.limit]
     res = {"query": q, "mode": a.mode, "scope": a.scope, "expanded": added, "total": len(hits), "hits": hits}
     if not hits:
         res["note"] = "no match"
+    elif max(h["coverage"] for h in hits if h["via"] == "match") < 0.5:
+        res["note"] = "weak match: no hit contains half of the query terms; treat as no evidence unless the page itself confirms"
     print(json.dumps(res, ensure_ascii=False, indent=2))
 
 

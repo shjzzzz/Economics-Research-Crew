@@ -13,7 +13,7 @@ task_type: open-ended
 
 ## 2. 前置读取与检索顺序
 1. 先读 `Meta/purpose.md`、`Meta/decisions.md`、`Meta/index.md` 与 `Meta/link-map.md`（优先锁定枢纽页与 `MOC/`）。
-2. **全文召回（跨文献问答必做）**：运行 `python .claude/scripts/kb_search.py search --vault . '<关键词>' --expand-links 1`（本地 BM25，无模型、无网络；关键词用空格分隔，中文词至少 2 个字，可用 `--mode all` 要求全部命中、`--type literature --year 2015-2022` 过滤；索引随检索自动增量更新）。中英文关键词各试一次；同义词记入 `Meta/aliases.csv`（`canonical,alias`）。**命中只是线索，不是结论**：必须打开命中页原文核对，引用时带 `cite_key`、命中的标题路径/行号与文献卡 `locator`。旧税法笔记用 `--scope legacy`。零命中如实答“库内证据不足”，不得用常识补齐。
+2. **全文召回（跨文献问答必做）**：运行 `python .claude/scripts/kb_search.py search --vault . '<关键词>' --expand-links 1`（本地 BM25，无模型、无网络；关键词用空格分隔，中文词至少 2 个字，可用 `--mode all` 要求全部命中、`--type literature --year 2015-2022` 过滤；索引随检索自动增量更新）。中英文关键词各试一次；同义词记入 `Meta/aliases.csv`（`canonical,alias`）。**命中只是线索，不是结论**：必须打开命中页原文核对，引用时带 `cite_key`、命中的标题路径/行号与文献卡 `locator`。旧税法笔记用 `--scope legacy`。零命中如实答“库内证据不足”，不得用常识补齐。每条命中带 `coverage`（命中块含查询词的比例）；结果 `note` 为 `weak match` 或最高 coverage < 0.5 时按“库内证据不足”倾向处理，除非页面原文确认。
 3. 从相关枢纽页和条目进入正文，再沿 `[[双链]]`（`Meta/link-map.md` 邻接表）向外展开 1–2 跳；若涉及在研项目进展，补充读取 `01-Research-Projects/<项目>/PROJECT.md`。
 4. 必要时按目录检索库内既有旧税法笔记，**严禁**在 `.claude`、`.agents`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中查找税法笔记。
 
@@ -31,7 +31,7 @@ task_type: open-ended
 - **经研究者同意才写入**；写入后更新 `Meta/index.md`、在 `Meta/log.md` 追加 `## [YYYY-MM-DD] query | 问题`（或 `synthesis`），并运行 `python .claude/scripts/wiki_lint.py map --vault .`。
 
 ## 4b. 检索自测模式（研究者要求“测一下检索”时）
-从库内随机抽 5–10 页，各出一个只能由该页回答的问题，另出 2–3 个库内确无答案的问题；按本 Skill 流程作答，统计是否找到正确页（并记录目标页在 `kb_search.py search` 结果中的名次：Top-5 / Top-10 / 未召回）、无答案题是否如实答“库内证据不足”。把漏检原因（页面缺双链、未入 `Meta/index.md`、标题不含关键词、`keywords` 未同时写中英文、`Meta/aliases.csv` 缺同义条目）列为建议，**只报告，不改页面**。
+从库内随机抽 5–10 页，各出一个只能由该页回答的问题，另出 2–3 个库内确无答案的问题；按本 Skill 流程作答，统计是否找到正确页（并记录目标页在 `kb_search.py search` 结果中的名次：Top-5 / Top-10 / 未召回）、无答案题是否如实答“库内证据不足”。把漏检原因（页面缺双链、未入 `Meta/index.md`、标题不含关键词、`tags` 未同时写中英文、`Meta/aliases.csv` 缺同义条目）列为建议，**只报告，不改页面**。
 
 ## 5. 硬性禁止
 禁止用模型常识填补库内缺口并包装为“库内已有证据”；禁止在未核对多页的情况下宣称“文献一致认为”；禁止把 `kb_search.py` 的命中片段当结论引用；禁止未经同意擅自新建笔记。
