@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 目录
 - `payload/`：必装内容（18 个 Skill、7 个 Agent、Meta、Templates、hooks、scripts）。
-- `payload-extras/`：可选扩展（50 个第三方 Skill），**已 gitignore，不得提交**（上游多数无许可证），只有其 README 入库。
+- `payload-extras/`：可选扩展（`agents/` 与 `extras/` 说明；24 个第三方 Skill 已直接装在研究库 `.claude/skills`、`.agents/skills`，本地不再存放 `skills/`），**已 gitignore，不得提交**（上游多数无许可证），只有其 README 入库。
 - `tools/`（跨平台安装 CLI、ARS 追踪）、`tests/`、`docs/`、`README.md`。
 
 ## 验证（改动后必跑，两个宿主都要过）
