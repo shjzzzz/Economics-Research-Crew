@@ -107,7 +107,7 @@ S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`typ
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令优先 `py -3`（无 py 启动器时回退 `python`） | 已双宿主全量测试（474 项；本机安装 `claude` CLI 时 475 项） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令优先 `py -3`（无 py 启动器时回退 `python`） | 已双宿主全量测试（475 项；本机安装 `claude` CLI 时 476 项） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/`（原生 `effort`/`disallowedTools`/`PowerShell`） | `.claude/settings.json`（全 7 个 hooks，含 `SessionStart` 状态恢复与 `timeout: 10`） | 已测试（含 `claude plugin validate --strict`） |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -161,7 +161,7 @@ chmod +x install.sh
 | 验证项 | 命令 | 说明 |
 |---|---|---|
 | 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、18 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 474 项（本机安装 `claude` CLI 时 475 项；本地放有 `payload-extras/skills` 时再加 3 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 475 项（本机安装 `claude` CLI 时 476 项；本地放有 `payload-extras/skills` 时再加 3 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
 | 网络连通性与评分细则 | `python tests/evals/run_evals.py --chain --selftest` | 清单与 payload 一致、路由覆盖全部 Skill、S1–S12 的负责人/Agent/检查名都存在、Skill 里引用的 CLI 子命令确实存在；7 个评分场景各有正反例 |
 | 离线评分已保存回答 | `python tests/evals/run_evals.py --grade <目录>` | 只按评分细则判分，不调用模型 |
 | 检索评测 | `python .claude/scripts/kb_search.py eval qrels.json --vault <库> --k 5,10` | “问题 → 应命中来源”清单算 recall@k、MRR 与漏检项 |

@@ -536,6 +536,10 @@ $o = PT @("results","verify","--prefix","rp","--rerun","--yes")
 Ok ($o -match "reproduced 1" -and $o -match "rc=0") "results verify --rerun --yes re-runs the script and reproduces"
 [IO.File]::WriteAllText($rpOut, "row,coef`nb,0.5000000001`n", $enc)
 Ok ((PT @("results","verify","--prefix","rp")) -match "within_tolerance") "results verify accepts differences within rtol"
+[IO.File]::WriteAllText($rpPy, "pass`n", $enc); [IO.File]::WriteAllText($rpOut, "row,coef`nb,0.5`n", $enc); (Get-Item $rpOut).LastWriteTime = (Get-Date).AddHours(-1)
+$o = PT @("results","verify","--prefix","rp","--rerun","--yes")
+Ok ($o -match "unverifiable" -and $o -match "rc=0") "results verify --rerun does not trust an output file the script did not rewrite"
+[IO.File]::WriteAllText($rpPy, "open('06-Data/processed/rp.csv', 'w').write('row,coef\nb,0.5\n')`n", $enc); $null = PT @("results","verify","--prefix","rp","--rerun","--yes")
 $null = PT @("results","register","--id","m1","--value","3","--no-source-reason","hand")
 $null = PT @("results","register","--id","w1","--value","4","--no-source-reason","confidential")
 $rpDraft = Join-Path $dr "repro.md"; [IO.File]::WriteAllText($rpDraft, "{{res:m1}} {{res:w1}} {{res:rp.b.coef}}`n", $enc)
@@ -835,7 +839,7 @@ Ok ($LASTEXITCODE -eq 0) "refmgr selftest exit 0"
 
 # --- 16. logic hardening regressions -----------------------------------------
 }
-if (Begin-Sec "16" "logic hardening regressions") {
+if (Begin-Sec "16" "logic hardening regressions") { $ErrorActionPreference = "Continue"
 $v16 = New-Vault
 Ok ((Run-Install $v16 @("-Platform","all","-WithHooks")) -eq 0) "v16 all-platform install exit 0"
 $orc16 = Join-Path $v16 ".claude\scripts\orchestrator.py"

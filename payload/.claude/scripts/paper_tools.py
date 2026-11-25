@@ -77,6 +77,7 @@ import os
 import re
 import shutil
 import sys
+import time
 import unicodedata
 import urllib.parse
 import urllib.request
@@ -1115,6 +1116,7 @@ def cmd_results_verify(a):
                 print("  " + (" ".join(argv) if argv else "%s  （找不到解释器，将标为 unverifiable）" % s))
             sys.exit(2)
         import subprocess
+        started = time.time() - 2  # outputs older than this were not written by the re-run
         for s, argv in plan:
             if not argv:
                 run_fail[s] = "找不到运行 %s 的解释器（Stata 可用环境变量 ERC_STATA 指定）" % s
@@ -1139,6 +1141,8 @@ def cmd_results_verify(a):
             st, note = ("unverifiable" if "解释器" in run_fail[e["script"]] else "different"), run_fail[e["script"]]
         elif not e.get("output"):
             st, note = "unverifiable", "没有记录输出文件（手填数值）"
+        elif a.rerun and e.get("script") and os.path.getmtime(os.path.join(vault, e["output"])) < started:
+            st, note = "unverifiable", "输出文件未被脚本更新（可能脚本出错或不产生该文件）：%s" % e["output"]
         else:
             new, err = read_output_value(vault, e)
             if err:
@@ -1146,7 +1150,7 @@ def cmd_results_verify(a):
             else:
                 st = compare_values(e["value"], new, a.rtol, a.atol)
                 note = "" if st == "reproduced" else "登记 %s，现为 %s" % (e["value"], new)
-        e["repro"] = {"status": st, "checked": now(), "note": note, "rerun": bool(a.rerun)}
+        e["repro"] = {"status": st, "checked": now(), "note": note, "rerun": bool(a.rerun and e.get("script"))}
         counts[st] += 1
         if st != "reproduced" and not a.json:
             print("%-16s %s  %s" % (st, i, note))
