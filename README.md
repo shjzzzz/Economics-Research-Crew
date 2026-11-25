@@ -84,7 +84,7 @@ S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`typ
 | `kb_search.py` | `index`、`search`、`stats`、`eval` | 全库**本地**全文召回（SQLite FTS5 + BM25，中文字 bigram，`Meta/aliases.csv` 中英同义展开，`--expand-links` 沿双链扩展）；纯标准库、不调用任何模型、不联网；命中带 `cite_key`/标题路径/行号锚点与 `coverage`（命中查询词比例，弱匹配会提示），供 `/query-wiki` 跨文献问答召回；结果登记簿与规格账本也进入索引（`--scope meta`，每条一节），可查“这个数来自哪个规格”；`eval` 用“问题 → 应命中来源”清单算 recall@k 与 MRR；索引放库内 `.erc-index/`（自忽略，可随时重建）；命中只是线索，结论须回到原文核对 |
 | `tools/check_upstreams.py` | `list`、`check [--repo NAME] [--out FILE] [--json]`、`mark-audited --repo NAME --sha S [--tag T]` | **零 LLM 额度**一次检测 5 个上游（`academic-research-skills`、`paper-orchestra`、`obsidian-second-brain`、`research-superpowers`、`Auto-Empirical-Research-Skills`），按各自清单映射受影响模块并输出原生适配简报；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；GitHub Actions 每周一自动运行，有更新时开 issue，**只检测，不自动改库** |
 | `tools/check_ars_updates.py` | `check [--out FILE] [--json]`、`mark-audited --tag T --sha S` | ARS 单上游检测（`check_upstreams.py` 的底层，保持兼容） |
-| `tools/erc_cli.py` + `install.sh` | `install / test / sync / check-ars` | Windows 11 与 macOS / Linux 跨平台安装、校验与同步，自动适配 `python` / `python3` hook 命令 |
+| `tools/erc_cli.py` + `install.sh` | `install / test / sync / check-ars / check-upstreams` | Windows 11 与 macOS / Linux 跨平台安装、校验与同步，自动适配 `python` / `python3` hook 命令 |
 | 7 个可选 Hooks（`-WithHooks`） | `session_context`、`protect_raw`、`orchestrator_guard`、`validate_frontmatter`、`validate_paper`、`routing_hint`、`orchestrator_record` | 会话启动/压缩后自动恢复项目阶段状态；拦截改写原始数据/机读账本/跳阶段/超并发；草稿未知引文/结果即时告警；确定性路由提示与派出记录（均设 `timeout: 10`） |
 
 ---
@@ -107,7 +107,7 @@ S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`typ
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令使用 `python` | 已双宿主全量测试（467 项；本机安装 `claude` CLI 时 468 项） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令优先 `py -3`（无 py 启动器时回退 `python`） | 已双宿主全量测试（464 项；本机安装 `claude` CLI 时 465 项） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/`（原生 `effort`/`disallowedTools`/`PowerShell`） | `.claude/settings.json`（全 7 个 hooks，含 `SessionStart` 状态恢复与 `timeout: 10`） | 已测试（含 `claude plugin validate --strict`） |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -116,6 +116,12 @@ S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`typ
 ---
 
 ## 七、安装与同步
+
+先获取代码并进入仓库目录（以下命令都在仓库根目录运行）：
+```bash
+git clone https://github.com/shjzzzz/Economics-Research-Crew.git
+cd Economics-Research-Crew
+```
 
 ### Windows 11（PowerShell 5.1 / 7）
 ```powershell
@@ -155,7 +161,7 @@ chmod +x install.sh
 | 验证项 | 命令 | 说明 |
 |---|---|---|
 | 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、18 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 467 项（本机安装 `claude` CLI 时 468 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 464 项（本机安装 `claude` CLI 时 465 项；本地放有 `payload-extras/skills` 时再加 3 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
 | 网络连通性与评分细则 | `python tests/evals/run_evals.py --chain --selftest` | 清单与 payload 一致、路由覆盖全部 Skill、S1–S12 的负责人/Agent/检查名都存在、Skill 里引用的 CLI 子命令确实存在；7 个评分场景各有正反例 |
 | 离线评分已保存回答 | `python tests/evals/run_evals.py --grade <目录>` | 只按评分细则判分，不调用模型 |
 | 检索评测 | `python .claude/scripts/kb_search.py eval qrels.json --vault <库> --k 5,10` | “问题 → 应命中来源”清单算 recall@k、MRR 与漏检项 |

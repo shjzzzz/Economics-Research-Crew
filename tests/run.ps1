@@ -312,7 +312,10 @@ Ok ($null -ne $hj.'economics-research-crew'.PreToolUse -and $null -ne $hj.'econo
 Ok ($LASTEXITCODE -eq 0) "generated wiki_lint runs on a fresh vault (and skips .agents/)"
 $before10 = Snapshot $v10
 Ok ((Run-Install $v10 @("-Platform","all","-WithHooks")) -eq 0) "all-platform re-install exit 0"
-Ok ((($before10 -join "`n") -eq ((Snapshot $v10) -join "`n"))) "no file changed on all-platform re-install"
+$same10 = (($before10 -join "`n") -eq ((Snapshot $v10) -join "`n"))
+Run-Install $v10 @("-Platform","all","-Update") | Out-Null
+$noNew10 = @(Get-ChildItem $v10 -Recurse -Filter *.new -Force).Count -eq 0
+Ok ($same10 -and $noNew10) "no file changed on all-platform re-install; -Update right after writes no .new (same=$same10 noNew=$noNew10)"
 
 # existing AGENTS.md / hooks.json are preserved
 $v10b = New-Vault
