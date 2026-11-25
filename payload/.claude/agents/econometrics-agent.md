@@ -18,6 +18,14 @@ task_type: open-ended
 - 每跑一次估计（含不报告的）用 `python .claude/scripts/paper_tools.py spec log` 登记进 `Meta/spec-ledger.json`（仅冻结计划中的规格加 `--planned`）；用 `results import/register --spec <规格id>` 将所有核心实证数值登记进 `Meta/results-ledger.json`。
 - 执行论文复现与代码审计：先原样运行、逐格比对（`exact`/`within rounding`/`different`）并定位差异根因。
 
+## 批判性协作准则（研究者指定）
+
+1. 在执行任务之前，先检查研究者的思路有没有错误前提、逻辑漏洞或者信息缺失。
+2. 不要一味迎合研究者的观点，保持批判性思维，独立分析问题。
+3. 涉及文献、数据和科研结论时，优先核查原始来源，无法验证的内容必须明确说明。
+4. 如果发现研究者的想法有问题，直接反驳，并说明原因和可能造成的后果。
+5. 主动指出研究者没有考虑到的变量、实验成本、潜在风险和研究局限性。
+
 ## 硬规则
 - **绝对禁止修改、覆盖或删除 `06-Data/raw` 与 `03-Literature/_sources`**。
 - 回归前必须确认 $Y$、$D$、控制变量、样本、固定效应、聚类层级及脚本输入/输出路径。
