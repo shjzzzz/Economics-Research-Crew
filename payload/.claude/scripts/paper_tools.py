@@ -27,7 +27,16 @@ cite keys that exist in a verified citation table, and every number must trace t
   cite list
   results register --id ID --value V [--label L --se S --n N --source FILE --script FILE --no-source-reason T --note T]
                    [--spec SPEC_ID]           --spec links the number to the specification it came from
-  results import CSV --prefix P --source FILE [--script FILE] [--spec SPEC_ID]   register every cell as P.<row>.<col>
+  results import CSV --prefix P --source FILE [--script FILE] [--spec SPEC_ID] [--data FILE]... [--software S] [--seed N]
+                                              register every cell as P.<row>.<col>, with its run recipe (output file,
+                                              cell, input data SHA256, software, seed) so it can be verified later
+  results verify (--id ID | --prefix P | --all) [--rerun [--yes]] [--rtol 1e-6] [--atol 0] [--timeout S] [--json]
+                                              re-read each number from its output file (and check data SHA256); --rerun
+                                              re-runs the scripts first (.do Stata via ERC_STATA/PATH, .R Rscript, .py);
+                                              without --yes it only prints the commands. Status: reproduced |
+                                              within_tolerance | different | unverifiable; exit 1 if any different
+  results confirm --id ID --note TEXT         the researcher vouches for a hand-entered number (asks for permission)
+  results waive --id ID --reason TEXT         the researcher exempts a number that cannot be re-run (confidential data)
   results render DRAFT.md [-o OUT.md]         fill {{res:id}} / {{res:id:3}} / {{res:id:pct}} placeholders from the ledger
                                               (:pct = log points as a percentage, (e^b-1)*100, 1 decimal; :pct2 = 2 decimals)
   spec log --id ID --purpose baseline|robustness|heterogeneity|mechanism|placebo|exploration [--planned]
@@ -66,6 +75,7 @@ import json
 import math
 import os
 import re
+import shutil
 import sys
 import unicodedata
 import urllib.parse
@@ -765,7 +775,7 @@ def to_float(s):
 
 
 def register(vault, m, rid, value, label="", se=None, n=None, source=None, script=None, note="", no_source_reason=None,
-             spec=None):
+             spec=None, origin="manual", output=None, cell=None, data=None, software=None, seed=None):
     if not ID_RE.match(rid):
         sys.exit("id 只能含字母数字、下划线、点、冒号、连字符：%s" % rid)
     if spec and spec not in smap(vault)[1]["entries"]:
@@ -787,7 +797,45 @@ def register(vault, m, rid, value, label="", se=None, n=None, source=None, scrip
             e[fld] = relpath(ap, vault)
             if fld == "source":
                 e["source_sha256"] = sha256(ap)
+    # run recipe: where the number comes from, so results verify can check it again later
+    e["origin"] = origin
+    if output:
+        op = in_vault(vault, output)
+        if not orc.inside(op, vault) or not os.path.isfile(op):
+            sys.exit("output 必须是库内已存在的文件：%s" % output)
+        e["output"] = relpath(op, vault)
+        if cell is not None:
+            e["cell"] = cell
+    if data:
+        e["data"] = data
+    if software:
+        e["software"] = software
+    if seed not in (None, ""):
+        e["seed"] = str(seed)
     m["entries"][rid] = e
+
+
+def data_fingerprints(vault, files):
+    """[{path, sha256}] for --data files (must exist inside the vault)."""
+    out = []
+    for p in files or []:
+        ap = in_vault(vault, p)
+        if not orc.inside(ap, vault) or not os.path.isfile(ap):
+            sys.exit("data 必须是库内已存在的文件：%s" % p)
+        out.append({"path": relpath(ap, vault), "sha256": sha256(ap)})
+    return out
+
+
+def parse_cell(output, cell):
+    """CSV cell 'ROW::COL' (row label in the first column, column header) -> dict; JSON keeps a dotted path."""
+    if cell is None:
+        return None
+    if output and output.lower().endswith(".json"):
+        return cell
+    if "::" not in cell:
+        sys.exit("CSV 的 --cell 写成 行标签::列名，例如 baseline::coef")
+    row, col = cell.split("::", 1)
+    return {"row": row.strip(), "col": col.strip()}
 
 
 def cmd_results_register(a):
@@ -795,7 +843,11 @@ def cmd_results_register(a):
     path, m = rmap(vault)
     if a.id in m["entries"] and not a.replace:
         sys.exit("id 已存在：%s（要覆盖请加 --replace）" % a.id)
-    register(vault, m, a.id, a.value, a.label, a.se, a.n, a.source, a.script, a.note or "", a.no_source_reason, a.spec)
+    if a.cell and not a.output:
+        sys.exit("--cell 需要同时给出 --output")
+    register(vault, m, a.id, a.value, a.label, a.se, a.n, a.source, a.script, a.note or "", a.no_source_reason, a.spec,
+             origin="manual", output=a.output, cell=parse_cell(a.output, a.cell),
+             data=data_fingerprints(vault, a.data), software=a.software, seed=a.seed)
     save(path, m)
     orc.ledger_append(vault, "result_register", id=a.id)
     e = m["entries"][a.id]
@@ -805,6 +857,8 @@ def cmd_results_register(a):
         suffix = ""
     else:
         suffix = "  （警告：没有 --source，无法追溯来源；若确无库内源文件请用 --no-source-reason 说明）"
+    if not e.get("output"):
+        suffix += "  （手填数值：终检前须由研究者 results confirm，或补 --output 后用 results verify 核对）"
     print("%s = %s%s" % (a.id, e["value"], suffix))
 
 
@@ -826,6 +880,8 @@ def cmd_results_import(a):
     if len(rows) < 2:
         sys.exit("CSV 至少需要表头和一行数据。")
     header, count, seen_ids = rows[0], 0, set()
+    data = data_fingerprints(vault, a.data)
+    out_rel = os.path.relpath(csv_path, vault).replace(os.sep, "/")
     for ri, r in enumerate(rows[1:], 1):
         if not r or not r[0].strip():
             continue
@@ -841,7 +897,9 @@ def cmd_results_import(a):
                 suffix += 1
             seen_ids.add(rid)
             register(vault, m, rid, r[j].strip(), "%s / %s / %s" % (a.prefix, r[0].strip(), header[j].strip()),
-                     source=a.source or os.path.relpath(csv_path, vault), script=a.script, spec=a.spec)
+                     source=a.source or os.path.relpath(csv_path, vault), script=a.script, spec=a.spec,
+                     origin="import", output=out_rel, cell={"row": r[0].strip(), "col": header[j].strip()},
+                     data=data, software=a.software, seed=a.seed)
             count += 1
     save(path, m)
     orc.ledger_append(vault, "result_import", prefix=a.prefix, count=count)
@@ -943,6 +1001,219 @@ def cmd_results_check(a):
     print_findings(errors, warns)
     print("错误 %d，警告 %d。" % (len(errors), len(warns)))
     sys.exit(1 if errors else 0)
+
+# ------------------------------------------------------------------ reproducibility (re-read or re-run, then compare)
+REPRO_OK = {"reproduced", "within_tolerance", "waived"}
+STATA_NAMES = ("stata-mp", "stata-se", "stata", "StataMP-64", "StataSE-64", "Stata-64", "StataMP", "StataSE")
+
+
+def read_output_value(vault, e):
+    """(value_string, None) read again from e['output'] at e['cell'], or (None, reason)."""
+    p = os.path.join(vault, e["output"])
+    if not os.path.isfile(p):
+        return None, "输出文件不存在：%s" % e["output"]
+    cell = e.get("cell")
+    if p.lower().endswith(".json"):
+        try:
+            obj = json.loads(read_text(p))
+        except ValueError:
+            return None, "输出文件不是合法 JSON：%s" % e["output"]
+        for k in str(cell or "").split("."):
+            if isinstance(obj, list) and k.isdigit() and int(k) < len(obj):
+                obj = obj[int(k)]
+            elif isinstance(obj, dict) and k in obj:
+                obj = obj[k]
+            else:
+                return None, "JSON 中找不到 %s" % cell
+        return str(obj), None
+    if not isinstance(cell, dict):
+        return None, "缺少单元格定位（cell）"
+    with open(p, encoding="utf-8-sig", newline="") as fh:
+        rows = list(csv.reader(fh))
+    if not rows:
+        return None, "输出文件为空：%s" % e["output"]
+    header = [h.strip() for h in rows[0]]
+    if cell.get("col") not in header:
+        return None, "输出文件中没有列 %s" % cell.get("col")
+    j = header.index(cell["col"])
+    for r in rows[1:]:
+        if r and r[0].strip() == cell.get("row"):
+            return (r[j].strip() if j < len(r) else ""), None
+    return None, "输出文件中没有行 %s" % cell.get("row")
+
+
+def compare_values(old, new, rtol, atol):
+    """reproduced | within_tolerance | different"""
+    if str(old).strip() == str(new).strip():
+        return "reproduced"
+    a, b = to_float(old), to_float(new)
+    if a is None or b is None:
+        return "different"
+    if a == b:
+        return "reproduced"
+    as_int = lambda s: re.fullmatch(r"[+-]?[\d,]+", str(s).strip()) is not None
+    if as_int(old) and as_int(new):
+        return "different"  # counts (N, clusters) must match exactly
+    return "within_tolerance" if abs(a - b) <= atol + rtol * abs(a) else "different"
+
+
+def data_drift(vault, e):
+    """Recorded input data files whose SHA256 changed or that are missing."""
+    out = []
+    for d in e.get("data") or []:
+        p = os.path.join(vault, d["path"])
+        if not os.path.isfile(p):
+            out.append("%s 缺失" % d["path"])
+        elif sha256(p) != d.get("sha256"):
+            out.append("%s 已变化" % d["path"])
+    return out
+
+
+def runner_for(script):
+    """argv prefix that runs a script, or None when the interpreter is not installed."""
+    ext = os.path.splitext(script)[1].lower()
+    if ext == ".py":
+        return [sys.executable]
+    if ext == ".r":
+        exe = shutil.which("Rscript")
+        return [exe] if exe else None
+    if ext == ".do":
+        exe = os.environ.get("ERC_STATA") or next((shutil.which(n) for n in STATA_NAMES if shutil.which(n)), None)
+        if not exe:
+            return None
+        return [exe, "/e" if os.name == "nt" else "-b", "do"]
+    return None
+
+
+def select_entries(m, a):
+    ents = m["entries"]
+    if a.id:
+        if a.id not in ents:
+            sys.exit("id 不在结果登记簿中：%s" % a.id)
+        return [a.id]
+    if a.prefix:
+        return sorted(k for k in ents if k == a.prefix or k.startswith(a.prefix + "."))
+    if a.all:
+        return sorted(ents)
+    sys.exit("请指定 --id、--prefix 或 --all")
+
+
+def cmd_results_verify(a):
+    vault = vault_of(a)
+    path, m = rmap(vault)
+    ids = select_entries(m, a)
+    run_fail = {}
+    if a.rerun:
+        scripts = sorted({m["entries"][i]["script"] for i in ids if m["entries"][i].get("script")})
+        plan = []
+        for s in scripts:
+            r = runner_for(s)
+            plan.append((s, r + [s] if r else None))
+        if not a.yes:
+            print("将在库根目录运行以下脚本（加 --yes 才会执行；须研究者同意）：")
+            for s, argv in plan:
+                print("  " + (" ".join(argv) if argv else "%s  （找不到解释器，将标为 unverifiable）" % s))
+            sys.exit(2)
+        import subprocess
+        for s, argv in plan:
+            if not argv:
+                run_fail[s] = "找不到运行 %s 的解释器（Stata 可用环境变量 ERC_STATA 指定）" % s
+                continue
+            try:
+                cp = subprocess.run(argv, cwd=vault, timeout=a.timeout, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                if cp.returncode != 0:
+                    run_fail[s] = "脚本 %s 退出码 %d" % (s, cp.returncode)
+            except subprocess.TimeoutExpired:
+                run_fail[s] = "脚本 %s 超时（%d 秒）" % (s, a.timeout)
+            print("已运行 %s%s" % (s, "（失败）" if s in run_fail else ""))
+    counts = Counter()
+    for i in ids:
+        e = m["entries"][i]
+        if (e.get("repro") or {}).get("status") == "waived":
+            counts["waived"] += 1
+            continue
+        drift = data_drift(vault, e)
+        if drift:
+            st, note = "different", "数据指纹不符：" + "；".join(drift)
+        elif e.get("script") in run_fail:
+            st, note = ("unverifiable" if "解释器" in run_fail[e["script"]] else "different"), run_fail[e["script"]]
+        elif not e.get("output"):
+            st, note = "unverifiable", "没有记录输出文件（手填数值）"
+        else:
+            new, err = read_output_value(vault, e)
+            if err:
+                st, note = "different", err
+            else:
+                st = compare_values(e["value"], new, a.rtol, a.atol)
+                note = "" if st == "reproduced" else "登记 %s，现为 %s" % (e["value"], new)
+        e["repro"] = {"status": st, "checked": now(), "note": note, "rerun": bool(a.rerun)}
+        counts[st] += 1
+        if st != "reproduced" and not a.json:
+            print("%-16s %s  %s" % (st, i, note))
+    save(path, m)
+    orc.ledger_append(vault, "results_verify", n=len(ids), rerun=bool(a.rerun), **{k: v for k, v in counts.items()})
+    if a.json:
+        print(json.dumps({i: m["entries"][i].get("repro") for i in ids}, ensure_ascii=False, indent=2))
+    print("核对 %d 条：%s" % (len(ids), "，".join("%s %d" % kv for kv in sorted(counts.items())) or "无"))
+    sys.exit(1 if counts["different"] else 0)
+
+
+def cmd_results_confirm(a):
+    vault = vault_of(a)
+    path, m = rmap(vault)
+    if a.id not in m["entries"]:
+        sys.exit("id 不在结果登记簿中：%s" % a.id)
+    if not (a.note or "").strip():
+        sys.exit("必须用 --note 写明研究者如何核对了这个数值。")
+    m["entries"][a.id]["confirmed"] = {"note": a.note.strip(), "ts": now()}
+    save(path, m)
+    orc.ledger_append(vault, "result_confirm", id=a.id)
+    print("%s 已由研究者确认。" % a.id)
+
+
+def cmd_results_waive(a):
+    vault = vault_of(a)
+    path, m = rmap(vault)
+    if a.id not in m["entries"]:
+        sys.exit("id 不在结果登记簿中：%s" % a.id)
+    if not (a.reason or "").strip():
+        sys.exit("必须用 --reason 写明无法重跑的原因（如保密数据）。")
+    m["entries"][a.id]["repro"] = {"status": "waived", "checked": now(), "note": a.reason.strip()}
+    save(path, m)
+    orc.ledger_append(vault, "result_waive", id=a.id)
+    print("%s 已标为免于重跑（waived）。" % a.id)
+
+
+def repro_problems(vault, files):
+    """results_reproduced: ids cited by {{res:id}} in the files (all ledger entries when the files cite none)."""
+    _, m = rmap(vault)
+    ids = set()
+    for f in files:
+        ids |= {mo.group(1) for mo in PLACEHOLDER.finditer(strip_code(read_text(f)))}
+    if not ids:
+        ids = set(m["entries"])
+    errors = []
+    for i in sorted(ids):
+        e = m["entries"].get(i)
+        if e is None:
+            continue  # results_linked reports unknown ids
+        st = (e.get("repro") or {}).get("status")
+        if st == "waived":
+            continue
+        drift = data_drift(vault, e)
+        if st == "different":
+            errors.append("%s：重跑核对结果不一致（%s）" % (i, (e.get("repro") or {}).get("note", "")))
+        elif drift:
+            errors.append("%s：数据指纹不符（%s），须重新 results verify" % (i, "；".join(drift)))
+        elif st in REPRO_OK:
+            continue
+        elif e.get("confirmed"):
+            continue
+        elif e.get("origin") == "import" or e.get("output"):
+            errors.append("%s：尚未用 results verify 核对" % i)
+        else:
+            errors.append("%s：手填数值，须研究者 results confirm 或补输出文件后 results verify" % i)
+    return errors, []
 
 
 # ------------------------------------------------------------------ specification ledger (every estimate run, reported or not)
@@ -1507,7 +1778,7 @@ def cmd_package_check(a):
 
 
 STAGE_CHECKS = ("citations_resolved", "citations_verified", "results_linked", "claims_aligned", "no_open_questions",
-                "specs_logged", "package_ready")
+                "specs_logged", "package_ready", "results_reproduced")
 
 
 def stage_check(vault, name, files, project=None):
@@ -1519,6 +1790,8 @@ def stage_check(vault, name, files, project=None):
         return cite_problems(vault, md, strict=True)[0]
     if name == "results_linked":
         return results_problems(vault, md)[0]
+    if name == "results_reproduced":
+        return repro_problems(vault, md)[0]
     if name == "claims_aligned":
         return claim_problems(vault, md, strict=True, project=project)[0]
     if name == "specs_logged":
@@ -1749,9 +2022,23 @@ def main(argv=None):
     p.add_argument("--id", required=True); p.add_argument("--value", required=True); p.add_argument("--label", default="")
     p.add_argument("--se"); p.add_argument("--n"); p.add_argument("--source"); p.add_argument("--script")
     p.add_argument("--no-source-reason"); p.add_argument("--note"); p.add_argument("--replace", action="store_true")
-    p.add_argument("--spec"); p.set_defaults(f=cmd_results_register)
+    p.add_argument("--spec"); p.add_argument("--output"); p.add_argument("--cell")
+    p.add_argument("--data", action="append"); p.add_argument("--software"); p.add_argument("--seed")
+    p.set_defaults(f=cmd_results_register)
     p = r.add_parser("import"); p.add_argument("csv"); p.add_argument("--prefix", required=True)
-    p.add_argument("--source"); p.add_argument("--script"); p.add_argument("--spec"); p.set_defaults(f=cmd_results_import)
+    p.add_argument("--source"); p.add_argument("--script"); p.add_argument("--spec")
+    p.add_argument("--data", action="append"); p.add_argument("--software"); p.add_argument("--seed")
+    p.set_defaults(f=cmd_results_import)
+    p = r.add_parser("verify"); g = p.add_mutually_exclusive_group()
+    g.add_argument("--id"); g.add_argument("--prefix"); g.add_argument("--all", action="store_true")
+    p.add_argument("--rerun", action="store_true"); p.add_argument("--yes", action="store_true")
+    p.add_argument("--rtol", type=float, default=1e-6); p.add_argument("--atol", type=float, default=0.0)
+    p.add_argument("--timeout", type=int, default=3600); p.add_argument("--json", action="store_true")
+    p.set_defaults(f=cmd_results_verify)
+    p = r.add_parser("confirm"); p.add_argument("--id", required=True); p.add_argument("--note", required=True)
+    p.set_defaults(f=cmd_results_confirm)
+    p = r.add_parser("waive"); p.add_argument("--id", required=True); p.add_argument("--reason", required=True)
+    p.set_defaults(f=cmd_results_waive)
     p = r.add_parser("render"); p.add_argument("draft"); p.add_argument("-o", "--output"); p.set_defaults(f=cmd_results_render)
     p = r.add_parser("check"); p.add_argument("files", nargs="+"); p.set_defaults(f=cmd_results_check)
 

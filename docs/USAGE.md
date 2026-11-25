@@ -114,7 +114,7 @@ claude
 
 ## 9. 论文写作工具链（`paper_tools.py`）
 1. **大纲（S8）**：`/paper-outline` 生成含主张清单与 6 步引言蓝图的 `paper/outline.md`。
-2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`；若为保密税务微数据/官方年鉴手工摘录而无法提供库内源文件，用 `--no-source-reason "…"` 做“诚实空值”披露（与 `--source` 互斥）。每跑一次估计（含不报告的）先 `spec log --id <proj.sN> --purpose baseline|robustness|… [--planned]`，登记结果时加 `--spec <proj.sN>`；`spec summary` 报告试了多少、报告多少、非预设被报告的规格与选择性报告信号（S5 关卡机检 `specs_logged`）。对数因变量系数写 `{{res:id:pct}}`，渲染为 $(e^b-1)\times100$；`results check` 会提示把系数直接写成百分比的误写。
+2. **结果入簿（S5/S8）**：`paper_tools.py results import <csv> --prefix <proj.t2>` 或 `results register`；若为保密税务微数据/官方年鉴手工摘录而无法提供库内源文件，用 `--no-source-reason "…"` 做“诚实空值”披露（与 `--source` 互斥）。每跑一次估计（含不报告的）先 `spec log --id <proj.sN> --purpose baseline|robustness|… [--planned]`，登记结果时加 `--spec <proj.sN>`；`spec summary` 报告试了多少、报告多少、非预设被报告的规格与选择性报告信号（S5 关卡机检 `specs_logged`）。**结果可重复**：`results import` 时加 `--data <输入数据> --software "Stata 18 MP" --seed N` 记下运行配方；`results verify --prefix <proj.t2>` 重读输出文件并核对数据 SHA256，`--rerun` 先列出要运行的脚本，研究者同意后加 `--yes` 才真正重跑（`.do` 用 Stata，可设环境变量 `ERC_STATA`；`.R` 用 Rscript；`.py` 用 Python），结果分 `reproduced` / `within_tolerance` / `different` / `unverifiable`；手填数值须研究者 `results confirm --id … --note …`，保密数据无法重跑时由研究者 `results waive --id … --reason …`（S5 只提示，S12 机检 `results_reproduced` 阻断）。对数因变量系数写 `{{res:id:pct}}`，渲染为 $(e^b-1)\times100$；`results check` 会提示把系数直接写成百分比的误写。
 3. **引文管理（S9）**：
    - 从知识库文献卡直接桥接：`paper_tools.py cite from-note 03-Literature/<卡片>.md`；
    - 手动新增：`paper_tools.py cite add --key k --title "…" --year Y --locator "p.12, Table 2" --claim-scope "…" [--doi D | --type chinese | --type legal --doc-no … --effective …]`；

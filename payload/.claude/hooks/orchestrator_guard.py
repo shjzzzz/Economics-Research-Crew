@@ -33,6 +33,8 @@ GATE_CMD = re.compile(r"orchestrator\.py[\"']?\s+" + _CLI_OPTS + r"gate\b")
 PROTECTED_FILE = re.compile(r"(?:^|/)(?:STATE\.json|run-ledger\.jsonl|citation-map\.json|results-ledger\.json|reviews\.json)$", re.I)
 ZNOTE_CMD = re.compile(r"paper_tools\.py[\"']?\s+" + _CLI_OPTS + r"cite\s+zotero-note\b.*--yes\b")
 CONFIRM_CMD = re.compile(r"paper_tools\.py[\"']?\s+" + _CLI_OPTS + r"cite\s+confirm\b")
+RESULT_HUMAN_CMD = re.compile(r"paper_tools\.py[\"']?\s+" + _CLI_OPTS + r"results\s+(?:confirm|waive)\b")
+RERUN_CMD = re.compile(r"paper_tools\.py[\"']?\s+" + _CLI_OPTS + r"results\s+verify\b(?=.*--rerun\b)(?=.*--yes\b)")
 
 
 def block(msg):
@@ -77,6 +79,10 @@ def main():
                 reason = "这会向 Zotero 云端库写入一条新笔记（不可由本工具撤销）。请确认研究者同意回写，且已预览过内容。"
             elif CONFIRM_CMD.search(cmd):
                 reason = "这是研究者对引文来源的人工核验：只有研究者亲自核对原文后才应确认。请确认 --note 如实反映了核对方式。"
+            elif RESULT_HUMAN_CMD.search(cmd):
+                reason = "这是研究者对统计结果的表态（确认手填数值或因保密数据免于重跑）：只有研究者亲自核对后才应执行。"
+            elif RERUN_CMD.search(cmd):
+                reason = "这会在本机重新运行分析脚本（Stata/R/Python）以核对结果：请确认研究者同意运行这些脚本。"
             if not reason:
                 return
             import orchestrator as orc

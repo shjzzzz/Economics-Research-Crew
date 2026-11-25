@@ -263,6 +263,24 @@ def verify_stage(vault, cfg, st, sid):
     return problems
 
 
+def stage_advisories(vault, cfg, st, sid):
+    """Findings of the stage's advisory_checks: printed by verify, never block the gate."""
+    s = cfg["stages"][stage_index(cfg, sid)]
+    names = s.get("advisory_checks", [])
+    if not names:
+        return []
+    arts = st["stages"][sid].get("artifacts", [])
+    files = [os.path.join(vault, a) for a in arts if os.path.isfile(os.path.join(vault, a))]
+    try:
+        import paper_tools
+    except ImportError:
+        return []
+    out = []
+    for chk in names:
+        out += ["[%s] %s" % (chk, p) for p in paper_tools.stage_check(vault, chk, files, project=st["project"])]
+    return out
+
+
 # ---------------------------------------------------------------- commands
 def cmd_init(a):
     cfg = load_cfg()
@@ -379,7 +397,11 @@ def cmd_verify(a):
     if sid not in st["stages"]:
         sys.exit("未知阶段 %s" % sid)
     problems = verify_stage(vault, cfg, st, sid)
-    ledger_append(vault, "verify", project=st["project"], stage=sid, ok=not problems, problems=problems or None)
+    advisories = stage_advisories(vault, cfg, st, sid)
+    ledger_append(vault, "verify", project=st["project"], stage=sid, ok=not problems, problems=problems or None,
+                  advisories=advisories or None)
+    if advisories:
+        print_problems("提示（不阻断关卡，S12 终检时会阻断）：", advisories)
     if problems:
         print_problems("阶段 %s 未满足退出条件：" % sid, problems)
         sys.exit(1)

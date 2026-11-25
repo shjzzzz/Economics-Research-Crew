@@ -35,10 +35,10 @@
 
 | 阶段 | 机械检查 | 检查内容 |
 |---|---|---|
-| S5 实证执行 | `specs_logged` | 规格账本非空（每次估计都登记，含不报告的），且登记结果的 `--spec` 不指向不存在的规格 |
+| S5 实证执行 | `specs_logged`（`results_reproduced` 仅提示） | 规格账本非空（每次估计都登记，含不报告的），且登记结果的 `--spec` 不指向不存在的规格；结果可重复检查在 S5 只提示不阻断 |
 | S8 论文大纲 | `no_open_questions` | 不留未答的 `⟦问：…⟧` |
 | S10 / S11 成稿与精修 | `citations_resolved`、`results_linked` | 引文都在引文表中，数字都来自结果登记簿 |
-| S12 终检 | 以上全部 + `citations_verified`、`claims_aligned`、`package_ready` | 引文已核实、主张与大纲一致、复现包审计通过（README 四节、主脚本、无绝对路径与隐藏字符、无 Office 作者元数据） |
+| S12 终检 | 以上全部 + `citations_verified`、`claims_aligned`、`package_ready`、`results_reproduced` | 引文已核实、主张与大纲一致、复现包审计通过（README 四节、主脚本、无绝对路径与隐藏字符、无 Office 作者元数据）；正文每个 `{{res:id}}` 经 `results verify` 重读或重跑后一致、输入数据 SHA256 未变，手填数值由研究者 `results confirm`，保密数据由研究者 `results waive` |
 
 ---
 
@@ -79,7 +79,7 @@ S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`typ
 | 工具 / Hook | 核心命令或触发时机 | 解决的问题 |
 |---|---|---|
 | `orchestrator.py` | `init / status / next / artifact / verify / gate / fail / recover / enforce / log` | 机读项目状态机（`STATE.json`）与追加式运行账本（`Meta/run-ledger.jsonl`）；关卡仅由研究者决定 |
-| `paper_tools.py` | `cite (add/from-note/import/zotero/zotero-note/open/verify/confirm/check/bib/ris/csl)`、`results (register/import/render/check)`、`spec (log/summary)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`package check`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明（含否定词与语气强弱）、规格账本（试了多少 vs 报告多少，选择性报告信号）、对数点→百分比换算与误写检查、复现包审计（README 四节、主脚本、绝对路径、隐藏字符、Office 作者元数据） |
+| `paper_tools.py` | `cite (add/from-note/import/zotero/zotero-note/open/verify/confirm/check/bib/ris/csl)`、`results (register/import/verify/confirm/waive/render/check)`、`spec (log/summary)`、`claim check`、`review verify`、`refine (start/record/status)`、`polish (scan/check)`、`package check`、`questions`、`report` | 引文与数字机械溯源、EndNote / Zotero 互通（RIS / BibTeX / CSL-JSON 导入导出，Zotero API 只读拉取，导入一律 `unverified`）、`--no-source-reason` 诚实空值、大纲主张覆盖度审计、NFC 审稿引述与推荐文献存在性核验、润色零内容变更证明（含否定词与语气强弱）、规格账本（试了多少 vs 报告多少，选择性报告信号）、结果可重复核对（每个数记下输出文件、单元格、输入数据 SHA256、软件与种子；`results verify` 重读输出，`--rerun --yes` 经研究者同意后用 Stata / R / Python 重跑脚本再比对）、对数点→百分比换算与误写检查、复现包审计（README 四节、主脚本、绝对路径、隐藏字符、Office 作者元数据） |
 | `wiki_lint.py` | `lint`、`map [--check]`、`hash` | 确定性体检、生成双地图并刷新 `ERC:MAP`；自动过滤 `paper/versions/` 与多项目 `PROJECT.md` 误报 |
 | `kb_search.py` | `index`、`search`、`stats`、`eval` | 全库**本地**全文召回（SQLite FTS5 + BM25，中文字 bigram，`Meta/aliases.csv` 中英同义展开，`--expand-links` 沿双链扩展）；纯标准库、不调用任何模型、不联网；命中带 `cite_key`/标题路径/行号锚点与 `coverage`（命中查询词比例，弱匹配会提示），供 `/query-wiki` 跨文献问答召回；结果登记簿与规格账本也进入索引（`--scope meta`，每条一节），可查“这个数来自哪个规格”；`eval` 用“问题 → 应命中来源”清单算 recall@k 与 MRR；索引放库内 `.erc-index/`（自忽略，可随时重建）；命中只是线索，结论须回到原文核对 |
 | `tools/check_upstreams.py` | `list`、`check [--repo NAME] [--out FILE] [--json]`、`mark-audited --repo NAME --sha S [--tag T]` | **零 LLM 额度**一次检测 5 个上游（`academic-research-skills`、`paper-orchestra`、`obsidian-second-brain`、`research-superpowers`、`Auto-Empirical-Research-Skills`），按各自清单映射受影响模块并输出原生适配简报；清单在 `payload/Meta/upstream-ars.json` 与 `tools/upstreams/*.json`；GitHub Actions 每周一自动运行，有更新时开 issue，**只检测，不自动改库** |
@@ -107,7 +107,7 @@ S12 结项后，关键发现经研究者同意写回 `08-Research-Notes/`（`typ
 
 | 维度 | 支持对象 | 规则与路径 | Hooks（`-WithHooks` / `--with-hooks`） | 状态 |
 |---|---|---|---|---|
-| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令优先 `py -3`（无 py 启动器时回退 `python`） | 已双宿主全量测试（464 项；本机安装 `claude` CLI 时 465 项） |
+| **操作系统** | **Windows 11** | `Install-EconomicsResearchCrew.ps1`（PS 5.1 / 7）或 `python tools/erc_cli.py` | hook 命令优先 `py -3`（无 py 启动器时回退 `python`） | 已双宿主全量测试（474 项；本机安装 `claude` CLI 时 475 项） |
 | **操作系统** | **macOS / Linux** | `./install.sh`（封装 `python3 tools/erc_cli.py`，纯 LF） | 自动适配为 `python3` | Python 模拟全量通过 + `bash -n` 通过；实体 macOS 未实机运行 |
 | **AI CLI** | **Claude Code** | `CLAUDE.md` + `.claude/ECONOMICS-RESEARCH.md`、`.claude/{skills,agents,scripts,hooks}/`（原生 `effort`/`disallowedTools`/`PowerShell`） | `.claude/settings.json`（全 7 个 hooks，含 `SessionStart` 状态恢复与 `timeout: 10`） | 已测试（含 `claude plugin validate --strict`） |
 | **AI CLI** | **Antigravity (`agy`)** | 根 `AGENTS.md`（`ERC:BEGIN…END`，≤24 KB）、`.agents/{skills,agents,scripts,hooks}/` | `.agents/hooks.json`（`protect_raw` + `routing_hint`） | 已冒烟测试 |
@@ -161,7 +161,7 @@ chmod +x install.sh
 | 验证项 | 命令 | 说明 |
 |---|---|---|
 | 结构检查 | `.\Test-EconomicsResearchCrew.ps1 -VaultPath <库>` / `./install.sh test --vault <库>` | 校验 7 Agents、18 Skills、frontmatter、全部 `Meta/` 与 Hooks |
-| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 464 项（本机安装 `claude` CLI 时 465 项；本地放有 `payload-extras/skills` 时再加 3 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
+| 全量离线回归（Win11） | `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1` | `[1]`…`[20]` 共 474 项（本机安装 `claude` CLI 时 475 项；本地放有 `payload-extras/skills` 时再加 3 项）；`-Section 11,17,18` 按节调试并自动带上前置节；全在临时目录运行，不触碰真实知识库 |
 | 网络连通性与评分细则 | `python tests/evals/run_evals.py --chain --selftest` | 清单与 payload 一致、路由覆盖全部 Skill、S1–S12 的负责人/Agent/检查名都存在、Skill 里引用的 CLI 子命令确实存在；7 个评分场景各有正反例 |
 | 离线评分已保存回答 | `python tests/evals/run_evals.py --grade <目录>` | 只按评分细则判分，不调用模型 |
 | 检索评测 | `python .claude/scripts/kb_search.py eval qrels.json --vault <库> --k 5,10` | “问题 → 应命中来源”清单算 recall@k、MRR 与漏检项 |

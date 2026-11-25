@@ -1,5 +1,5 @@
 {
-  "_comment": "Stage definitions for the Research Director (/research-pipeline). Read by scripts/orchestrator.py and hooks/orchestrator_guard.py. 'agents' = project Agents that may be dispatched in that stage (an agent may be dispatched in its own stage or any later stage, never earlier). 'min_artifacts' = artifacts that must be registered (and non-empty) before the gate can pass. 'require_name' / 'require_text' are regexes (case-insensitive) that some artifact path / the artifacts' text must match. 'checks' = named mechanical checks run by verify (see scripts/paper_tools.py stage_check): citations_resolved, citations_verified, results_linked, claims_aligned, no_open_questions, specs_logged (spec ledger non-empty, no result pointing to a missing spec), package_ready (<project>/replication passes package check).",
+  "_comment": "Stage definitions for the Research Director (/research-pipeline). Read by scripts/orchestrator.py and hooks/orchestrator_guard.py. 'agents' = project Agents that may be dispatched in that stage (an agent may be dispatched in its own stage or any later stage, never earlier). 'min_artifacts' = artifacts that must be registered (and non-empty) before the gate can pass. 'require_name' / 'require_text' are regexes (case-insensitive) that some artifact path / the artifacts' text must match. 'checks' = named mechanical checks run by verify (see scripts/paper_tools.py stage_check): citations_resolved, citations_verified, results_linked, claims_aligned, no_open_questions, specs_logged (spec ledger non-empty, no result pointing to a missing spec), package_ready (<project>/replication passes package check), results_reproduced (every {{res:id}} re-read or re-run and matching via results verify, or confirmed/waived by the researcher). 'advisory_checks' = checks verify only prints as warnings (never block the gate).",
   "max_retries": 2,
   "stale_minutes": 30,
   "max_parallel_cap": 3,
@@ -61,6 +61,9 @@
       ],
       "checks": [
         "specs_logged"
+      ],
+      "advisory_checks": [
+        "results_reproduced"
       ],
       "gate": "是否按计划执行、记录偏离，把跑过的每个规格登记入 Meta/spec-ledger.json、核心结果登记入 Meta/results-ledger.json？"
     },
@@ -162,7 +165,8 @@
         "claims_aligned",
         "no_open_questions",
         "specs_logged",
-        "package_ready"
+        "package_ready",
+        "results_reproduced"
       ],
       "gate": "C5：投稿前清单（含 7 类失效清零、复现包、AI 披露与知识库回流）是否完成？"
     }

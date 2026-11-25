@@ -23,9 +23,10 @@ task_type: open-ended
 2. **主脚本**：写一个一键运行的 `main.do` / `run_all.R` / `main.py` / `Makefile`，按 `01_clean` → … → 出表顺序调用全部脚本；路径一律相对复现包根目录。
 3. **README**：按 `Templates/replication-readme.md` 填写四个必备节——数据可得性、计算环境（软件与包版本、硬件、预计运行时长）、运行说明、表图对照（每张表/图 → 生成它的脚本与输出文件）。
 4. **账本对账**：终稿引用的每个 `{{res:id}}` 都应能追到复现包内的脚本；`spec summary` 中“已报告”的规格须出现在表图对照中，非预设规格在 README 中注明为探索性。
-5. **机械审计**：运行 `python .claude/scripts/paper_tools.py package check 01-Research-Projects/<项目>/replication`。错误（缺 README、缺必备节、缺主脚本）必须清零；警告逐条处理或在 README 中说明理由。
-6. **双盲清理（仅在研究者确认要匿名投稿时）**：`package check … --fix` 删除零宽/双向控制等隐藏字符并清空 docx/pptx/xlsx 的作者元数据；README 与代码注释中的作者姓名、单位、致谢另行人工检查。
-7. **关卡**：S12 的 `package_ready` 检查即上述错误清零；通过后把复现包路径登记为 S12 产物（`orchestrator.py artifact`）。
+5. **重跑核对**：先 `python .claude/scripts/paper_tools.py results verify --all --rerun` 列出将运行的脚本，研究者同意后加 `--yes` 重跑并逐个比对账本数值（S12 机检 `results_reproduced`）；保密数据无法重跑的数值由研究者 `results waive --id … --reason …`，不得为通过检查改账本。
+6. **机械审计**：运行 `python .claude/scripts/paper_tools.py package check 01-Research-Projects/<项目>/replication`。错误（缺 README、缺必备节、缺主脚本）必须清零；警告逐条处理或在 README 中说明理由。
+7. **双盲清理（仅在研究者确认要匿名投稿时）**：`package check … --fix` 删除零宽/双向控制等隐藏字符并清空 docx/pptx/xlsx 的作者元数据；README 与代码注释中的作者姓名、单位、致谢另行人工检查。
+8. **关卡**：S12 的 `package_ready` 与 `results_reproduced` 检查即上述错误清零；通过后把复现包路径登记为 S12 产物（`orchestrator.py artifact`）。
 
 ## 4. 产出与知识回流
 - `replication/`（README、主脚本、代码、可公开数据、输出）+ `package check` 原样输出。

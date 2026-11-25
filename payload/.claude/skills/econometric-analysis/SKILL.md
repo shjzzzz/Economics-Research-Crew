@@ -25,7 +25,7 @@ task_type: open-ended
 4. **样本瀑布与诊断核验**：逐行记录原始 $N$ → 去重 → 合并（检查合并前后行数变化防多对多爆炸）→ 筛选 → 最终估计样本 $N$；核查系数符号与量纲、标准误、收敛状态与软件/包版本。
 5. **计算经济量级并导出机读表**：同步计算因变量处理前均值/标准差、系数占均值/标准差比例或隐含弹性；对数因变量的系数换算为百分比时用 $(e^{b}-1)\times 100$，正文写 `{{res:id:pct}}` 由工具换算，不手算；将关键回归表导出为清晰 CSV。
 6. **规格账本（每跑一次估计就登记，不论是否报告）**：`python .claude/scripts/paper_tools.py spec log --id <项目.sN> --purpose baseline|robustness|heterogeneity|mechanism|placebo|exploration [--planned] --outcome Y --treatment D --controls … --fe … --cluster … --estimate b --se s --p p --n N --script <脚本>`。`--planned` 只给冻结分析计划中预设的规格；事后新增的一律不加。
-7. **强制结果入簿（打通 S5 → S8/S10）**：使用 `python .claude/scripts/paper_tools.py results import <CSV> --prefix <项目.表号> --source <CSV路径> --script <脚本路径> --spec <规格id>` 或 `results register … --spec <规格id>` 登记全部待引用核心数值、标准误与样本量；交给 S6 前运行 `paper_tools.py spec summary`，把“试了 N 个、报告 M 个、非预设被报告的规格”原样写入分析日志。
+7. **强制结果入簿（打通 S5 → S8/S10）**：使用 `python .claude/scripts/paper_tools.py results import <CSV> --prefix <项目.表号> --source <CSV路径> --script <脚本路径> --spec <规格id>` 或 `results register … --spec <规格id>` 登记全部待引用核心数值、标准误与样本量；优先由脚本写出机读 CSV 再 `results import`，并加 `--data <输入数据> --software <软件与版本> --seed <种子>` 记下运行配方（手填 `results register` 的数值终检前须研究者 `results confirm`）；交 S6 前运行 `paper_tools.py results verify --prefix <项目.表号>`，有 `different` 先查明原因；交给 S6 前运行 `paper_tools.py spec summary`，把“试了 N 个、报告 M 个、非预设被报告的规格”原样写入分析日志。
 8. **记录分析日志与偏离**：按 `Templates/analysis-log.md` 写入日志；任何偏离冻结分析计划的调整（含缩尾、控制变量或样本变更）必须逐条记录原因，明确区分“预设主分析”与“探索性补充”。
 
 ### 3.2 论文复现与代码审计模式

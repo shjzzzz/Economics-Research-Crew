@@ -36,7 +36,7 @@ S1 问题与 estimand → S2 文献争论与缺口 → S3 竞争机制与制度�
 
 ## 4. 论文写作与人机协作（S8–S12）
 遵循 `Meta/collaboration-protocol.md`（A0–A3、C1–C5）与 `Meta/style-guide.md`（CLI 细节见 `/literature-review`、`/paper-draft`、`/paper-refine`、`/paper-polish`）：
-- **受约束输入**：引文用 `Meta/citation-map.json` 的 `[@key]`（`locator` 与 `claim_scope` 防 L3 错配）；数字用 `Meta/results-ledger.json` 的 `{{res:id}}`（无来源须 `--no-source-reason`；对数点用 `:pct`），经 `--spec` 链到 `Meta/spec-ledger.json`（记录每个设定）；结果段带 `<!-- claim: Cn -->`；缺口写 `⟦问：…⟧`（答复 `⟦答：…⟧`），绝不编造。
+- **受约束输入**：引文用 `Meta/citation-map.json` 的 `[@key]`（`locator` 与 `claim_scope` 防 L3 错配）；数字用 `Meta/results-ledger.json` 的 `{{res:id}}`（无来源须 `--no-source-reason`；对数点用 `:pct`），经 `--spec` 链到 `Meta/spec-ledger.json`（记录每个设定）；数字须能经 `results verify` 重现（手填由研究者 `results confirm`）；结果段带 `<!-- claim: Cn -->`；缺口写 `⟦问：…⟧`（答复 `⟦答：…⟧`），绝不编造。
 - **文献管理**：`paper_tools.py cite import|zotero|ris|csl|bib|open|zotero-note` ↔ EndNote/Zotero（`ZOTERO_API_KEY` 只放环境变量，只做 GET 拉取，`zotero-note --yes` 须研究者同意）；导入一律 `unverified`（中文 `manual`），从不自动确认。
 - **精修（`/paper-refine`）**：`academic-reviewer` 列出所读文件，按稿件日期评判文献，检查分配归宿、Frame-Lock 与让步阈值（≥4/5，不得连续让步），输出编号 `F1/M1/m1` 与 5 项评分（`ident, contrib, inst, consist, write`）。修改前先跑 `paper_tools.py review verify`。复审按清单计数（`--carried-*`/`--new-*`）；仅当 Fatal ≤ 上轮、Major 减少（或持平且总分不降）、维度一致且无单项降 ≥2 时接受。新增分析进 `Meta/review-queue.md`。
 - **润色（`/paper-polish`）**：内容定稿后才做；`polish check` 证明引文、`{{res}}`、主张、问答标记、数字与否定词未变。不得用于规避 AI 检测；AI 使用披露写入 `paper/ai-disclosure.md`。

@@ -518,6 +518,33 @@ $d1 = Join-Path $dr "draft.md"
 [IO.File]::WriteAllText($d1, "系数为 {{res:t2.DID.coef:3}}，样本 {{res:n}} [@author2009; @zh1]。`n⟦问：是否加机制检验？⟧`n", $enc)
 Ok ((PT @("cite","check",$d1)) -match "rc=0") "cite check passes when all keys are in the table"
 Ok ((PT @("results","check",$d1)) -match "错误 0") "results check passes for registered ids"
+# 12b. reproducible results: run recipe, results verify (re-read / --rerun), confirm, waive, results_reproduced
+$rpIn = Join-Path $v12 "06-Data\processed\rp_in.csv"; [IO.File]::WriteAllText($rpIn, "x`n1`n", $enc)
+$rpOut = Join-Path $v12 "06-Data\processed\rp.csv"; [IO.File]::WriteAllText($rpOut, "row,coef`nb,0.5`n", $enc)
+$rpPy = Join-Path $v12 "07-Code\python\rp.py"; New-Item -ItemType Directory -Force (Split-Path $rpPy) | Out-Null
+[IO.File]::WriteAllText($rpPy, "open('06-Data/processed/rp.csv', 'w').write('row,coef\nb,0.5\n')`n", $enc)
+Ok ((PT @("results","import","06-Data\processed\rp.csv","--prefix","rp","--script","07-Code\python\rp.py","--data","06-Data\processed\rp_in.csv","--software","Python 3","--seed","42")) -match "已登记 1") "results import records the run recipe (--data/--software/--seed)"
+$o = PT @("results","verify","--prefix","rp"); Ok ($o -match "reproduced 1" -and $o -match "rc=0") "results verify re-reads the output and reproduces"
+[IO.File]::WriteAllText($rpIn, "x`n2`n", $enc); $o = PT @("results","verify","--prefix","rp")
+[IO.File]::WriteAllText($rpIn, "x`n1`n", $enc)
+Ok ($o -match "rc=1" -and $o -match "rp_in.csv") "results verify flags changed input data (SHA256)"
+[IO.File]::WriteAllText($rpOut, "row,coef`nb,0.6`n", $enc); $o = PT @("results","verify","--prefix","rp")
+Ok ($o -match "different" -and $o -match "rc=1") "results verify flags a number that no longer matches its output file"
+$o = PT @("results","verify","--prefix","rp","--rerun")
+Ok ($o -match "rc=2" -and ([IO.File]::ReadAllText($rpOut, $enc) -match "0\.6")) "results verify --rerun without --yes only prints the commands"
+$o = PT @("results","verify","--prefix","rp","--rerun","--yes")
+Ok ($o -match "reproduced 1" -and $o -match "rc=0") "results verify --rerun --yes re-runs the script and reproduces"
+[IO.File]::WriteAllText($rpOut, "row,coef`nb,0.5000000001`n", $enc)
+Ok ((PT @("results","verify","--prefix","rp")) -match "within_tolerance") "results verify accepts differences within rtol"
+$null = PT @("results","register","--id","m1","--value","3","--no-source-reason","hand")
+$null = PT @("results","register","--id","w1","--value","4","--no-source-reason","confidential")
+$rpDraft = Join-Path $dr "repro.md"; [IO.File]::WriteAllText($rpDraft, "{{res:m1}} {{res:w1}} {{res:rp.b.coef}}`n", $enc)
+function RR { $ErrorActionPreference = "Continue"; $c = "import sys; sys.path.insert(0, sys.argv[1]); import paper_tools as p; print(len(p.stage_check(sys.argv[2], 'results_reproduced', [sys.argv[3]])))"
+    return ((& $py -X utf8 -c $c (Split-Path $pt) $v12 $rpDraft 2>&1) -join "") }
+$before = RR
+$null = PT @("results","confirm","--id","m1","--note","researcher checked the log")
+$null = PT @("results","waive","--id","w1","--reason","confidential tax microdata")
+Ok ($before -eq "2" -and (RR) -eq "0") "results_reproduced blocks unconfirmed manual numbers until confirm / waive"
 Ok ((PT @("questions",$d1)) -match "rc=1") "unanswered researcher question detected"
 Ok ((PT @("results","render",$d1,"-o",(Join-Path $dr "r.md"))) -match "rc=0" -and ([IO.File]::ReadAllText((Join-Path $dr "r.md"), $enc) -match "系数为 -0\.123，")) "render fills placeholders with requested decimals"
 $d2 = Join-Path $dr "bad.md"
@@ -576,6 +603,8 @@ function G2([string]$Tool, [hashtable]$In) { $ErrorActionPreference = "Continue"
 Ok ((G2 "Write" @{file_path=(Join-Path $v12 "Meta\citation-map.json")}) -match "rc=2") "direct write of citation-map.json blocked"
 Ok ((G2 "Edit" @{file_path=(Join-Path $v12 "Meta\results-ledger.json")}) -match "rc=2") "direct edit of results-ledger.json blocked"
 Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite confirm --key a --note x"}) -match "permissionDecision.*ask") "cite confirm via Bash forces a permission prompt"
+Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py results confirm --id r --note x"}) -match "permissionDecision.*ask" -and (G2 "Bash" @{command="python .claude/scripts/paper_tools.py results waive --id r --reason x"}) -match "permissionDecision.*ask") "results confirm / waive via Bash force a permission prompt"
+Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py results verify --all --rerun --yes"}) -match "permissionDecision.*ask" -and (G2 "Bash" @{command="python .claude/scripts/paper_tools.py results verify --all"}) -notmatch "permissionDecision") "results verify --rerun --yes prompts; plain verify does not"
 Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite zotero-note k --user 1 --yes"}) -match "permissionDecision.*ask") "zotero-note --yes (write to Zotero) forces a permission prompt"
 Ok (-not ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite zotero-note k --user 1"}) -match "permissionDecision")) "zotero-note preview (no --yes) does not prompt"
 Ok ((G2 "Bash" @{command="python .claude/scripts/paper_tools.py cite list"}) -match "^\|rc=0") "cite list not prompted"
@@ -853,6 +882,7 @@ $p2dir = Join-Path $v16 "01-Research-Projects\p2\paper"; New-Item -ItemType Dire
 $null = PT16 @("cite","add","--key","k16","--title","Tax","--locator","p.1","--offline")
 $null = PT16 @("cite","confirm","--key","k16","--note","ok")
 $null = PT16 @("results","register","--id","r1","--value","0.5","--no-source-reason","test")
+$null = PT16 @("results","confirm","--id","r1","--note","test")
 $p1Final = Join-Path $p16 "final.md"
 [IO.File]::WriteAllText($p1Final, "<!-- claim: C1 -->`n`n结果 {{res:r1}} 与征管相关 [@k16]。`n", $enc)
 $null = O16 @("--project","p1","artifact",$p1Final,"--stage","S12")

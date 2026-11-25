@@ -33,7 +33,7 @@ task_type: open-ended
 | S9 引文 | `/literature-review` + `paper_tools.py cite` | `Meta/citation-map.json`（含 `locator` 与核验状态）、`paper/citations.bib` | C2：引文表核验状态与定位锚点是否可接受？ |
 | S10 成稿 | `/paper-draft`（`paper-writer-agent`） | `paper/draft.md`（`[@key]`/`{{res:id}}`/`<!-- claim -->`）与主张对照表 | C3：主张—证据对照、覆盖度与经济量级是否准确？ |
 | S11 精修与润色 | `/paper-refine`（`paper-writer-agent` + `academic-reviewer`）+ 可选 `/paper-polish` | `paper/versions/`、`reviews.json`、`worklog-vN.md`、可选 `polished.md` | C4：精修结果、剩余问题与可选润色（`polish check` 通过）是否可接受？ |
-| S12 终检 | Research Director + 研究者 + `/replication-package` | `paper/final.md`、`paper/ai-disclosure.md`、`replication/`（`package_ready` 机检）；机械检查与 7 类失效全清；知识回流 | C5：投稿前清单（含复现包、AI 披露与知识库回流）是否完成？ |
+| S12 终检 | Research Director + 研究者 + `/replication-package` | `paper/final.md`、`paper/ai-disclosure.md`、`replication/`（`package_ready` 与 `results_reproduced` 机检）；机械检查与 7 类失效全清；知识回流 | C5：投稿前清单（含复现包、AI 披露与知识库回流）是否完成？ |
 
 ## 4. 编排执行、质量闭环与知识回流
 ### 4.1 单阶段操作流
