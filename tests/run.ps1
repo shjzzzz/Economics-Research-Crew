@@ -245,6 +245,9 @@ Ok ((Hint "我的 DID 平行趋势成立吗") -match "/causal-inference-audit") 
 Ok ((Hint "我想完整做一个研究并推进") -match "/research-pipeline") "project intent -> /research-pipeline"
 Ok ((Hint "固定效应和随机效应的核心区别是什么") -eq "") "conceptual question -> no hint"
 Ok ((Hint "/literature-review 税收遵从") -eq "") "explicit slash command -> no hint"
+Ok ((Hint "帮我识别一下这段话的语气") -eq "") "bare word 识别 alone -> no causal hint"
+Ok ((Hint "把数据清洗一下再说") -match "/econometric-analysis") "data cleaning intent -> /econometric-analysis"
+Ok ((Hint "复现包的 README 怎么写") -notmatch "/econometric-analysis") "replication package request is not routed to econometric-analysis"
 # Hosts run hooks as plain `python script.py` (no -X utf8). On Chinese Windows python would decode
 # stdin as GBK and no Chinese trigger would ever match; the scripts must read UTF-8 bytes themselves.
 function HintPlain([string]$Json) {

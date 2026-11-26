@@ -146,4 +146,6 @@ claude
 - **`-WithExtras`**：可选安装 `payload-extras/` 中的本地自用第三方 Skill（只新增、不装 MCP、未经审计；其中含 4 个上游未附许可证、仅供本机自用的绘图/制表 Skill：`publication-chart-skill`、`econ-visualization`、`copyplot`、`tikz`），使用规则见 `payload-extras/README.md`；与必装 18 个 Skill 重叠时必装 Skill 优先。
 - **`-WithUpstream`**：需同时指定 `-RepoUrl`，在隔离目录构建，不自动导入会冲突的上游 dispatcher。
 - **验证回归**：运行 `pwsh -NoProfile -File tests\run.ps1` 与 `powershell -NoProfile -File tests\run.ps1`（全在临时目录运行，不触碰真实知识库）。
+- **Windows 实战注意（来自真实项目）**：① Windows PowerShell 5.1 里不要用 `&&` 串联命令，改用 `;`；含复杂引号的 Python 逻辑写成独立 `.py` 脚本再执行，不在命令行里内联拼接。② `Set-Content -Encoding UTF8` 在 5.1 下会写入 BOM，Stata 批处理会在首行报错；生成 `.do` 用 Python `open(..., encoding="utf-8")` 无 BOM 写入。③ Stata 导出的含中文 CSV 常为 GB18030，入簿前先转为无 BOM UTF-8，否则 `results import` 解码失败。④ `protect_raw` hook 按命令字符串同时匹配“删除动词”和受保护目录名；整理旧稿时对核心目录用 `Move-Item` 归档到 `10-Archive/`，与对 `07-Code/`、`06-Data/processed/` 的删除分成两次独立命令。
+- **库内自改与重装**：直接改库里的 SKILL.md、CLAUDE.md、AGENTS.md 后，重装或 `-Update` 只会生成 `.new` 副本供比对，不会覆盖；但改完请在 `Meta/decisions.md` 记一笔，方便日后比对哪些是本地定制。
 - **卸载**：不提供自动卸载，按 README 文件清单手动删除；安装前备份保留在 `_erc-backups/<时间戳>/`。

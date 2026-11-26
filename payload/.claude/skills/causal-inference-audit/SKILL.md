@@ -26,7 +26,7 @@ task_type: open-ended
    - **样本选择与流失**：处理本身是否导致企业进入/退出、登记类型切换或申报口径变化？
    - **推断与聚类层级**：处理在哪一层级分配，标准误是否在该层级聚类？聚类数是否过少（需野靴法 Wild Cluster Bootstrap）？
 3. **分方法现代应用微观计量诊断**：
-   - **DID / 交错 DID**：平行趋势（强调“事前系数不显著 ≠ 平行趋势成立”）、事前检验力与敏感性（Rambachan-Roth / HonestDiD）、交错处理异质性与负权重（Goodman-Bacon 分解、Callaway-Sant'Anna、Sun-Abraham、stacked DID）、溢出与 SUTVA、坏控制排查。
+   - **DID / 交错 DID**：先区分**单一统一时点 DID** 与**分批交错 DID**。单一时点冲击不存在“已处理组充当晚处理组对照”的负权重问题，用标准高维固定效应 DID + 有效识别权重分解（Aronow-Samii 2016）+ 改革前安慰剂 + HonestDiD 敏感性，不机械引入 Callaway-Sant'Anna、Sun-Abraham、stacked DID；仅分批交错处理时才做 Goodman-Bacon 分解与异质性稳健估计。统一核查：平行趋势（强调“事前系数不显著 ≠ 平行趋势成立”）与事前检验力（Rambachan-Roth / HonestDiD）、以存量属性分组时“设立队列×年份”的共线性、衍生指标跨期前值回填（forward-fill）造成的伪连续、溢出与 SUTVA、坏控制排查。
    - **IV**：相关性与弱工具检验（有效 F 统计量 Olea-Pflueger、弱工具稳健 Anderson-Rubin 置信区间）、排他性约束（含零一阶段/简化式安慰剂检验）、单调性与 LATE 依从者画像；份额移动（Shift-Share / Bartik）区分外生份额（GPSS）与外生冲击（BHJ）。
    - **RDD / 税收聚束（Bunching）**：配置变量连续性与操纵密度检验（McCrary / CJM）、甜甜圈断点（Donut-hole）、局部多项式带宽与核函数敏感性、税率拐点/缺口（Kink/Notch）的优化摩擦与反事实分布假设。
    - **合成控制（SCM / SDID）**：备选池排除受污染单位、事前拟合质量、空间/时间安慰剂推断、权重稀疏性。

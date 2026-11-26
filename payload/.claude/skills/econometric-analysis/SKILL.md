@@ -21,11 +21,15 @@ task_type: open-ended
 1. **原始数据审计（只读）**：核查观测粒度、唯一主键、重复行、缺失模式、时间/地区覆盖与异常值；严禁原地修改 `06-Data/raw/`。
 2. **确认执行清单**：动代码前向研究者复核 $Y$、$D$、控制变量、固定效应、样本筛选、权重、聚类层级与输入/输出路径。
 3. **模块化可复现实现**：在 `07-Code/<lang>/<project>/` 按步骤组织脚本（`01_clean` → `02_build` → `03_main` → `04_robustness` → `05_mechanisms`），衍生数据仅写入 `06-Data/processed/`；运行任何写文件脚本前先说明输入与输出。标准产出覆盖 8 步：① 数据清洗 ② 变量构造 ③ 描述统计（Table 1，含处理组/对照组均值差）④ 诊断检验 ⑤ 基准估计 ⑥ 稳健性 ⑦ 进一步分析（机制、异质性）⑧ 出版级表图；计划未要求的步骤写明“不适用”而非静默跳过。
+   - **单一自包含精简面板**：上游为多源或千列宽表时，先由 `build_panel` 脚本裁剪出仅含本文变量的精简数据文件至 `06-Data/processed/`，并对关键变量做与上游的数值对齐断言（容差写明），全套估计脚本只读该单一文件，避免各脚本各自读上游、口径漂移。
    - **主表 M1→M6 渐进式**：从无控制变量起，逐列加入控制变量、固定效应与聚类调整（列数按计划，不必凑满 6 列）；表注写明每列设定、聚类层级与样本 $N$，读者能看出系数随设定如何变化。
 4. **样本瀑布与诊断核验**：逐行记录原始 $N$ → 去重 → 合并（检查合并前后行数变化防多对多爆炸）→ 筛选 → 最终估计样本 $N$；核查系数符号与量纲、标准误、收敛状态与软件/包版本。
 5. **计算经济量级并导出机读表**：同步计算因变量处理前均值/标准差、系数占均值/标准差比例或隐含弹性；对数因变量的系数换算为百分比时用 $(e^{b}-1)\times 100$，正文写 `{{res:id:pct}}` 由工具换算，不手算；将关键回归表导出为清晰 CSV。
 6. **规格账本（每跑一次估计就登记，不论是否报告）**：`python .claude/scripts/paper_tools.py spec log --id <项目.sN> --purpose baseline|robustness|heterogeneity|mechanism|placebo|exploration [--planned] --outcome Y --treatment D --controls … --fe … --cluster … --estimate b --se s --p p --n N --script <脚本>`。`--planned` 只给冻结分析计划中预设的规格；事后新增的一律不加。
 7. **强制结果入簿（打通 S5 → S8/S10）**：使用 `python .claude/scripts/paper_tools.py results import <CSV> --prefix <项目.表号> --source <CSV路径> --script <脚本路径> --spec <规格id>` 或 `results register … --spec <规格id>` 登记全部待引用核心数值、标准误与样本量；优先由脚本写出机读 CSV 再 `results import`，并加 `--data <输入数据> --software <软件与版本> --seed <种子>` 记下运行配方（手填 `results register` 的数值终检前须研究者 `results confirm`）；交 S6 前运行 `paper_tools.py results verify --prefix <项目.表号>`，有 `different` 先查明原因；交给 S6 前运行 `paper_tools.py spec summary`，把“试了 N 个、报告 M 个、非预设被报告的规格”原样写入分析日志。
+   - **机读 CSV 的唯一键与编码**：`results import` 以第 0 列的 ASCII slug 作键，因此每个结果表第 0 列须为全表唯一的 ASCII `row_id`，同名行会互相覆盖并使 `results verify` 报 `different`；Windows 下 Stata 导出的含中文 CSV 常为 GB18030，入簿前先转为无 BOM 的 UTF-8。
+   - **脚本文件编码**：生成 `.do` 文件用 UTF-8 无 BOM 写入（Stata 批处理遇 BOM 会在首行报错；Windows PowerShell 5.1 的 `Set-Content -Encoding UTF8` 默认带 BOM，改用 Python `open(..., encoding="utf-8")`）。
+   - **文稿生成脚本的锚定与归仓**：文稿脚本跨版本升级时，复用已核验的参考文献、法条脚注与推导，不凭记忆重写书目或补造页码；定稿后去掉对临时缓存目录（如 `scratch/`）的依赖，把自包含的文稿与编译脚本放入 `07-Code/`，保证独立可运行。
 8. **记录分析日志与偏离**：按 `Templates/analysis-log.md` 写入日志；任何偏离冻结分析计划的调整（含缩尾、控制变量或样本变更）必须逐条记录原因，明确区分“预设主分析”与“探索性补充”。
 
 ### 3.2 论文复现与代码审计模式
