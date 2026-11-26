@@ -17,7 +17,7 @@ task_type: open-ended
 
 ## 3. 核心流程与苏格拉底防越位护栏
 - **探索态护栏**：当研究者尚未确定核心机制时，只追问行为主体、目标函数、信息结构、约束条件与制度摩擦，不替研究者拍板核心假说；若明确要求 AI 拟定机制候选，先显式输出 `[SOCRATIC-NON-GENERATION-EXIT: explicit_user_request]` 并标注为 AI 建议。
-- **写作结构**：模型一节的段落顺序与"偏离环节"清单见 `Templates/intro-model-blueprint.md`。
+- **写作结构**：模型一节的段落顺序与"偏离环节"清单见 `Templates/intro-model-blueprint.md`；命题后的一句话直觉、编号预测与“预测→表/列”映射的写法按 `Meta/style-guide.md` §IV.10A（QJE 范式）。
 - **委派授权**：复杂优化与逐步推导可派出 `theory-agent`（按 `Templates/handoff.md` 交接，一次一个）。
 1. **界定环境与要素**：参与人（纳税人/企业/平台/税务机关等）、决策变量、时序（Timing）、信息结构（对称/不对称/有限注意）、预算与制度约束。
 2. **引入行为或制度摩擦**：若使用 `Meta/mechanism-library.md` 中的行为机制（如凸显性、损失厌恶、现时偏向、第三方信息、遵从成本），须明确其数学表征与标准理性基准模型的差异。

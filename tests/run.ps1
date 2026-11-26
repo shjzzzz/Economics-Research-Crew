@@ -1026,6 +1026,10 @@ $sgTxt18 = [IO.File]::ReadAllText((Join-Path $payload "Meta\style-guide.md"), $e
 Ok ($tplTxt18 -match "新政治经济学视角" -and $tplTxt18 -match 'Meta/style-guide\.md') "CLAUDE template routes paper writing to the new-political-economy requirement in style-guide"
 $npeMissing18 = @(@("行为者与激励","政策内生性","规则与执行","竞争性解释","机制落到渠道","实证与规范分开","制度背景与外部效度","来源纪律") | Where-Object { $sgTxt18 -notmatch $_ })
 Ok ($npeMissing18.Count -eq 0) "style-guide lists all eight new-political-economy requirements"
+$sgQje18 = ($sgTxt18 -match "## 10\. QJE Paradigm") -and ($sgTxt18 -match "### A\. 理论模型") -and ($sgTxt18 -match "### B\. 计量模型") -and ($sgTxt18 -match "### C\. 回归结果的解释")
+Ok $sgQje18 "style-guide carries the QJE paradigm section for theory model, econometric model and result interpretation"
+$qjeRef18 = @("theory-modeling","paper-draft","academic-review","econometric-analysis") | Where-Object { -not ([IO.File]::ReadAllText((Join-Path $payload (".claude\skills\" + $_ + "\SKILL.md")), $enc) -match 'style-guide\.md`\s*§IV\.10') }
+Ok (@($qjeRef18).Count -eq 0) "theory/draft/review/econometric skills point to the QJE paradigm section"
 # lightweight validate_paper catches both unknown [@key] and unknown {{res:id}}
 $v18 = New-Vault
 Ok ((Run-Install $v18 @("-Platform","claude")) -eq 0) "v18 install exit 0"
