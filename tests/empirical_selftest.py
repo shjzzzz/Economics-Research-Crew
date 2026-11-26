@@ -62,9 +62,9 @@ chk("28.4" in out and "{{res:t2.b:pct}}" in out, "results check catches a log po
 rc, out = run("results", "render", d, "-o", os.path.join(v, "r.md"))
 chk("换算为 28.4%" in open(os.path.join(v, "r.md"), encoding="utf-8").read(), "{{res:id:pct}} renders (e^b-1)*100")
 
-a = w("a.md", "合并可能提高了税收 {{res:t2.b}}，但并非所有地区都不显著。This may not hold.\n")
-b = w("b.md", "合并证明提高了税收 {{res:t2.b}}，但并非所有地区都显著。This clearly holds.\n")
-c = w("c.md", "合并或许提高了税收 {{res:t2.b}}，但并非所有地区都不显著。This may not hold.\n")
+a = w("a.md", "改革可能提高了税收 {{res:t2.b}}，但并非所有地区都不显著。This may not hold.\n")
+b = w("b.md", "改革证明提高了税收 {{res:t2.b}}，但并非所有地区都显著。This clearly holds.\n")
+c = w("c.md", "改革或许提高了税收 {{res:t2.b}}，但并非所有地区都不显著。This may not hold.\n")
 rc, out = run("polish", "check", "--before", a, "--after", b)
 chk(rc != 0 and "否定词" in out and "语气变强" in out, "polish check fails on a dropped negation and warns on stronger tone")
 rc, out = run("polish", "check", "--before", a, "--after", c)
