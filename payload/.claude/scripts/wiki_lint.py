@@ -2,30 +2,42 @@
 """Deterministic wiki checks for the Economics Research Crew vault.
 
 Usage:
-    python wiki_lint.py lint [--vault PATH] [--json] [--strict]
+    python wiki_lint.py lint [--vault PATH] [--json] [--strict] [--against REF]
     python wiki_lint.py map [--vault PATH] [--check] [--no-embed]
     python wiki_lint.py hash FILE [--vault PATH]
+    python wiki_lint.py inspect FILE [--extract] [--max-chars N] [--json]
 
-lint  : frontmatter, sources[] resolvability, broken wikilinks, orphan pages,
-        index coverage, duplicate concept pages declared in Meta/aliases.csv. Scope = new research folders only (legacy tax-law
-        notes are never scanned).
-map   : generate Meta/folder-map.md (real folders) and Meta/link-map.md (wikilink graph: hubs,
-        adjacency, orphans, broken links, duplicate names; legacy notes summarised per folder
-        only) and refresh the compact map between ERC:MAP markers in CLAUDE.md and AGENTS.md.
-        --check reports drift without writing (exit 1).
-hash  : print SHA256 of FILE and report whether Meta/source-registry.md
-        already contains it (exit 10 if already registered).
+lint    : frontmatter, sources[] resolvability, broken wikilinks, orphan pages,
+          index coverage, duplicate concept pages declared in Meta/aliases.csv,
+          optional [source: ... | as-of: ...] fact-line lifecycle tags,
+          optional <!-- current-picture:start/end --> summary blocks, page size
+          hygiene, and (--against REF) non-destructive fact-line survival check.
+          Scope = new research folders only (legacy tax-law notes are never scanned).
+map     : generate Meta/folder-map.md (real folders) and Meta/link-map.md (wikilink graph: hubs,
+          adjacency, orphans, broken links, duplicate names; legacy notes summarised per folder
+          only) and refresh the compact map between ERC:MAP markers in CLAUDE.md and AGENTS.md.
+          --check reports drift without writing (exit 1).
+hash    : print SHA256 of FILE and report whether Meta/source-registry.md
+          already contains it (exit 10 if already registered).
+inspect : read-only, stdlib-first pre-check for raw sources (.txt/.md/.csv/.html/.eml/
+          .docx/.xlsx/.pptx, plus optional pypdf text-layer check to catch scanned PDFs).
 
-Exit codes: 0 ok, 1 errors found (or warnings with --strict), 10 hash already registered.
+Exit codes: 0 ok, 1 errors found (or warnings with --strict), 2 scanned/unreadable PDF, 10 hash already registered.
 """
 import argparse
 import datetime
+import email
+import email.policy
 import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
+import xml.etree.ElementTree as ET
+import zipfile
 from collections import Counter
+from html.parser import HTMLParser
 from pathlib import Path
 
 SCOPE = ["01-Research-Projects", "02-Areas", "03-Literature", "04-Theories",
@@ -40,6 +52,159 @@ NON_PAGE_EXT = (".base", ".canvas", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".p
 WIKILINK = re.compile(r"\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 CODE_FENCE = re.compile(r"```.*?```", re.S)
 INLINE_CODE = re.compile(r"`[^`\n]+`")
+
+# Optional fact-line lifecycle tag: [source: <id> | as-of: YYYY-MM-DD | valid_from: ... | valid_to: ... | retracted: ... | section: ...]
+_DATE_PAT = r"\d{4}-\d{2}-\d{2}"
+SOURCE_TAG_RE = re.compile(
+    r"\[source:\s*(?P<source>[A-Za-z0-9][A-Za-z0-9._-]*)\s*\|\s*as-of:\s*(?P<as_of>" + _DATE_PAT + r")"
+    r"(?:\s*\|\s*valid_from:\s*(?P<valid_from>" + _DATE_PAT + r"))?"
+    r"(?:\s*\|\s*valid_to:\s*(?P<valid_to>" + _DATE_PAT + r"))?"
+    r"(?:\s*\|\s*retracted:\s*(?P<retracted>" + _DATE_PAT + r"))?"
+    r"(?:\s*\|\s*section:\s*(?P<section>[^\]|\n]+?))?"
+    r"\s*\]"
+)
+SOURCE_TAG_START = re.compile(r"\[source:", re.I)
+SOURCE_TAG_ANY = re.compile(r"\[source:[^\]\n]*\]", re.I)
+LIFECYCLE_FIELD = re.compile(r"\s*\|\s*(?:valid_to|retracted):\s*" + _DATE_PAT)
+PIC_START = "<!-- current-picture:start -->"
+PIC_END = "<!-- current-picture:end -->"
+PIC_MAX_LINES = 30
+PAGE_WARN_BYTES = 20 * 1024
+PAGE_MAX_BYTES = 100 * 1024
+MIN_PDF_CHARS_PER_PAGE = 40
+LONG_DOC_CHUNK_CHARS = 120000
+
+
+def _valid_iso_date(s):
+    try:
+        datetime.date.fromisoformat(s)
+        return True
+    except ValueError:
+        return False
+
+
+def parse_source_tags(line):
+    """Return (valid_tag_dicts, malformed_snippets) for every '[source:' occurrence in line."""
+    good, bad = [], []
+    for m in SOURCE_TAG_START.finditer(line):
+        tm = SOURCE_TAG_RE.match(line, m.start())
+        if tm:
+            good.append(tm.groupdict())
+        else:
+            end = line.find("]", m.start())
+            bad.append(line[m.start(): end + 1 if end != -1 else len(line)])
+    return good, bad
+
+
+def _strip_lifecycle(line):
+    line = line.rstrip()
+    if "valid_to:" not in line and "retracted:" not in line:
+        return line
+    return SOURCE_TAG_ANY.sub(lambda m: LIFECYCLE_FIELD.sub("", m.group(0)), line)
+
+
+def lifecycle_only_added(base_line, cur_line):
+    """True if cur_line equals base_line, or only added valid_to/retracted inside its [source: ...] tags."""
+    if base_line.rstrip() == cur_line.rstrip():
+        return True
+    if _strip_lifecycle(base_line) != _strip_lifecycle(cur_line):
+        return False
+    bt, ct = parse_source_tags(base_line)[0], parse_source_tags(cur_line)[0]
+    if len(bt) != len(ct):
+        return False
+    for b, c in zip(bt, ct):
+        for k in ("valid_to", "retracted"):
+            if b.get(k) and b.get(k) != c.get(k):
+                return False
+    return True
+
+
+def _known_source_ids(vault, scope_pages, read_cached):
+    """Collect known source IDs from literature cite_keys/stems, Meta/citation-map.json, and Meta/source-registry.md."""
+    ids = set()
+    for p in scope_pages:
+        if p.relative_to(vault).parts[0] == "03-Literature":
+            ids.add(p.stem.lower())
+            fm, err = parse_frontmatter(read_cached(p))
+            if fm and not err and fm.get("cite_key"):
+                ids.add(str(fm["cite_key"]).strip().lower())
+    cmap = vault / "Meta" / "citation-map.json"
+    if cmap.exists():
+        try:
+            data = json.loads(read(cmap))
+            entries = data.get("entries", data) if isinstance(data, dict) else {}
+            if isinstance(entries, dict):
+                ids.update(k.lower() for k in entries.keys())
+        except ValueError:
+            pass
+    reg = vault / "Meta" / "source-registry.md"
+    if reg.exists():
+        for m in re.finditer(r"\b([A-Za-z0-9][A-Za-z0-9._-]{2,})\b", read(reg)):
+            tok = m.group(1).lower()
+            ids.add(tok)
+            if "." in tok:
+                ids.add(tok.rsplit(".", 1)[0])
+    return ids
+
+
+def _tagged_fact_lines(text):
+    """Return list of (1-based line_no, line_text) for non-code lines containing a valid [source: ...] tag."""
+    out = []
+    in_fence = False
+    for n, ln in enumerate(text.splitlines(), 1):
+        if ln.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        clean = INLINE_CODE.sub("", ln)
+        if SOURCE_TAG_START.search(clean):
+            good, _ = parse_source_tags(clean)
+            if good:
+                out.append((n, ln))
+    return out
+
+
+def check_against_ref(vault, ref, read_cached):
+    """Verify every [source: ...] fact line in Tier 1 pages at git REF survives unchanged or with only valid_to/retracted added."""
+    findings = []
+    r = subprocess.run(["git", "-C", str(vault), "rev-parse", "--verify", ref], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if r.returncode != 0:
+        return [{"level": "error", "file": ref, "check": "against", "msg": "git ref not found or vault is not a git repository"}]
+    ls = subprocess.run(["git", "-C", str(vault), "ls-tree", "-r", "--name-only", ref], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if ls.returncode != 0:
+        return [{"level": "error", "file": ref, "check": "against", "msg": "failed to list files at ref %s" % ref}]
+    for rel in ls.stdout.splitlines():
+        if not rel.endswith(".md"):
+            continue
+        rel_path = Path(rel)
+        if not rel_path.parts or rel_path.parts[0] not in SCOPE:
+            continue
+        if any(part in SKIP_PARTS or part.startswith("_erc") for part in rel_path.parts):
+            continue
+        if _is_paper_version(rel_path) or _is_project_subartifact(rel_path):
+            continue
+        sh = subprocess.run(["git", "-C", str(vault), "show", "%s:%s" % (ref, rel)], capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if sh.returncode != 0:
+            continue
+        base_facts = _tagged_fact_lines(sh.stdout)
+        if not base_facts:
+            continue
+        cur_path = vault / rel_path
+        if not cur_path.exists():
+            findings.append({"level": "error", "file": rel, "check": "against",
+                             "msg": "file with %d tagged fact line(s) was deleted since %s" % (len(base_facts), ref)})
+            continue
+        cur_lines = [ln for _, ln in _tagged_fact_lines(read_cached(cur_path))]
+        used = [False] * len(cur_lines)
+        for n, bline in base_facts:
+            matched = next((i for i, cline in enumerate(cur_lines) if not used[i] and lifecycle_only_added(bline, cline)), None)
+            if matched is not None:
+                used[matched] = True
+            else:
+                findings.append({"level": "error", "file": rel, "check": "against",
+                                 "msg": "base line %d missing or modified beyond valid_to/retracted: %r" % (n, bline.strip()[:80])})
+    return findings
 
 
 def _strip_code_spans(text):
@@ -183,7 +348,7 @@ def override_rate(vault):
     return (forced, len(recent)) if forced / len(recent) > OVERRIDE_LIMIT else None
 
 
-def lint(vault, strict=False):
+def lint(vault, strict=False, against=None):
     findings = []
 
     def add(level, page, check, msg):
@@ -203,6 +368,7 @@ def lint(vault, strict=False):
     non_sub_pages = [p for p in all_pages if not _is_project_subartifact(p.relative_to(vault))]
     stems = _stem_index(all_pages)
     wiki_stems = _stem_index(non_sub_pages)
+    known_sources = _known_source_ids(vault, scope_pages, read_cached)
 
     index = vault / "Meta" / "index.md"
     index_text = read_cached(index) if index.exists() else None
@@ -265,6 +431,47 @@ def lint(vault, strict=False):
             same = wiki_stems.get(p.stem.lower(), [])
             if len(same) > 1 and not all(_is_project_entry(x.relative_to(vault)) for x in same):
                 add("warning", rel, "duplicate", "file name is not unique in the vault, so [[%s]] is ambiguous" % p.stem)
+            # optional fact-line lifecycle tags: [source: <id> | as-of: YYYY-MM-DD | ...]
+            in_fence = False
+            for lno, raw_ln in enumerate(text.splitlines(), 1):
+                if raw_ln.lstrip().startswith(("```", "~~~")):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    continue
+                clean_ln = INLINE_CODE.sub("", raw_ln)
+                if SOURCE_TAG_START.search(clean_ln):
+                    good, bad = parse_source_tags(clean_ln)
+                    for snip in bad:
+                        add("error", rel, "source-tag", "line %d: malformed source tag %r" % (lno, snip[:80]))
+                    for t in good:
+                        for dk in ("as_of", "valid_from", "valid_to", "retracted"):
+                            if t.get(dk) and not _valid_iso_date(t[dk]):
+                                add("error", rel, "source-tag", "line %d: invalid date %r in %s" % (lno, t[dk], dk))
+                        if known_sources and t["source"].lower() not in known_sources:
+                            add("warning", rel, "source-tag",
+                                "line %d: source %r not found in literature notes, citation-map or source-registry" % (lno, t["source"]))
+            # optional <!-- current-picture:start/end --> block hygiene
+            if PIC_START in text:
+                i0 = text.find(PIC_START)
+                i1 = text.find(PIC_END, i0 + len(PIC_START))
+                if i1 < 0:
+                    add("error", rel, "current-picture", "unclosed %s block" % PIC_START)
+                else:
+                    pic_lines = [ln for ln in text[i0 + len(PIC_START):i1].splitlines() if ln.strip()]
+                    if len(pic_lines) > PIC_MAX_LINES:
+                        add("warning", rel, "current-picture",
+                            "current-picture has %d lines (max %d)" % (len(pic_lines), PIC_MAX_LINES))
+                    plain = [ln for ln in pic_lines if not ln.lstrip().startswith(("- ", "* "))]
+                    if plain:
+                        add("warning", rel, "current-picture",
+                            "current-picture has %d non-bullet line(s), e.g. %r" % (len(plain), plain[0].strip()[:60]))
+            # page size hygiene
+            nbytes = len(text.encode("utf-8"))
+            if nbytes > PAGE_MAX_BYTES:
+                add("warning", rel, "size", "%d bytes (>100 KB); split or summarize to keep context lean" % nbytes)
+            elif nbytes > PAGE_WARN_BYTES:
+                add("warning", rel, "size", "%d bytes (>20 KB); consider trimming or splitting" % nbytes)
 
     # inbound links may come from any page in the vault (index, MOC, notes), not only scope pages
     wiki_scope_set = set(wiki_scope_pages)
@@ -304,6 +511,9 @@ def lint(vault, strict=False):
     if ov:
         add("warning", "Meta/run-ledger.jsonl", "override",
             "%d of the last %d gate passes were forced (--force); overrides should be the exception: revisit the exit conditions or the analysis plan" % ov)
+
+    if against:
+        findings.extend(check_against_ref(vault, against, read_cached))
 
     errors = sum(1 for f in findings if f["level"] == "error")
     warnings = sum(1 for f in findings if f["level"] == "warning")
@@ -638,6 +848,207 @@ def cmd_hash(vault, file):
     return 0
 
 
+# ---------------------------------------------------------------- read-only document inspector (stdlib-first)
+class _HtmlText(HTMLParser):
+    SKIP = {"script", "style", "head"}
+    BLOCK = {"p", "div", "tr", "table", "br", "h1", "h2", "h3", "h4", "li", "hr"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.out, self.skip = [], 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "body":
+            self.skip = 0
+        if tag in self.SKIP:
+            self.skip += 1
+        elif tag in ("td", "th"):
+            self.out.append(" | ")
+        elif tag in self.BLOCK:
+            self.out.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP:
+            self.skip = max(0, self.skip - 1)
+        elif tag in self.BLOCK:
+            self.out.append("\n")
+
+    def handle_data(self, data):
+        if not self.skip:
+            self.out.append(data)
+
+    def text(self):
+        raw = re.sub(r"[ \t]+", " ", "".join(self.out).replace("\xa0", " "))
+        raw = re.sub(r" ?\| (?:\| )+", " | ", raw)
+        lines = [ln.strip(" |") for ln in raw.split("\n")]
+        return re.sub(r"\n{3,}", "\n\n", "\n".join(ln for ln in lines if ln))
+
+
+def _decode_bytes(data):
+    """Decode UTF-16 BOM, UTF-8 (with/without BOM), or GB18030 fallback (Windows Stata/Excel CSV)."""
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return data.decode("utf-16", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), "utf-16"
+    try:
+        return data.decode("utf-8-sig").replace("\r\n", "\n").replace("\r", "\n"), "utf-8"
+    except UnicodeDecodeError:
+        return data.decode("gb18030", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), "gb18030"
+
+
+def _xml_text_nodes(xml_bytes, tag_suffix):
+    root = ET.fromstring(xml_bytes)
+    return [el.text for el in root.iter() if el.tag.endswith(tag_suffix) and el.text]
+
+
+def _docx_text(path):
+    with zipfile.ZipFile(path) as zf:
+        root = ET.fromstring(zf.read("word/document.xml"))
+    parts = []
+    for p in root.iter():
+        if p.tag.endswith("}p"):
+            txt = "".join(t.text for t in p.iter() if t.tag.endswith("}t") and t.text).strip()
+            if txt:
+                parts.append(txt)
+    return "\n\n".join(parts)
+
+
+def _xlsx_text(path):
+    with zipfile.ZipFile(path) as zf:
+        shared = []
+        if "xl/sharedStrings.xml" in zf.namelist():
+            sroot = ET.fromstring(zf.read("xl/sharedStrings.xml"))
+            for si in sroot.iter():
+                if si.tag.endswith("}si"):
+                    shared.append("".join(t.text for t in si.iter() if t.tag.endswith("}t") and t.text))
+        sheets = sorted(n for n in zf.namelist() if re.match(r"xl/worksheets/sheet\d+\.xml$", n))
+        parts = []
+        for sname in sheets:
+            parts.append("## " + Path(sname).stem)
+            sroot = ET.fromstring(zf.read(sname))
+            for row in sroot.iter():
+                if not row.tag.endswith("}row"):
+                    continue
+                cells = []
+                for c in row:
+                    if not c.tag.endswith("}c"):
+                        continue
+                    ctype = c.attrib.get("t", "")
+                    v = next((ch.text for ch in c if ch.tag.endswith("}v") and ch.text), "")
+                    if ctype == "s" and v.isdigit() and int(v) < len(shared):
+                        cells.append(shared[int(v)])
+                    elif ctype == "inlineStr":
+                        cells.append("".join(t.text for t in c.iter() if t.tag.endswith("}t") and t.text))
+                    else:
+                        cells.append(v)
+                if any(x.strip() for x in cells):
+                    parts.append(" | ".join(cells))
+        return "\n".join(parts)
+
+
+def _pptx_text(path):
+    with zipfile.ZipFile(path) as zf:
+        slides = sorted(n for n in zf.namelist() if re.match(r"ppt/slides/slide\d+\.xml$", n))
+        parts = []
+        for idx, sname in enumerate(slides, 1):
+            txts = _xml_text_nodes(zf.read(sname), "}t")
+            if txts:
+                parts.append("## Slide %d\n%s" % (idx, "\n".join(txts)))
+        return "\n\n".join(parts)
+
+
+def _eml_text(path):
+    msg = email.message_from_bytes(path.read_bytes(), policy=email.policy.default)
+    hdr = "\n".join("%s: %s" % (k, msg.get(k, "")) for k in ("From", "To", "Date", "Subject"))
+    body = msg.get_body(preferencelist=("plain", "html"))
+    content = ""
+    if body is not None:
+        try:
+            content = body.get_content()
+        except LookupError:
+            content = (body.get_payload(decode=True) or b"").decode("utf-8", errors="replace")
+        if body.get_content_type() == "text/html":
+            hp = _HtmlText()
+            hp.feed(content)
+            content = hp.text()
+    return hdr + "\n\n" + content
+
+
+def inspect_file(path):
+    """Read-only document inspection (stdlib-first; optional pypdf for PDF scanned detection)."""
+    p = Path(path)
+    if not p.is_file():
+        return {"file": str(p), "status": "not_found", "error": "file not found"}, "", 1
+    ext = p.suffix.lower()
+    size = p.stat().st_size
+    info = {"file": p.name, "ext": ext or "(none)", "bytes": size, "encoding": "binary",
+            "pages": None, "chars": 0, "status": "ok", "suggested_chunks": 1}
+    try:
+        if ext in (".txt", ".md", ".csv"):
+            text, enc = _decode_bytes(p.read_bytes())
+            info["encoding"] = enc
+        elif ext in (".html", ".htm"):
+            raw, enc = _decode_bytes(p.read_bytes())
+            hp = _HtmlText()
+            hp.feed(raw)
+            text, info["encoding"] = hp.text(), enc
+        elif ext == ".eml":
+            text, info["encoding"] = _eml_text(p), "eml"
+        elif ext == ".docx":
+            text, info["encoding"] = _docx_text(p), "ooxml"
+        elif ext == ".xlsx":
+            text, info["encoding"] = _xlsx_text(p), "ooxml"
+        elif ext == ".pptx":
+            text, info["encoding"] = _pptx_text(p), "ooxml"
+        elif ext == ".pdf":
+            try:
+                import pypdf  # optional; zero mandatory deps
+            except ImportError:
+                info["status"] = "pdf_no_extractor"
+                info["note"] = "pypdf not installed; cannot auto-check PDF text layer (install pypdf or read directly)"
+                return info, "", 0
+            reader = pypdf.PdfReader(str(p))
+            pages = [(pg.extract_text() or "").strip() for pg in reader.pages]
+            info["pages"] = len(pages)
+            chars = sum(len(t) for t in pages)
+            info["chars"] = chars
+            if not pages or chars < MIN_PDF_CHARS_PER_PAGE * len(pages):
+                info["status"] = "scanned_pdf"
+                info["note"] = "looks like a scanned PDF (~%d chars/page); run OCR before ingesting" % (chars // max(1, len(pages)))
+                return info, "", 2
+            text = "\n\n".join("## Page %d\n%s" % (i, t) for i, t in enumerate(pages, 1) if t)
+            info["encoding"] = "pdf-text"
+        else:
+            info["status"] = "unsupported"
+            info["note"] = "unsupported extension %s" % (ext or "(none)")
+            return info, "", 1
+    except Exception as exc:
+        info["status"] = "error"
+        info["error"] = "%s: %s" % (type(exc).__name__, exc)
+        return info, "", 1
+    info["chars"] = len(text)
+    if len(text) > LONG_DOC_CHUNK_CHARS:
+        info["suggested_chunks"] = (len(text) + LONG_DOC_CHUNK_CHARS - 1) // LONG_DOC_CHUNK_CHARS
+        info["note"] = "long document (%d chars); read in ~%d chunks" % (len(text), info["suggested_chunks"])
+    header = "[SOURCE: %s | inspected: %s]\n\n" % (p.name, datetime.date.today().isoformat())
+    return info, header + text.strip("\n") + "\n", 0
+
+
+def cmd_inspect(file, extract=False, max_chars=0, as_json=False):
+    info, text, rc = inspect_file(file)
+    if as_json:
+        out = dict(info)
+        if extract and text:
+            out["text"] = text[:max_chars] if max_chars > 0 else text
+        print(json.dumps(out, ensure_ascii=False, indent=2))
+    else:
+        for k in ("file", "ext", "bytes", "encoding", "pages", "chars", "suggested_chunks", "status", "note", "error"):
+            if info.get(k) is not None:
+                print("%s: %s" % (k, info[k]))
+        if extract and text:
+            print("\n--- EXTRACTED TEXT ---")
+            print(text[:max_chars] if max_chars > 0 else text)
+    return rc
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -645,6 +1056,7 @@ def main(argv=None):
     pl.add_argument("--vault", default=".")
     pl.add_argument("--json", action="store_true")
     pl.add_argument("--strict", action="store_true")
+    pl.add_argument("--against", help="git ref: verify every [source: ...] fact line at REF survives unchanged or with only valid_to/retracted added")
     pm = sub.add_parser("map")
     pm.add_argument("--vault", default=".")
     pm.add_argument("--check", action="store_true")
@@ -652,13 +1064,20 @@ def main(argv=None):
     ph = sub.add_parser("hash")
     ph.add_argument("file")
     ph.add_argument("--vault", default=".")
+    pi = sub.add_parser("inspect")
+    pi.add_argument("file")
+    pi.add_argument("--extract", action="store_true", help="print extracted text with [SOURCE: ...] header")
+    pi.add_argument("--max-chars", dest="max_chars", type=int, default=0, help="truncate extracted text to N chars")
+    pi.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+    if a.cmd == "inspect":
+        return cmd_inspect(a.file, a.extract, a.max_chars, a.json)
     vault = Path(a.vault).resolve()
     if a.cmd == "hash":
         return cmd_hash(vault, a.file)
     if a.cmd == "map":
         return cmd_map(vault, a.check, not a.no_embed)
-    findings, n, errors, warnings = lint(vault, a.strict)
+    findings, n, errors, warnings = lint(vault, a.strict, against=a.against)
     if a.json:
         print(json.dumps({"pages": n, "errors": errors, "warnings": warnings, "findings": findings}, ensure_ascii=False, indent=2))
     else:

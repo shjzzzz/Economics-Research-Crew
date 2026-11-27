@@ -1170,6 +1170,46 @@ Ok (($LASTEXITCODE -eq 0) -and ($nm -match '"note": "no match"')) "no-hit search
 $skTxt = [IO.File]::ReadAllText((Join-Path $payload ".claude\skills\query-wiki\SKILL.md"), $enc)
 $agSk = [IO.File]::ReadAllText((Join-Path $v19 ".agents\skills\query-wiki\SKILL.md"), $enc)
 Ok ($skTxt -match "kb_search\.py" -and $agSk -match "\.agents/scripts/kb_search\.py" -and $agSk -notmatch "\.claude/scripts") "query-wiki calls kb_search.py; agy skill path rewritten to .agents/scripts"
+# agy-wiki design fusion: fact-line lifecycle tags, --against survival check, current-picture, inspect, cross-platform skills & upstream manifest
+$wl19 = Join-Path $v19 ".agents\scripts\wiki_lint.py"
+$agIng = [IO.File]::ReadAllText((Join-Path $v19 ".agents\skills\ingest-source\SKILL.md"), $enc)
+$agWl  = [IO.File]::ReadAllText((Join-Path $v19 ".agents\skills\wiki-lint\SKILL.md"), $enc)
+Ok ($agIng -match "\.agents/scripts/wiki_lint\.py inspect" -and $agSk -match "\.agents/scripts/kb_search\.py orient" -and $agSk -match "check-cites" -and $agWl -match "--against" -and $agIng -notmatch "\.claude/scripts" -and $agWl -notmatch "\.claude/scripts") "agy/Codex skills auto-adapted with inspect, orient, check-cites and --against"
+$vGit = New-Vault
+New-Item -ItemType Directory -Force (Join-Path $vGit "03-Literature"),(Join-Path $vGit "04-Theories"),(Join-Path $vGit "Meta") | Out-Null
+[IO.File]::WriteAllText((Join-Path $vGit "Meta\index.md"), "# Index`n- [[tax2024]]`n- [[vat-mech]]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $vGit "03-Literature\tax2024.md"), "---`ntype: literature`ncite_key: tax2024`nsources: []`nverification: verified`nupdated: 2026-11-27`n---`n- 标准税率为 13% [source: tax2024 | as-of: 2026-01-01]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $vGit "04-Theories\vat-mech.md"), "---`ntype: theory`nsources: []`nverification: verified`nupdated: 2026-11-27`n---`n<!-- current-picture:start -->`n- 现行税率 13% [source: tax2024 | as-of: 2026-01-01]`n<!-- current-picture:end -->`n", $enc)
+$wlGood = ((& $py -X utf8 $wl19 lint --vault $vGit --json) -join "`n") | ConvertFrom-Json
+Ok ($wlGood.errors -eq 0) "wiki_lint passes valid [source: ...] fact tags and current-picture block"
+git -C $vGit init -q 2>$null; git -C $vGit config user.email "t@e.com"; git -C $vGit config user.name "t"
+git -C $vGit add -A 2>$null; git -C $vGit commit -q -m "base" 2>$null
+# lifecycle-only edit (adding valid_to) passes --against HEAD
+[IO.File]::WriteAllText((Join-Path $vGit "03-Literature\tax2024.md"), "---`ntype: literature`ncite_key: tax2024`nsources: []`nverification: verified`nupdated: 2026-11-27`n---`n- 标准税率为 13% [source: tax2024 | as-of: 2026-01-01 | valid_to: 2026-10-01]`n", $enc)
+$agOk = ((& $py -X utf8 $wl19 lint --vault $vGit --against HEAD --json) -join "`n") | ConvertFrom-Json
+Ok ($agOk.errors -eq 0) "wiki_lint --against HEAD allows appending valid_to lifecycle field"
+# deleting/altering fact line fails --against HEAD; malformed tag & unclosed current-picture also fail
+[IO.File]::WriteAllText((Join-Path $vGit "03-Literature\tax2024.md"), "---`ntype: literature`ncite_key: tax2024`nsources: []`nverification: verified`nupdated: 2026-11-27`n---`n- 改写后的事实 [source: bad_tag_no_date]`n", $enc)
+[IO.File]::WriteAllText((Join-Path $vGit "04-Theories\vat-mech.md"), "---`ntype: theory`nsources: []`nverification: verified`nupdated: 2026-11-27`n---`n<!-- current-picture:start -->`n普通段落非列表`n", $enc)
+$agBad = ((& $py -X utf8 $wl19 lint --vault $vGit --against HEAD --json) -join "`n") | ConvertFrom-Json
+$chkNames = @($agBad.findings | ForEach-Object { $_.check })
+Ok ($agBad.errors -ge 3 -and ($chkNames -contains "against") -and ($chkNames -contains "source-tag") -and ($chkNames -contains "current-picture")) "wiki_lint catches --against fact deletion, malformed source-tag and unclosed current-picture"
+# stdlib inspect: UTF-16 CSV, HTML table, and minimal DOCX
+$utf16Csv = Join-Path $vGit "u16.csv"
+[IO.File]::WriteAllText($utf16Csv, "id,val`n1,100`n", [System.Text.Encoding]::Unicode)
+$htmlF = Join-Path $vGit "tbl.html"
+[IO.File]::WriteAllText($htmlF, "<html><head><style>x{}</style></head><body><table><tr><td>税种</td><td>13%</td></tr></table></body></html>", $enc)
+$docxF = Join-Path $vGit "sample.docx"
+$mkDocx = Join-Path $vGit "mk_docx.py"
+[IO.File]::WriteAllText($mkDocx, "import zipfile, sys`nwith zipfile.ZipFile(sys.argv[1], 'w') as z:`n    z.writestr('word/document.xml', '<w:document xmlns:w=""http://schemas.openxmlformats.org/wordprocessingml/2006/main""><w:body><w:p><w:r><w:t>Tax Policy Note</w:t></w:r></w:p></w:body></w:document>')`n", $enc)
+& $py $mkDocx $docxF
+$iCsv = ((& $py -X utf8 $wl19 inspect $utf16Csv --extract --json) -join "`n") | ConvertFrom-Json
+$iHtml = ((& $py -X utf8 $wl19 inspect $htmlF --extract --json) -join "`n") | ConvertFrom-Json
+$iDocx = ((& $py -X utf8 $wl19 inspect $docxF --extract --json) -join "`n") | ConvertFrom-Json
+Ok ($iCsv.encoding -eq "utf-16" -and $iCsv.text -match "1,100" -and $iHtml.text -match "税种 \| 13%" -and $iDocx.encoding -eq "ooxml" -and $iDocx.text -match "Tax Policy Note") "wiki_lint inspect extracts UTF-16 CSV, HTML tables and DOCX with pure stdlib"
+$upList = ((& $py -X utf8 (Join-Path $pkg "tools\check_upstreams.py") list 2>&1) -join "`n")
+Ok ($LASTEXITCODE -eq 0 -and $upList -match "agy-wiki") "check_upstreams list includes agy-wiki"
+Remove-Item -LiteralPath $vGit -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $v19 -Recurse -Force -ErrorAction SilentlyContinue
 }
 

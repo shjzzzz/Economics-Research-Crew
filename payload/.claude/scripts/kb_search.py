@@ -4,11 +4,17 @@
     python kb_search.py search QUERY... [--vault PATH] [--scope wiki|legacy|raw|project|meta|all]
                         [--type T[,T]] [--year Y|Y1-Y2] [--cite-key K] [--limit DOCS]
                         [--mode any|all] [--expand-links HOPS]
+    python kb_search.py orient QUERY... [--vault PATH] [--scope S] [--limit DOCS]
+                        pre-query orientation map: matched aliases, MOC hubs, and hits sorted
+                        chronologically (oldest -> newest) so later amendments/papers stand out
+    python kb_search.py check-cites FILE [--vault PATH]
+                        verify every [source: <id> ...] and [@key] cited in FILE exists in the vault
     python kb_search.py index  [--vault PATH] [--rebuild]
     python kb_search.py stats  [--vault PATH]
     python kb_search.py eval QRELS.json [--vault PATH] [--k 5,10] [--scope S]
                         retrieval benchmark: QRELS = [{"q": question, "expect": [cite_key or file stem]}];
-                        reports recall@k (share of questions whose expected source is in the top k), MRR, misses
+                        supports trap/no-answer cases ("expect": [] or "trap": true) and reports
+                        recall@k, MRR, misses, and trap_refusal_rate
 
 Every command first brings <vault>/.erc-index/kb.sqlite up to date (stat-based, incremental), so
 results never lag behind the notes. Notes are split into heading-level chunks; Chinese is indexed as
@@ -355,24 +361,120 @@ def find(vault, a):
     return res
 
 
+def orient(vault, a):
+    """Pre-query orientation map: matched alias groups, MOC hubs, and candidate sources sorted chronologically."""
+    con = update_index(vault)[0]
+    q = " ".join(a.query).strip()
+    qlow = q.lower()
+    alias_groups = load_aliases(vault)
+    matched_aliases = []
+    for g in alias_groups:
+        if any(len(t) > 1 and term_in(t, qlow) for t in g):
+            matched_aliases.append({"group": sorted(g), "added": [t for t in sorted(g) if not term_in(t, qlow)]})
+    mocs = [{"path": r["path"], "title": r["title"]}
+            for r in con.execute("SELECT path, title FROM docs WHERE path LIKE 'MOC/%' ORDER BY path")]
+    ns = argparse.Namespace(query=a.query, scope=a.scope, type=None, year=None, cite_key=None,
+                            limit=a.limit, mode="any", expand_links=1)
+    res = find(vault, ns)
+    seen = {}
+    for h in res["hits"]:
+        p = h["path"]
+        if p not in seen or h["coverage"] > seen[p]["coverage"]:
+            seen[p] = {
+                "year": h["year"], "cite_key": h["cite_key"], "path": p, "title": h["title"],
+                "type": h["type"], "verification": h["verification"], "coverage": h["coverage"],
+                "via": h["via"],
+            }
+    timeline = sorted(seen.values(), key=lambda x: (x["year"] if x["year"] is not None else 9999, x["path"]))
+    out = {"query": q, "scope": a.scope, "matched_aliases": matched_aliases, "mocs": mocs,
+           "timeline": timeline, "total_sources": len(timeline)}
+    if "note" in res:
+        out["note"] = res["note"]
+    return out
+
+
+def check_cites(vault, file_path):
+    """Verify every [source: <id> ...] tag and [@cite_key] in FILE resolves to a known vault source."""
+    con = update_index(vault)[0]
+    known = set()
+    for r in con.execute("SELECT cite_key, stem FROM docs WHERE tier = 'wiki'"):
+        if r["cite_key"]:
+            known.add(r["cite_key"].lower())
+        if r["stem"]:
+            known.add(r["stem"].lower())
+    cmap = vault / "Meta" / "citation-map.json"
+    if cmap.exists():
+        try:
+            data = json.loads(cmap.read_text(encoding="utf-8-sig", errors="replace"))
+            entries = data.get("entries", data) if isinstance(data, dict) else {}
+            if isinstance(entries, dict):
+                known.update(k.lower() for k in entries.keys())
+        except ValueError:
+            pass
+    reg = vault / "Meta" / "source-registry.md"
+    if reg.exists():
+        for m in re.finditer(r"\b([A-Za-z0-9][A-Za-z0-9._-]{2,})\b", reg.read_text(encoding="utf-8-sig", errors="replace")):
+            tok = m.group(1).lower()
+            known.add(tok)
+            if "." in tok:
+                known.add(tok.rsplit(".", 1)[0])
+    text = Path(file_path).read_text(encoding="utf-8-sig", errors="replace")
+    cited, malformed = [], []
+    in_fence = False
+    for lno, raw_ln in enumerate(text.splitlines(), 1):
+        if raw_ln.lstrip().startswith(("```", "~~~")):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        clean = wl.INLINE_CODE.sub("", raw_ln)
+        if wl.SOURCE_TAG_START.search(clean):
+            good, bad = wl.parse_source_tags(clean)
+            for b in bad:
+                malformed.append({"line": lno, "snippet": b[:80]})
+            for t in good:
+                cited.append(t["source"])
+        for m in re.finditer(r"\[@([A-Za-z0-9][A-Za-z0-9._-]*)", clean):
+            cited.append(m.group(1))
+    uniq = list(dict.fromkeys(cited))
+    valid = [c for c in uniq if c.lower() in known]
+    unknown = [c for c in uniq if c.lower() not in known]
+    return {"file": str(file_path), "cited": uniq, "valid": valid, "unknown": unknown,
+            "malformed_tags": malformed, "ok": not unknown and not malformed}
+
+
 def evaluate(vault, a):
-    """Retrieval benchmark: QRELS is a JSON list of {"q": question, "expect": [cite_key or file stem, ...], "scope"?}.
-    A question counts as found at k when any expected source is among the first k documents returned."""
+    """Retrieval benchmark: QRELS is a JSON list of {"q": question, "expect": [cite_key or file stem, ...], "scope"?, "trap"?}.
+    A positive question counts as found at k when any expected source is among the first k documents returned.
+    A trap/no-answer question ("expect": [] or "trap": true) counts as refused when hits is empty or note starts with 'weak match'."""
     cases = json.loads(Path(a.qrels).read_text(encoding="utf-8-sig"))
     ks = sorted({int(k) for k in a.k.split(",")})
-    rows = []
+    rows, traps = [], []
     for c in cases:
         ns = argparse.Namespace(query=[c["q"]], scope=c.get("scope", a.scope), type=None, year=None, cite_key=None,
                                 limit=ks[-1], mode="any", expand_links=0)
+        res = find(vault, ns)
+        is_trap = bool(c.get("trap")) or len(c.get("expect", [])) == 0
+        if is_trap:
+            refused = (not res["hits"]) or res.get("note", "").startswith("weak match")
+            traps.append({"q": c["q"], "refused": refused})
+            continue
         want = {str(x).lower() for x in c["expect"]}
-        docs = list(dict.fromkeys((h["cite_key"].lower(), Path(h["path"]).stem.lower()) for h in find(vault, ns)["hits"]))
+        docs = list(dict.fromkeys((h["cite_key"].lower(), Path(h["path"]).stem.lower()) for h in res["hits"]))
         rank = next((i for i, d in enumerate(docs, 1) if want & set(d)), None)
         rows.append({"q": c["q"], "rank": rank})
     n = max(len(rows), 1)
-    return {"cases": len(rows),
-            "recall": {"@%d" % k: round(sum(1 for r in rows if r["rank"] and r["rank"] <= k) / n, 3) for k in ks},
-            "mrr": round(sum(1.0 / r["rank"] for r in rows if r["rank"]) / n, 3),
-            "misses": [r["q"] for r in rows if not r["rank"]]}
+    out = {"cases": len(rows),
+           "recall": {"@%d" % k: round(sum(1 for r in rows if r["rank"] and r["rank"] <= k) / n, 3) for k in ks},
+           "mrr": round(sum(1.0 / r["rank"] for r in rows if r["rank"]) / n, 3),
+           "misses": [r["q"] for r in rows if not r["rank"]]}
+    if traps:
+        ref = sum(1 for t in traps if t["refused"])
+        out["trap_cases"] = len(traps)
+        out["trap_refused"] = ref
+        out["trap_refusal_rate"] = round(ref / len(traps), 3)
+        out["trap_leaks"] = [t["q"] for t in traps if not t["refused"]]
+    return out
 
 
 def stats(vault):
@@ -388,7 +490,7 @@ def stats(vault):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name in ("index", "search", "stats", "eval"):
+    for name in ("index", "search", "orient", "check-cites", "stats", "eval"):
         p = sub.add_parser(name)
         p.add_argument("--vault", default=".")
         if name == "index":
@@ -402,6 +504,12 @@ def main(argv=None):
             p.add_argument("--limit", type=int, default=10)
             p.add_argument("--mode", choices=("any", "all"), default="any")
             p.add_argument("--expand-links", dest="expand_links", type=int, default=0)
+        if name == "orient":
+            p.add_argument("query", nargs="+")
+            p.add_argument("--scope", default="wiki")
+            p.add_argument("--limit", type=int, default=12)
+        if name == "check-cites":
+            p.add_argument("file")
         if name == "eval":
             p.add_argument("qrels")
             p.add_argument("--k", default="5,10")
@@ -409,8 +517,16 @@ def main(argv=None):
     a = ap.parse_args(argv)
     vault = Path(a.vault).resolve()
     try:
-        if a.cmd in ("search", "eval"):
-            print(json.dumps((find if a.cmd == "search" else evaluate)(vault, a), ensure_ascii=False, indent=2))
+        if a.cmd == "search":
+            print(json.dumps(find(vault, a), ensure_ascii=False, indent=2))
+        elif a.cmd == "orient":
+            print(json.dumps(orient(vault, a), ensure_ascii=False, indent=2))
+        elif a.cmd == "check-cites":
+            res = check_cites(vault, a.file)
+            print(json.dumps(res, ensure_ascii=False, indent=2))
+            return 0 if res["ok"] else 1
+        elif a.cmd == "eval":
+            print(json.dumps(evaluate(vault, a), ensure_ascii=False, indent=2))
         elif a.cmd == "stats":
             stats(vault)
         else:

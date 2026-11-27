@@ -92,9 +92,29 @@ w("Meta/spec-ledger.json", json.dumps({"version": 1, "entries": {"p.s1": {"id": 
 rc, out, _ = run("search", "ln_vat", "--scope", "meta"); j = json.loads(out)
 chk(any(h["path"] == "Meta/spec-ledger.json" and h["heading_path"] == "p.s1" for h in j["hits"]), "spec ledger indexed one section per entry")
 q = os.path.join(v, "qrels.json")
-open(q, "w", encoding="utf-8").write(json.dumps([{"q": "稽查威慑", "expect": ["smith2020"]}, {"q": "tax compliance", "expect": ["smith2020"]}, {"q": "火星殖民", "expect": ["smith2020"]}], ensure_ascii=False))
+open(q, "w", encoding="utf-8").write(json.dumps([
+    {"q": "稽查威慑", "expect": ["smith2020"]},
+    {"q": "tax compliance", "expect": ["smith2020"]},
+    {"q": "火星殖民", "expect": ["smith2020"]},
+    {"q": "完全不存在的外星税制", "expect": [], "trap": True},
+    {"q": "遵从 火星 殖民", "expect": [], "trap": True},
+], ensure_ascii=False))
 rc, out, _ = run("eval", q, "--k", "1,5"); j = json.loads(out)
 chk(rc == 0 and j["cases"] == 3 and j["recall"]["@5"] == 0.667 and j["misses"] == ["火星殖民"], "eval: recall@5 = 2/3 and the miss is listed")
+chk(j.get("trap_cases") == 2 and j.get("trap_refused") == 2 and j.get("trap_refusal_rate") == 1.0, "eval: trap cases refused (no match + weak match)")
+w("MOC/tax-moc.md", "---\ntype: moc\ntitle: 税收遵从总览\n---\n# MOC\n[[smith2020]] [[chen2018]]\n")
+rc, out, _ = run("orient", "纳税遵从", "工具变量"); j = json.loads(out)
+years = [x["year"] for x in j["timeline"] if x["year"] is not None]
+chk(rc == 0 and j["matched_aliases"] and any(m["path"] == "MOC/tax-moc.md" for m in j["mocs"]) and years == sorted(years) and len(years) >= 2,
+    "orient: returns matched aliases, MOCs, and chronological timeline")
+ans_ok = os.path.join(v, "ans_ok.md")
+open(ans_ok, "w", encoding="utf-8").write("- 稽查威慑提高遵从 [source: smith2020 | as-of: 2026-11-27]\n见 [@chen2018]。\n")
+rc, out, _ = run("check-cites", ans_ok); j = json.loads(out)
+chk(rc == 0 and j["ok"] and set(j["valid"]) == {"smith2020", "chen2018"}, "check-cites passes on valid vault sources")
+ans_bad = os.path.join(v, "ans_bad.md")
+open(ans_bad, "w", encoding="utf-8").write("- 幻觉引用 [source: ghost9999 | as-of: 2026-11-27]\n见 [@missing2025]。\n")
+rc, out, _ = run("check-cites", ans_bad); j = json.loads(out)
+chk(rc == 1 and not j["ok"] and set(j["unknown"]) == {"ghost9999", "missing2025"}, "check-cites fails on unknown sources")
 shutil.rmtree(v, ignore_errors=True)
 print("kb_search selftest: " + ("ALL OK" if ok else "SOME FAILED"))
 sys.exit(0 if ok else 1)

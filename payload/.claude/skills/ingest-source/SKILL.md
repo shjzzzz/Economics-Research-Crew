@@ -15,7 +15,8 @@ task_type: open-ended
 1. 读取 `Meta/purpose.md`（未填则提醒并按“方向未定”处理）、`Meta/index.md`、`Meta/link-map.md`、`Meta/source-registry.md`、`Meta/constraints.md`（研究者纠正，必须遵守）、`Meta/aliases.csv`（建概念页前先查别名，已有规范名则并入而非新建）。
 2. 核实待摄入来源位于默认入口 `00-Inbox/`（如 `00-Inbox/文献/`，亦兼容已归档的 `03-Literature/_sources/`）。若研究者仅提供文件名，优先在 `00-Inbox/` 下查找；若在别处，请研究者确认路径或自行移入；**不得移动、改名、修改或删除原始文件**。
 3. 计算哈希去重：`python .claude/scripts/wiki_lint.py hash <文件> --vault .`。若返回 `ALREADY REGISTERED`，停止并告知，除非研究者明确要求重新摄入；若研究者要求**换一个 focus 重新摄入**，视为明确要求，走下面“追加 focus 小节”的路径，不新建文献卡。
-4. **确定本次 focus**（一句话：这篇来源要为哪个研究问题或哪个方面服务）。研究者没有指定时，默认取当前项目 `01-Research-Projects/<项目>/PROJECT.md` 的研究问题（没有项目则取 `Meta/purpose.md`），并在第一步开头写明“本次 focus：……”请研究者确认或改写；焦点不明时先问，不要用泛泛摘要代替。
+4. **原始文档只读预检（多格式/编码/扫描版拦截）**：运行 `python .claude/scripts/wiki_lint.py inspect <文件>`（必要时加 `--extract` 预读纯文本，纯标准库支持 `.txt/.md/.csv/.html/.eml/.docx/.xlsx/.pptx`，自动兼容 UTF-8 / UTF-16 / GB18030）。若返回 `scanned_pdf`（退出码 `2`），立即停止并告知研究者先做 OCR，不得靠猜测补全；若 `suggested_chunks > 1`，按分段通读。
+5. **确定本次 focus**（一句话：这篇来源要为哪个研究问题或哪个方面服务）。研究者没有指定时，默认取当前项目 `01-Research-Projects/<项目>/PROJECT.md` 的研究问题（没有项目则取 `Meta/purpose.md`），并在第一步开头写明“本次 focus：……”请研究者确认或改写；焦点不明时先问，不要用泛泛摘要代替。
 
 ## 3. 核心两步流程
 ### 第一步：分析（不写任何文件，输出后必须停止等待确认）
@@ -38,7 +39,7 @@ task_type: open-ended
 ### 第二步：写入（仅在确认后执行）
 1. 按 `Templates/literature-note.md` 写入 `03-Literature/`，frontmatter 必填：`type: literature`、`cite_key`、`title`、`locator`、`claim_scope`、`sources`（指向 `00-Inbox/` 或 `03-Literature/_sources/` 原始文件）、`sha256`、`updated`、`verification`（`verified | unverified`）；`focus`（可选，列表，记录本次摄入的 focus；旧卡没有该字段时视为通用摄入，不要求补）。本次 focus 的内容写进卡内“Focus 视角”小节，格式 `### Focus：<问题或方面>（YYYY-MM-DD）`。`tags` 须中英文并写（至少 3 个，含核心概念、方法、政策名），写入的是研究者确认过的清单。
    - **换 focus 重新摄入**：不新建卡、不改动 `sha256` 与既有各节；只在原卡“Focus 视角”下**追加**一个新小节，把新 focus 追加进 frontmatter 的 `focus` 列表，并在“更新记录”写一行日期与 focus。同一来源的多个 focus 并存，互不覆盖。
-2. 更新已确认触及的 `04-Theories/`、`05-Methods/` 或 `MOC/` 页面：只追加相关段落与 `[[双链]]`，不整页重写；文末“更新记录”注明日期与来源。
+2. 更新已确认触及的 `04-Theories/`、`05-Methods/` 或 `MOC/` 页面：只追加相关段落与 `[[双链]]`，不整页重写；文末“更新记录”注明日期与来源。涉及时间敏感的税法条文、政策税率或关键实证发现时，可在事实行末附可选生命周期标签 `[source: <cite_key> | as-of: YYYY-MM-DD]`（修订/废止/撤回时只追加 `| valid_to: YYYY-MM-DD` 或 `| retracted: YYYY-MM-DD`，**绝不静默删除原事实行**）；汇总页可在页首维护 `<!-- current-picture:start -->` … `<!-- current-picture:end -->` 块（≤30 行列表项，列出当前共识与 `CONFLICT:`）。
 3. 矛盾处理：在相关页面并列写出两侧主张与来源，同时记入 `Meta/review-queue.md`（状态 `open`）。
 4. 更新 `Meta/index.md`（每页一行，附 `cite_key`）、在 `Meta/source-registry.md` 登记 SHA256 与访问日期、在 `Meta/log.md` 追加 `## [YYYY-MM-DD] ingest | 标题`。
 5. 把研究者**批准**的同义词行追加到 `Meta/aliases.csv`：先读全文去重（忽略大小写），文件为空时先写表头 `canonical,alias`，只追加、不改旧行；研究者未批准的行一律不写。

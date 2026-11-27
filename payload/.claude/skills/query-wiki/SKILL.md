@@ -13,15 +13,16 @@ task_type: open-ended
 
 ## 2. 前置读取与检索顺序
 1. 先读 `Meta/purpose.md`、`Meta/decisions.md`、`Meta/index.md` 与 `Meta/link-map.md`（优先锁定枢纽页与 `MOC/`）。
-2. **全文召回（跨文献问答必做）**：运行 `python .claude/scripts/kb_search.py search --vault . '<关键词>' --expand-links 1`（本地 BM25，无模型、无网络；关键词用空格分隔，中文词至少 2 个字，可用 `--mode all` 要求全部命中、`--type literature --year 2015-2022` 过滤；索引随检索自动增量更新）。中英文关键词各试一次；同义词记入 `Meta/aliases.csv`（`canonical,alias`）。**命中只是线索，不是结论**：必须打开命中页原文核对，引用时带 `cite_key`、命中的标题路径/行号与文献卡 `locator`。旧税法笔记用 `--scope legacy`。零命中如实答“库内证据不足”，不得用常识补齐。每条命中带 `coverage`（命中块含查询词的比例）；结果 `note` 为 `weak match` 或最高 coverage < 0.5 时按“库内证据不足”倾向处理，除非页面原文确认。
-3. 从相关枢纽页和条目进入正文，再沿 `[[双链]]`（`Meta/link-map.md` 邻接表）向外展开 1–2 跳；若涉及在研项目进展，补充读取 `01-Research-Projects/<项目>/PROJECT.md`。
-4. 必要时按目录检索库内既有旧税法笔记，**严禁**在 `.claude`、`.agents`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中查找税法笔记。
+2. **前置定向地图（Pre-Query Orientation）**：运行 `python .claude/scripts/kb_search.py orient --vault . '<关键词>'`，一步获取命中的 `Meta/aliases.csv` 同义词组、相关 `MOC/` 枢纽页以及**按年份从早到晚排序的候选来源时间线**（便于识别后发论文或税制修订对早期结论的覆盖）。
+3. **全文召回（跨文献问答必做）**：运行 `python .claude/scripts/kb_search.py search --vault . '<关键词>' --expand-links 1`（本地 BM25，无模型、无网络；关键词用空格分隔，中文词至少 2 个字，可用 `--mode all` 要求全部命中、`--type literature --year 2015-2022` 过滤；索引随检索自动增量更新）。中英文关键词各试一次；同义词记入 `Meta/aliases.csv`（`canonical,alias`）。**命中只是线索，不是结论**：必须打开命中页原文核对，引用时带 `cite_key`、命中的标题路径/行号与文献卡 `locator`。旧税法笔记用 `--scope legacy`。零命中如实答“库内证据不足”，不得用常识补齐。每条命中带 `coverage`（命中块含查询词的比例）；结果 `note` 为 `weak match` 或最高 coverage < 0.5 时按“库内证据不足”倾向处理，除非页面原文确认。
+4. 从相关枢纽页（优先读页首 `<!-- current-picture:start/end -->` 若存在）和条目进入正文，再沿 `[[双链]]`（`Meta/link-map.md` 邻接表）向外展开 1–2 跳；若涉及在研项目进展，补充读取 `01-Research-Projects/<项目>/PROJECT.md`。
+5. 必要时按目录检索库内既有旧税法笔记，**严禁**在 `.claude`、`.agents`、`_vendor`、`_erc-*`、`06-Data`、`07-Code` 中查找税法笔记。
 
 ## 3. 核心回答结构
-1. **核心结论**：先给直接、克制的结论（不足以定论则直说“库内证据不足”）。
-2. **库内依据（Fact）**：每条主张标明 `[[页面]]` 与其 `sources` 中的原始来源及定位锚点（页码/表/节/文号）；若用于论文写作准备，顺带列出各文献卡的 `cite_key`。
+1. **核心结论**：先给直接、克制的结论（不足以定论则直说“库内证据不足”）。严格区分**已报告实证值 / 现行有效法条**与**预测值 / 模拟估算 / 已废止旧口径（`valid_to` / `retracted`）**：当问题问实际已报告数字或现行规定而库内仅有预测或旧口径时，先答“库内证据不足”，再说明存在预测或旧口径。
+2. **库内依据（Fact）**：每条主张标明 `[[页面]]` 与其 `sources` 中的原始来源及定位锚点（页码/表/节/文号）；若用于论文写作准备，顺带列出各文献卡的 `cite_key`（回存笔记后可用 `python .claude/scripts/kb_search.py check-cites <笔记路径> --vault .` 机检所有 `[source: ...]` 与 `[@key]` 真实存在）。
 3. **综合推断（Inference）**：显式单独标注基于上述依据做出的归纳或演绎，说明适用条件，不与原文事实混写。
-4. **未核实项与来源冲突**：引用 `verification: unverified` 页面或存在 `Meta/review-queue.md` 未决矛盾时必须标出；法规结论须注明发文机关、文号、生效/废止状态，并提醒本地资料不自动等于现行有效法。
+4. **未核实项与来源冲突**：引用 `verification: unverified` 页面、遇到 `CONFLICT:` 行或存在 `Meta/review-queue.md` 未决矛盾时必须**双边并列汇报两侧主张与来源**，绝不擅自裁决；法规结论须注明发文机关、文号、生效/废止状态，并提醒本地资料不自动等于现行有效法。
 5. **知识库盲区与下一步**：明确列出“库中没有覆盖的部分”，建议对应 `/literature-review` 或 `/ingest-source`。
 
 ## 4. 产出与知识回流

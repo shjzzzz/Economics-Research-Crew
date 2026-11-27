@@ -1,0 +1,118 @@
+{
+  "_comment": "Upstream design-pattern tracker for win4r/agy-wiki (MIT for quickstart-derived parts; port of win4r/claude-wiki). ERC adopts compatible zero-LLM deterministic patterns only (fact-line lifecycle tags valid_from/valid_to/retracted, --against non-destructive fact survival check, optional current-picture summary block & page size hygiene, pre-query orientation map with chronological source timeline, answer citation existence check, trap-case retrieval eval, stdlib-first read-only document inspection / scanned-PDF detection, and 5-class evidence-grounded consolidation retro). Headless agy/claude subprocess runners, cron daemons, quota/token budget schedulers, mandatory pip converters, and replacing ERC's 4-tier vault layout with entities/ + 6 per-unit folders are excluded because they conflict with ERC's zero-LLM scripts, researcher-in-the-loop gates, subscription quota guardrails, and economics S1-S12 pipeline.",
+  "name": "agy-wiki",
+  "label": "agy-wiki",
+  "repo": "win4r/agy-wiki",
+  "url": "https://github.com/win4r/agy-wiki",
+  "license": "MIT (adapted parts)",
+  "policy": "design-pattern-only; native rewrite in ERC; headless autonomous runners, cron daemons, mandatory pip deps and vault layout replacement are excluded",
+  "last_audited_tag": null,
+  "last_audited_sha": "0a5a041b6740c736fa2a94827e3092d00cda7c15",
+  "last_audited_date": "2026-11-27",
+  "last_audit_note": "Full architectural audit of README.md, docs/upstream/SPEC.md, src/wiki/*.py, prompts/*.md and rules/knowledge-wiki.md. Adopted 5 compatible deterministic patterns natively across wiki_lint.py, kb_search.py, ingest-source, query-wiki, wiki-lint and Templates/literature-note.md; auto-adapted to Claude Code, Antigravity (agy) and Codex CLI via build_platform.py.",
+  "adopted_patterns": [
+    {
+      "id": "fact-lifecycle-and-against-check",
+      "adopted": "2026-11-27",
+      "note": "native rewrite in wiki_lint.py: optional [source: id | as-of: YYYY-MM-DD | valid_from/valid_to/retracted] validation, lint --against <ref> non-destructive survival invariant, current-picture block & page-size hygiene"
+    },
+    {
+      "id": "pre-query-orientation-and-trap-eval",
+      "adopted": "2026-11-27",
+      "note": "native rewrite in kb_search.py & query-wiki: orient (aliases + MOCs + chronological timeline), check-cites, eval trap_refusal_rate, reported vs projection distinction & CONFLICT reporting"
+    },
+    {
+      "id": "stdlib-document-inspector",
+      "adopted": "2026-11-27",
+      "note": "native rewrite in wiki_lint.py inspect: read-only stdlib-first pre-check for txt/md/csv/html/eml/docx/xlsx/pptx with UTF-16/GB18030 support and optional pypdf scanned-PDF refusal"
+    },
+    {
+      "id": "five-class-evidence-grounded-retro",
+      "adopted": "2026-11-27",
+      "note": "native rewrite in wiki-lint §3b: WRONG/MISS/DOCS-ONLY/UNPLACED/CONFLICT failure taxonomy, transcripts-as-leads source verification, diff-only approval"
+    }
+  ],
+  "excluded_patterns": [
+    "headless-agy-claude-subprocess-runner",
+    "nightly-cron-dream-daemon",
+    "entities-and-six-per-unit-folder-layout",
+    "mandatory-third-party-pip-converters"
+  ],
+  "capability_map": [
+    {
+      "id": "fact_grammar_and_check",
+      "label": "Fact-line lifecycle grammar, wiki check invariants and --against survival check",
+      "keywords": [
+        "grammar",
+        "check",
+        "against",
+        "retracted",
+        "valid_to",
+        "valid_from",
+        "current-picture",
+        "lifecycle",
+        "lost_lines"
+      ],
+      "erc_files": [
+        "payload/.claude/scripts/wiki_lint.py",
+        "payload/.claude/skills/wiki-lint/SKILL.md",
+        "payload/Templates/literature-note.md"
+      ]
+    },
+    {
+      "id": "ask_orientation_and_eval",
+      "label": "Pre-query orientation map, citation checking and trap-case evaluation",
+      "keywords": [
+        "ask",
+        "orient",
+        "timeline",
+        "cited_units",
+        "eval",
+        "trap",
+        "refusal",
+        "projection",
+        "conflict"
+      ],
+      "erc_files": [
+        "payload/.claude/scripts/kb_search.py",
+        "payload/.claude/skills/query-wiki/SKILL.md"
+      ]
+    },
+    {
+      "id": "document_conversion_and_inspect",
+      "label": "Read-only document conversion, encoding handling and scanned-PDF detection",
+      "keywords": [
+        "convert",
+        "inspect",
+        "scanned",
+        "pdf",
+        "docx",
+        "xlsx",
+        "pptx",
+        "eml",
+        "utf-16"
+      ],
+      "erc_files": [
+        "payload/.claude/scripts/wiki_lint.py",
+        "payload/.claude/skills/ingest-source/SKILL.md"
+      ]
+    },
+    {
+      "id": "dream_consolidation",
+      "label": "Transcript-driven consolidation and 5-class failure diagnosis",
+      "keywords": [
+        "dream",
+        "transcript",
+        "wrong",
+        "miss",
+        "docs-only",
+        "unplaced",
+        "conflict",
+        "consolidat"
+      ],
+      "erc_files": [
+        "payload/.claude/skills/wiki-lint/SKILL.md"
+      ]
+    }
+  ]
+}

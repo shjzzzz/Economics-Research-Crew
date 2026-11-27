@@ -58,7 +58,7 @@ def chain():
         for dp, _, fs in os.walk(root):
             for f in fs:
                 if f.endswith(".md"):
-                    for m in re.finditer(r"(paper_tools|kb_search|orchestrator)\.py\x60? ([a-z][a-z-]+)(?: ([a-z][a-z-]+))?", read(os.path.join(dp, f))):
+                    for m in re.finditer(r"(paper_tools|kb_search|orchestrator|wiki_lint)\.py\x60? ([a-z][a-z-]+)(?: ([a-z][a-z-]+))?", read(os.path.join(dp, f))):
                         cited.add(m.groups())
     bad = []
     for script, cmd, sub in sorted(cited, key=str):
